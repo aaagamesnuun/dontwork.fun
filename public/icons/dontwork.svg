@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512" role="img" aria-labelledby="title description">
+  <title id="title">dontwork.fun</title>
+  <desc id="description">A bold lime DW monogram. The rising last stroke of the W echoes a playful market chart.</desc>
+  <!-- Two flat colors, broad counters and no small details: readable at 32 px. -->
+  <rect id="background" width="512" height="512" rx="104" fill="#10160f"/>
+  <g id="dw-monogram" fill="#b5ed70">
+    <!-- D has a 56-unit stem and an open, vertically extended counter. -->
+    <path id="letter-d" fill-rule="evenodd" d="M68 132H116C181 132 220 181 220 256S181 380 116 380H68ZM124 188V324C151 319 164 291 164 256S151 193 124 188Z"/>
+    <!-- W doubles as a zigzag chart; its final crest is the highest point. -->
+    <path id="letter-w" d="M242 151 285 354 334 249 382 354 430 130" fill="none" stroke="#b5ed70" stroke-width="48" stroke-linecap="butt" stroke-linejoin="round"/>
+    <path id="chart-arrow" d="M392 147 436 112 454 164" fill="none" stroke="#b5ed70" stroke-width="25" stroke-linecap="square" stroke-linejoin="miter"/>
+  </g>
+</svg>

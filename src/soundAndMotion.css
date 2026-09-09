@@ -1,0 +1,119 @@
+/* Four two-line metrics remain legible in every sweep layout. */
+:root {--spin-metrics-height:36px}
+.app .roll-station .spin-result {display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:4px;min-width:0;min-height:var(--spin-metrics-height);align-items:center}
+.app .roll-station .spin-result>span {display:flex;flex-direction:column;justify-content:center;gap:3px;min-width:0;white-space:nowrap}
+.app .roll-station .spin-result small {font:10px/1.1 system-ui,sans-serif;color:var(--muted)}
+.app .roll-station .spin-result b {margin:0;font:500 clamp(11px,1.4vw,16px)/1.2 var(--mono);font-variant-numeric:tabular-nums}
+.app .roll-station .spin-result b.positive {color:var(--positive,#8edec4)}
+.app .roll-station .spin-result b.negative {color:var(--negative,#f39188)}
+.sweep-readout {position:absolute;left:10px;top:5px;z-index:4;pointer-events:none;min-width:3ch;padding:1px 4px;border-radius:4px;background:#090d0fe8;color:#f2d477;font:600 22px/1 var(--mono);font-variant-numeric:tabular-nums;text-align:center}
+.sweep-readout.rolling {color:#fff0b1;text-shadow:0 0 12px #eac95988}
+@media(max-height:650px){
+ .desk-layout:has(.number-mode) {--number-station-height:125px}
+ .desk-layout:has(.number-mode .spin-growth) {--number-station-height:175px}
+ .desk-layout .compact-workspace.has-chart:has(.number-mode) {grid-template-rows:var(--number-station-height) minmax(40px,1fr) 190px}
+ .desk-layout .compact-workspace.has-chart.lab-card-expanded:has(.number-mode) {grid-template-rows:var(--number-station-height) minmax(25px,1fr) 245px}
+ .app.desk-layout:has(.number-mode) {height:auto;min-height:100dvh;grid-template-rows:var(--header-h) var(--news-h) var(--balance-h) minmax(450px,1fr) var(--dock-h)}
+ .app.desk-layout.news-bottom:has(.number-mode) {grid-template-rows:var(--header-h) var(--balance-h) minmax(450px,1fr) var(--news-h) var(--dock-h)}
+}
+.topbar nav {flex-shrink:0}
+.wordmark {min-width:0}
+.balance-result {display:flex;align-items:center;gap:12px;margin-left:auto;min-width:0}
+.balance-header .balance-result .pnl {min-width:0;white-space:nowrap}
+.desk-layout .auto-control,.auto-control>span {min-width:0}
+.sweep-integrated .classic-jackpot-line>span {top:2px;right:0;padding:2px 3px;font:8px/1 var(--mono);letter-spacing:.2px;background:#ffd166;color:#15150b;border-radius:2px 0 0 2px;white-space:nowrap}
+.sweep-integrated .classic-jackpot-line {opacity:1;box-shadow:0 0 5px #ffd16655}
+.chart-jackpot-label {top:5px;right:calc(10px + 1.688%);font:8px/1 var(--mono);padding:2px 3px;color:#15150b;background:#ffd166;border-radius:2px 0 0 2px}
+.flying-coin {position:fixed;width:58px;height:58px;margin:-29px 0 0 -29px;perspective:500px;filter:none;pointer-events:none}
+.coin-rotor {width:100%;height:100%;position:relative;transform-style:preserve-3d}
+.coin-face {position:absolute;inset:0;backface-visibility:hidden;-webkit-backface-visibility:hidden;border-radius:50%;overflow:hidden;box-shadow:0 0 10px #f7ce4c77;border:2px solid #e8c756;background:#bf9937}
+.coin-face img {width:100%;height:100%;object-fit:cover;display:block}
+.coin-bull {transform:rotateY(0deg)}
+.coin-bear {transform:rotateY(180deg);border-color:#ff855e;box-shadow:0 0 13px #ff573b99;background:#b64624}
+/* Match the generated coin's rim to the existing circular face viewport. */
+.coin-bear img {transform:scale(1.16);transform-origin:50% 49%}
+.coin-landing {position:absolute;left:50%;top:100%;transform:translateX(-50%);padding:2px 5px;border-radius:3px;background:#152317;box-shadow:0 0 9px #94db7788;color:#befe8f;font:800 10px/1.2 var(--mono);letter-spacing:1px}
+.coin-landing.bear {color:#ffe1d6;background:#762519;box-shadow:0 0 12px #fb7559aa}
+@media(max-width:759px){
+ .topbar nav {gap:0}
+ .wordmark .brand-name {font-size:clamp(14px,4vw,19px)}
+ .wordmark .brand-icon {width:20px;height:20px}
+ .balance-result {gap:8px}
+ .balance-header .balance-result .pnl {font-size:clamp(20px,5.4vw,30px)}
+}
+@media(max-width:390px){
+ .topbar .wordmark {gap:3px}
+ .topbar .wordmark .brand-icon {display:none}
+ .topbar .contact-button,.topbar .menu-button {width:36px;min-width:36px;padding:7px}
+ .balance-result {gap:5px}
+ .desk-layout .auto-control .native-switch {flex-shrink:0}
+ .desk-layout .auto-control>span {flex-wrap:wrap;gap:3px;font-size:12px}
+}
+
+/* Keep the public wallet delta on the amount's baseline. */
+.app .balance-header {align-items:flex-end}
+.app .balance-result {align-self:flex-end;padding-bottom:3px}
+.app .balance-result .pnl {line-height:1.15;margin:0;animation:wallet-pop .25s ease-out}
+@keyframes wallet-pop {from{opacity:.45;transform:translateY(4px)}to{opacity:1;transform:none}}
+.bet-card .wager-term strong,.bet-card .wager-term small,.bet-card .wager-term .micro {color:#ff818a}
+.coin-landing {font:750 16px/1.2 var(--mono);letter-spacing:0;padding:4px 7px;white-space:nowrap;top:calc(100% + 4px)}
+.jackpot-high-band {position:absolute;top:0;bottom:19px;right:var(--sweep-inset,10px);width:calc((100% - 20px)*.1);background:#ffd16616;border-left:1px solid #ffd16633;pointer-events:none;z-index:2}
+.jackpot-high-band.armed {background:#ffd16630;box-shadow:inset 0 0 12px #ffd16622}
+.sweep-integrated .payoff-scale {font-size:10px}
+.rush-remaining small {white-space:nowrap}
+.hand-toy-options {display:flex;gap:5px;overflow-x:auto;flex-shrink:0;padding:3px 0;touch-action:pan-x}
+.hand-toy-options button {min-height:40px;padding:6px 8px;flex-shrink:0;font:600 13px var(--mono)}
+.hand-toy-options button[aria-pressed=true] {border-color:#ffd166;background:#443b20;color:#fff0b1}
+.hand-toy-options small {display:block;font:11px/1.4 system-ui,sans-serif}
+.coin-locked {margin:auto;font-size:15px;color:#c6cbb8;text-align:center}
+.coin-locked strong {color:#ffe399}
+.hand-toy {position:relative;overflow:hidden;touch-action:none;user-select:none;-webkit-user-select:none}
+.hand-toy>span,.hand-toy>small {position:relative;z-index:1}
+.hand-toy .toy-light {width:8px;height:8px;display:inline-block;border-radius:50%;background:#ffd166;box-shadow:0 0 10px #ffd166}
+.toy-beat .toy-light {animation:toy-beat .6s linear infinite}
+@keyframes toy-beat {from{opacity:1;transform:scale(1.5)}to{opacity:.2;transform:scale(.7)}}
+.hand-toy.charging::before {content:"";position:absolute;inset:0;background:#ffd16633;transform-origin:left;animation:toy-charge .6s linear both}
+@keyframes toy-charge {from{transform:scaleX(0)}to{transform:scaleX(1)}}
+.celebration.milestone {border-color:#ffd166;background:radial-gradient(ellipse,#66511de8,#161b12f2);box-shadow:0 0 90px #ffdc6688}
+@media(prefers-reduced-motion:reduce){.hand-toy .toy-light,.hand-toy.charging::before,.app .balance-result .pnl {animation:none}}
+.reduced-motion .hand-toy .toy-light,.reduced-motion .hand-toy.charging::before,.reduced-motion .balance-result .pnl {animation:none}
+
+.app .balance-wallet {width:100%;min-width:0}
+.app .balance-money-line {display:flex;align-items:baseline;justify-content:space-between;gap:12px}
+.app .balance-header .balance-meta {display:none}
+.app .balance-money-line .balance-result {padding:0;align-self:baseline}
+
+.app .positions-grid .bet-card .wager-term strong,.app .positions-grid .bet-card .wager-term .micro {color:#ff818a}
+.news-strip.jackpot-news .rush-remaining>small {display:flex;flex-direction:column;gap:2px;text-align:right;line-height:1.1}
+
+/* Public results share a bounded, configurable visual intensity. */
+.app.desk-layout .positions-grid .bet-card .wager-term strong {color:#ff7974}
+.chart-notifications {grid-template-columns:minmax(0,1fr)}
+.chart-notifications .toast {box-sizing:border-box;min-width:0;width:min(650px,100%);white-space:normal;overflow-wrap:anywhere;text-align:left}
+.floating-notices {position:fixed;inset:auto;z-index:35;box-sizing:border-box;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin}
+.floating-notices .toast {pointer-events:auto;color:#fff5bd;background:#28230bf5;border:1px solid #d2bc65;border-radius:8px;font-family:system-ui,sans-serif}
+.sweep-integrated.jackpot-ready .classic-jackpot-line {width:2px;box-shadow:0 0 12px #ffcf51;transition:left .35s ease-out}
+.sweep-integrated.jackpot-ready .payoff-reel,.sweep-integrated.jackpot-ready .payoff-sweep {box-shadow:inset 0 0 20px #ffcd4530,0 0 10px #e9bd4925;border-color:#eac85d}
+.sweep-integrated.jackpot-suspense .payoff-reel,.sweep-integrated.jackpot-suspense .payoff-sweep {animation:jackpot-suspense-glow 1.1s ease-in-out infinite}
+.sweep-integrated.jackpot-suspense .jackpot-high-band {background:repeating-linear-gradient(125deg,#ffd16638 0 8px,#ffd1660b 8px 16px);background-size:32px 32px;animation:jackpot-suspense-flow .7s linear infinite}
+@keyframes jackpot-suspense-glow {0%,100%{box-shadow:inset 0 0 16px #ffc64130,0 0 8px #ffd35d30}50%{box-shadow:inset 0 0 35px #ffc64155,0 0 22px #ffd35d70}}
+@keyframes jackpot-suspense-flow {to{background-position:32px 0}}
+.jackpot-shockwave {position:absolute;left:50%;top:40%;width:55vmin;height:55vmin;border:10px solid #ffe078;border-radius:50%;box-shadow:0 0 40px #ffde56,inset 0 0 50px #ffd85e;pointer-events:none}
+.result-particle {scale:var(--particle-scale,1)}
+.reduced-motion .jackpot-suspense *, .reduced-motion .jackpot-ready .classic-jackpot-line {animation:none!important;transition:none}
+@media(prefers-reduced-motion:reduce){.jackpot-suspense *,.jackpot-ready .classic-jackpot-line{animation:none!important;transition:none}}
+
+.notice-reduced .celebration {animation:none!important}
+
+/* Pulse energy belongs to the settled spin, never to the current wallet. */
+.chart-backdrop.backdrop-pulse {opacity:var(--pulse-opacity,0);--flow-color:#65b9ff}
+.chart-backdrop.backdrop-pulse.falling {--flow-color:#ff607b}
+.chart-backdrop.backdrop-pulse.jackpot-pulse {--flow-color:#ffe069}
+.chart-backdrop.backdrop-pulse>i {inset:0;transform-origin:98% 58%;background:radial-gradient(ellipse var(--pulse-spread,80%) 85% at 98% 58%,var(--flow-color),transparent 78%);animation:spin-cash-pulse var(--pulse-duration,700ms) ease-out both}
+.chart-backdrop.backdrop-pulse>i:nth-child(n+2) {background:radial-gradient(ellipse at 96% 58%,transparent 25%,var(--flow-color) 28%,transparent 35%)}
+@keyframes spin-cash-pulse {0%{opacity:0;transform:scale(.25)}12%{opacity:1}100%{opacity:0;transform:scale(var(--pulse-scale,1.5))}}
+.reduced-motion .chart-backdrop.backdrop-pulse>i {opacity:.18;transform:none}
+@media(prefers-reduced-motion:reduce){.chart-backdrop.backdrop-pulse>i{opacity:.18;transform:none}}
+.tab-layout .main-tabs {grid-template-columns:repeat(3,minmax(0,1fr))}
+.tab-layout .main-tabs:has(>button:nth-child(4)) {grid-template-columns:repeat(4,minmax(0,1fr))}
+.effect-presets button[aria-pressed="true"] {border-color:#d6c56d;background:#3c3b20;color:#fff0a4;box-shadow:inset 0 0 0 1px #d6c56d50}

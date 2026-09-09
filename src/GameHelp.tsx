@@ -1,0 +1,43 @@
+import { t as _t, textValue as _text } from "./i18n";
+import { JackpotHelp } from "./Onboarding";
+import type { Run } from "./game/engine";
+import type { Guidance } from "./game/guidance";
+export function newsTopic(key: string) {
+    if (key === "trial")
+        return "trial";
+    if (key === "tip-5")
+        return "background";
+    if (key === "jackpot" || key === "tip-3")
+        return "jackpot";
+    if (["first-work", "cash", "recover-cheaper", "fuel", "work-gamble"].includes(key))
+        return "work";
+    if (["equip", "cheaper", "tip-2", "tip-4"].includes(key))
+        return "positions";
+    if (["first-upgrade", "tip-1"].includes(key))
+        return "upgrades";
+    if (key === "goal")
+        return "goal";
+    return "spin";
+}
+const content = {
+    trial: ["現金＋強化への投資で、30分後の総資産を競う。", "AUTOがONの間は、賭け金不足でも時計が進み、WORKできます。OFFにすると時計・WORK・FLIP・スピンが止まります。ポジション変更と強化購入はいつでもできます。", "画面を離れると一時停止します。背景進行はLABで設定できます。通常モードのセーブは別に残ります。"],
+    background: ["LABで、音を聞きながら背景で遊ぶ。", "音と通知をONにし、背景プレイを有効にすると、対応する端末では他のアプリを開いている間も進みます。ジャックポットが出ると時計とスピンを止め、戻るまで待ちます。", "OSがアプリを停止した間は音も即時通知も止まります。復帰時に最大1時間・12,000スピンまで反映し、途中のジャックポットで止まります。大きな増減の通知はLABで追加でき、通知音は鳴りません。"],
+    work: ["まずはWORKで資金を作ろう。", "WORKは1回で$1。連打して、セットしたギャンブルの賭け金を貯めます。FLIPに切り替えている場合は、コインフリップのスイッチをOFFにするとWORKへ戻ります。", "LABでスピン容量をONにしているときは、WORKで容量も補充できます。WORKポジションのルールなら、コスト$0で毎スピン$5です。"],
+    positions: ["＋でセット、−で外す。", "付け外しは無料。ジャックポット中に変えると、確認後に連鎖が終了します。ポジション数の上限に達したら、他のギャンブルを−で外して入れ替えます。同じギャンブルを複数セットすると、賭け金と配当も増えます。", "毎スピン、1〜100から引く数字は1つ。その同じ数字で、すべてのポジションの当たり・ハズレを判定します。"],
+    upgrades: ["スピン周期を強化しよう。", "下の切り替えボタンで「アップグレード」を開き、スピン周期の価格ボタンを押すと購入できます。ポジション数を増やすと、同時にセットできる数が増えます。", "ジャックポットカット量は未強化なら0で、ジャックポット中だけ有効。連鎖が重なるたびにカットする低い出目を増やします。"],
+    goal: ["総資産を伸ばして、新しいギャンブルへ。", "解放の基準は到達した最高資産です。その後に資産が減っても、解放したギャンブルは使えます。ポジションで編成を試して、$1Bを目指しましょう。"],
+    spin: ["AUTOをONにすると、自動でスピン。", "チャージが完了すると黄色い線が動き、最後に止まった数字で結果が決まります。青は利益、赤は損失。棒の高さは金額の大きさです。", "チャートの最新結果は右端。WORKやコインの増減も、次のスピンでチャートに合流します。黄色い丸はアップグレードへの支出です。"],
+};
+export function NewsHelp({ s, guide }: {
+    s: Run;
+    guide: Guidance;
+}) {
+    const topic = newsTopic(guide.key);
+    const lines = topic === "upgrades" && s.settings.upgradeMode === "gacha" ? [_t("強化ガチャで、スピンを育てよう。"), _t("「アップグレード」を開いて強化ガチャを引くと、未MAXの強化のどれかが1段階上がります。引くたびに価格が上がります。"), content.upgrades[2]] : topic === "spin" && s.settings.payoffStyle !== "net" ? [content.spin[0], _t("チャージが完了すると黄色い線が動き、最後に止まった数字で結果が決まります。青は配当、赤は支払い。配当が支払いを超えると資産が増えます。"), content.spin[2]] : topic !== "jackpot" ? content[topic] : [];
+    return <div className="game-help"><p className="help-news">{_text(guide.text)}</p>{topic === "jackpot" ? <JackpotHelp discovered={s.infinityAt !== null} rule={s.settings.jackpotRule}/> : lines.map((text, i) => i === 0 ? <h3 key={text}>{_text(text)}</h3> : <p key={text}>{_text(text)}</p>)}</div>;
+}
+export function GameHelp({ s }: {
+    s: Run;
+}) {
+    return <div className="game-help"><h3>{_t("WORK → ポジション → AUTO")}</h3><p>{_t("WORKを連打して資金を貯め、ポジションの＋でギャンブルをセット。AUTOをONにするとスピンが始まります。")}</p><p>{_t("1つの共通の数字で、セットしたすべてのギャンブルが決着。稼いだお金でスピン周期やポジション数を強化し、$1Bを目指そう。")}</p><h3>JACKPOT</h3><JackpotHelp discovered={s.infinityAt !== null} rule={s.settings.jackpotRule}/><h3>{_t("画面を離れて遊ぶ")}</h3>{content.background.map(text => <p key={text}>{_text(text)}</p>)}<h3>{_t("コインフリップ")}</h3><p>{_t("下の切り替えボタンから開き、スイッチをONにするとWORKがFLIPに変わります。1/2で賭け金の2倍を獲得、ハズレは0。スピン中やジャックポット中も投げられます。")}</p><p>{_t("コインの賭け金は10、100、1K…から選択。スピンの賭け金を確保した残りで遊べます。")}</p></div>;
+}

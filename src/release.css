@@ -1,0 +1,191 @@
+/* v2.3: readable desktop desk, installation and one-message onboarding. */
+.contact-button {display:grid;place-items:center;min-width:44px;min-height:44px;padding:8px}
+.balance-header .pnl {font-size:clamp(24px,3vw,40px);font-weight:600;line-height:1.1}
+.intro-pages {position:relative;text-align:center;padding:4px 0 16px;overflow:hidden}
+.intro-pagination {display:flex;justify-content:center;gap:8px;margin:0 0 16px}
+.intro-pagination i {height:4px;width:32px;background:#344236;border-radius:2px}
+.intro-pagination .current {background:#bdf28e}
+.intro-cash {width:100%;height:clamp(160px,31svh,300px);object-fit:cover;object-position:center 65%;border-radius:12px;display:block}
+.intro-message {font-size:clamp(28px,6vw,44px);line-height:1.4;letter-spacing:-.035em;margin:22px 0}
+.intro-message em {font-style:normal;color:#bcf27c}
+.intro-volume {width:140px;height:140px;color:#bcf27c;margin:28px auto 8px}
+.text-button {border:0;padding:14px;background:transparent;color:var(--muted)}
+.install-picture-steps {list-style:none;padding:0;display:grid;gap:10px}
+.install-picture-steps li {display:grid;grid-template-columns:74px 22px minmax(0,1fr);align-items:center;gap:10px;border:1px solid var(--line);border-radius:10px;padding:8px;background:#141d18}
+.install-picture-steps p {font-size:16px;line-height:1.5;margin:0}
+.install-picture-steps b {font:600 20px var(--mono);color:#bdf28e}
+.install-picture-steps small {display:block;font-size:14px;color:var(--muted);margin-top:4px}
+.install-diagram {width:74px;height:60px;color:#bdf28e}
+.install-guide select {max-width:65%;font-size:14px}
+.install-guide details {margin-top:18px;font-size:14px;line-height:1.65}
+.selectable-url {overflow-wrap:anywhere;user-select:all}
+.install-welcome>.large-copy {font-size:26px;margin:16px 0}
+.install-welcome>p {line-height:1.6}
+.jackpot-help li {margin:18px 0;line-height:1.8}
+.net-bars {align-items:center!important}
+.net-bars>.net-profit {background:#70b8ff;opacity:.9}
+.net-bars>.net-loss {background:#ff756e;opacity:.9}
+.net-bars>.is-cut {height:2px}
+.wealth-left-labels {grid-area:1/1;position:relative;pointer-events:none;min-height:0}
+.wealth-left-labels>span {position:absolute;left:2px;transform:translateY(-50%);font:12px/1 var(--mono);color:#a7b3a7;background:#10150fd9;padding:2px 4px;border-radius:3px}
+.bet-card .counter button[aria-disabled=true] {opacity:.45;cursor:help}
+.news-strip.needs-action {border-color:#ffd166;border-left-color:#ffd166}
+.news-strip:not(.needs-action):not(.jackpot-news) {border-color:#3b5543;border-left-color:#789c87;background:linear-gradient(100deg,#203129,#151d18)}
+.news-strip button {width:32px;height:32px;border-radius:50%;padding:0!important;font-weight:700}
+.shared-spin-workspace {display:grid;grid-template-rows:auto minmax(0,1fr);gap:14px}
+.shared-spin {min-width:0;min-height:0;padding-bottom:8px;border-bottom:1px solid var(--line)}
+.shared-spin .roll-station {height:auto;display:grid;grid-template-rows:140px var(--spin-metrics-height) 4px;gap:6px}
+.shared-spin .sweep-panel.with-growth {grid-template-rows:18px 32px minmax(0,1fr)}
+.shared-spin .number-mode-content {height:140px}
+.shared-spin .roll-display {min-height:60px}
+.work-cosmetic {margin:16px 0;align-items:center}
+.work-cosmetic button {padding:12px;min-width:100px}
+.wealth-starting {--panel:#171e1a}
+.wealth-rising {--lime:#6ce5d3;--panel:#112320;--line:#31514b}
+.wealth-million {--lime:#8ab8ff;--panel:#131c2b;--line:#344d70;background:radial-gradient(ellipse at 85% 0,#1a3262,#101319 60%)}
+.wealth-billion {--lime:#e9dca5;--panel:#232019;--line:#635936;background:radial-gradient(ellipse at 85% 0,#473a1d,#15130d 60%)}
+.wealth-drawdown {--lime:#c0a3de;--panel:#211925;--line:#594161;background:radial-gradient(ellipse at 85% 0,#452537,#131016 60%)}
+.app[class*="wealth-"] {transition:background-color 1s,color 1s}
+.version-links {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:20px 0}
+.version-links a {padding:14px;border:1px solid var(--line);border-radius:8px;text-decoration:none;color:var(--lime);font-size:14px}
+.version-notice {position:fixed;inset:0;z-index:1000;display:grid;place-items:center;background:#0c110ff5;padding:20px}
+.version-notice>section {max-width:500px;width:100%;border:1px solid #48694b;background:#172019;border-radius:18px;padding:30px}
+.version-notice p {line-height:1.7}
+.version-notice a {display:block;text-align:center;text-decoration:none;padding:14px;margin-top:20px}
+@media(min-width:1000px) and (min-height:760px) {
+ .app {max-width:1440px;margin:auto;--page-gutter:40px;--header-h:68px;--balance-h:104px;--dock-h:96px;--news-h:50px}
+ .game-workspace {padding-top:24px;padding-bottom:24px}
+ .spin-page.compact-payoff,.spin-page {display:grid;grid-template-columns:minmax(0,1.55fr) minmax(360px,1fr);grid-template-rows:minmax(0,1fr);gap:30px;align-items:stretch}
+ .spin-page .wealth-chart {grid-area:1/1;min-height:0}
+ .spin-page .roll-station,.spin-page.compact-payoff .roll-station {grid-area:1/2;height:100%;max-height:none;grid-template-rows:minmax(0,1fr) 48px 5px;gap:18px}
+ .spin-page .payoff-reel {min-height:140px;max-height:240px;align-self:center}
+ .spin-page .classic-payoff {align-items:center}
+ .positions-grid {grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
+ .upgrades-grid {grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+ .shared-spin-workspace {grid-template-columns:340px minmax(0,1fr);grid-template-rows:minmax(0,1fr);gap:26px}
+ .shared-spin {border:0;padding:20px 0}
+ .shared-spin .roll-station {grid-template-rows:220px 48px 4px;gap:12px}
+ .shared-spin-workspace .positions-grid {grid-template-columns:repeat(2,minmax(0,1fr))}
+ .shared-spin-workspace .workspace-heading {flex-wrap:wrap;position:static}
+ .shared-spin-workspace .position-tools {flex-wrap:wrap}
+ .main-tabs {max-width:700px;width:100%;justify-self:center}
+ .play-dock {max-width:800px;width:100%;justify-self:center}
+ .balance-header .pnl {font-size:38px}
+ .bet-card h3 {font-size:18px}
+ .bet-description,.bet-odds {font-size:14px}
+}
+@media(max-width:759px) {
+ .shared-spin-workspace {gap:8px}
+ .shared-spin .roll-station {grid-template-rows:116px var(--spin-metrics-height) 3px;gap:4px}
+ .balance-header .pnl {font-size:clamp(22px,5vw,30px)}
+ .news-label {display:none}
+ .shared-spin .spin-result span {font-size:12px}
+ .shared-spin .spin-result b {font-size:14px}
+ .header-center {display:none}
+ .topbar nav {gap:6px}
+ .sweep-key {font-size:12px}
+}
+@media(max-height:550px) {
+ .shared-spin-workspace {grid-template-columns:35% minmax(0,1fr);grid-template-rows:minmax(0,1fr)}
+ .shared-spin .roll-station {grid-template-rows:minmax(70px,1fr) var(--spin-metrics-height) 3px;height:100%}
+ .intro-cash {height:130px}
+ .intro-message {font-size:28px;margin:12px 0}
+ .intro-volume {height:75px;margin:0 auto}
+}
+@media(prefers-reduced-motion:reduce) {.app[class*="wealth-"] {transition:none}}
+
+/* One stable spin surface across every tab. */
+.chart-page {display:grid;grid-template-rows:minmax(0,1fr);min-width:0;min-height:0;height:100%}
+.chart-page>.wealth-chart {min-height:0;height:100%;padding:0}
+.shared-spin-workspace>.shared-spin {min-width:0}
+.spin-size-expanded .shared-spin .roll-station {grid-template-rows:clamp(170px,25svh,250px) 40px 4px;gap:8px}
+.shared-spin .number-mode-content {height:auto;min-height:0}
+.shared-spin .payoff-reel-bars {inset:9px}
+.shared-spin .payoff-cursor-track {inset:0 9px}
+.shared-spin .payoff-reel>strong {right:8px;bottom:5px;font-size:1.2rem}
+.trophy-button {color:#d5dfa9}
+.wordmark {white-space:nowrap;gap:6px}
+.wordmark .brand-name {color:#f0f4ec;font-size:20px;letter-spacing:-1px}
+.wordmark .brand-name em {font-style:normal;color:var(--lime)}
+.wordmark .brand-icon {flex-shrink:0}
+.desk-handoff {min-height:100dvh;display:grid;place-items:center;padding:28px;background:radial-gradient(ellipse at top,#23351e,#10160f 60%)}
+.desk-handoff>section {max-width:420px;text-align:center}
+.desk-handoff img {margin:auto}
+.desk-handoff h1 {font-size:32px;margin:16px 0}
+.desk-handoff h2 {font-size:22px;line-height:1.5;margin:24px 0 12px}
+.desk-handoff p {font-size:16px;line-height:1.8;color:var(--muted)}
+.desk-handoff button {width:100%;margin:24px 0 8px;padding:14px}
+
+/* A self-contained, still clear record that fits in a phone screenshot. */
+.clear-modal {width:min(490px,calc(100vw - 20px));max-height:calc(100svh - 20px);border-color:#687942;background:#121b13}
+.clear-modal .modal-header {padding:10px 16px;background:#121b13}
+.clear-modal .modal-body {padding:12px;line-height:1.3}
+.result-card {position:relative;overflow:hidden;padding:16px;border:1px solid #49633c;border-radius:12px;background:radial-gradient(ellipse at 80% 12%,#4b602833,transparent 65%),#10180f;color:#edf6e8;line-height:1.2}
+.result-brand {display:flex;align-items:center;gap:6px}
+.result-brand strong {font-size:16px;letter-spacing:-.5px}
+.result-brand>span {margin-left:auto;font:10px var(--mono);color:#c4de98;letter-spacing:1px}
+.result-hero {text-align:center;padding:14px 0 8px}
+.result-hero>span {font:12px var(--mono);letter-spacing:3px;color:#aab59e}
+.result-hero h3 {font:700 clamp(44px,7svh,66px)/1 var(--mono);letter-spacing:-3px;color:#d3ff93;margin:5px 0}
+.result-hero h3 i {font-style:normal;font-size:.5em;margin-left:10px;vertical-align:middle}
+.result-hero p {font-size:16px;font-weight:600;overflow-wrap:anywhere;margin:8px 0 0}
+.result-time {display:flex;align-items:baseline;justify-content:center;gap:12px;margin:6px 0 14px}
+.result-time strong {font:600 clamp(22px,4svh,32px)/1 var(--mono);color:#f0f6eb}
+.result-time span {font-size:12px;color:#aab59e}
+.result-card .wealth-chart {height:clamp(90px,15svh,145px);padding:0;margin:0;min-height:0}
+.result-card .wealth-plot {height:100%;min-height:0}
+.result-card .wealth-x-axis {font-size:10px}
+.result-card .wealth-left-labels>span {font-size:10px;background:#10180fd9}
+.result-numbers {display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;text-align:center;border-top:1px solid #34412b;padding:12px 0 10px;margin-top:10px}
+.result-numbers b {display:block;font:600 17px var(--mono);overflow-wrap:anywhere}
+.result-numbers span {display:block;font-size:11px;color:#aab59e;margin-top:5px}
+.result-card footer {display:flex;justify-content:space-between;gap:8px;color:#91a283;font:10px var(--mono);border-top:1px solid #263420;padding-top:10px}
+.clear-modal .score-form {margin:10px 0 0;padding:0;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px}
+.clear-modal .score-form input {width:100%;min-width:0;font-size:16px;padding:10px}
+.clear-modal .score-form button {font-size:12px;padding:8px}
+.clear-modal .setting-note {font-size:12px;margin:8px 0}
+.result-actions {display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
+.result-actions button {padding:10px 6px;font-size:13px}
+.clear-modal .continue-button {margin-top:8px;padding:11px;font-size:14px}
+@media(min-width:1000px) and (min-height:760px) {
+ .spin-size-expanded.shared-spin-workspace {grid-template-columns:420px minmax(0,1fr)}
+ .spin-size-expanded .shared-spin .roll-station {grid-template-rows:320px 48px 4px;gap:12px}
+}
+@media(max-width:759px) {
+ .topbar {gap:6px}
+ .topbar nav {gap:2px}
+ .wordmark .brand-name {font-size:clamp(15px,4.4vw,20px)}
+ .wordmark .brand-icon {width:26px;height:26px}
+ .contact-button,.menu-button {min-width:40px;width:40px;padding:8px}
+ .spin-size-expanded .shared-spin .roll-station {grid-template-rows:clamp(145px,23svh,210px) var(--spin-metrics-height) 3px;gap:4px}
+}
+@media(max-height:700px) {
+ .result-card {padding:12px}
+ .result-brand img {width:26px;height:26px}
+ .result-hero {padding:9px 0 5px}
+ .result-hero h3 {font-size:40px}
+ .result-hero p {margin-top:4px}
+ .result-time {margin:4px 0 8px}
+ .result-numbers {padding:8px 0;margin-top:6px}
+ .result-card footer {padding-top:7px}
+}
+@media(max-height:550px) {
+ .spin-size-expanded .shared-spin .roll-station {height:100%;grid-template-rows:minmax(70px,1fr) var(--spin-metrics-height) 3px}
+}
+/* Respect the available workspace height, including short desktop windows. */
+@media(min-width:760px) and (max-height:759px) {
+ .shared-spin-workspace {grid-template-columns:35% minmax(0,1fr);grid-template-rows:minmax(0,1fr)}
+ .shared-spin .roll-station,.spin-size-expanded .shared-spin .roll-station {height:100%;grid-template-rows:minmax(0,1fr) var(--spin-metrics-height) 3px;gap:4px}
+}
+@media(min-width:1000px) and (min-height:760px) {
+ .spin-size-expanded .shared-spin {padding:0;display:flex;align-items:stretch}
+ .spin-size-expanded .shared-spin .roll-station {width:100%;height:100%;max-height:400px;grid-template-rows:minmax(0,1fr) 48px 4px;gap:12px}
+}
+@media(max-width:759px) and (min-height:551px) and (max-height:700px) {
+ .shared-spin .roll-station {grid-template-rows:88px var(--spin-metrics-height) 3px}
+ .spin-size-expanded .shared-spin .roll-station {grid-template-rows:110px var(--spin-metrics-height) 3px}
+}
+/* Update notices do not change the compact game's grid or interrupt inputs. */
+.pwa-update-notice { position:fixed; z-index:12000; top:max(10px,env(safe-area-inset-top)); left:50%; transform:translateX(-50%); width:min(92vw,440px); display:flex; align-items:center; gap:12px; padding:12px 14px; background:#162319; color:#e5f7df; border:1px solid #a3dc72; border-radius:12px; box-shadow:0 6px 28px #0008; font-size:13px; }
+.pwa-update-notice span { flex:1; }
+.pwa-update-notice button { flex-shrink:0; padding:9px 12px; font-size:12px; }

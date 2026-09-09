@@ -1,0 +1,40 @@
+/* The number and scale live inside the payoff frame; no separate heading row. */
+.sweep-panel.sweep-integrated {grid-template-rows:minmax(0,1fr);gap:0}
+.sweep-panel.sweep-integrated.with-growth {grid-template-rows:42px minmax(0,1fr);gap:4px}
+.shared-spin .sweep-panel.sweep-integrated.with-growth {grid-template-rows:32px minmax(0,1fr)}
+.desk-layout .shared-spin .sweep-panel.sweep-integrated.with-growth {grid-template-rows:30px minmax(0,1fr)}
+.sweep-integrated .payoff-reel {--sweep-inset:9px}
+.sweep-integrated .payoff-reel .payoff-reel-bars {inset:7px var(--sweep-inset) 21px}
+.sweep-integrated .payoff-cursor-track {inset:0 var(--sweep-inset) 19px}
+.payoff-grid-lines {position:absolute;inset:5px var(--sweep-inset) 19px;pointer-events:none}
+.payoff-grid-lines>span {position:absolute;top:0;bottom:0;width:1px;background:#c2d6dd12;transform:translateX(-.5px)}
+.payoff-grid-lines>span.major {background:#c2d6dd30}
+.payoff-scale {position:absolute;inset:auto var(--sweep-inset,9px) 3px;height:13px;pointer-events:none;font:12px/1 var(--mono);color:#acb8ad}
+.payoff-scale>span {position:absolute;bottom:0;transform:translateX(-50%)}
+.payoff-scale>span:first-child {transform:none}
+.payoff-scale>span:last-child {transform:translateX(-100%);color:#e2ca87}
+.sweep-integrated .payoff-reel>strong {right:30px;top:42%;bottom:auto;transform:translateY(-50%);font-size:clamp(20px,3svh,28px);padding:2px 6px}
+.sweep-integrated .payoff-sweep {grid-template-rows:minmax(0,1fr);padding:5px 10px 21px}
+.sweep-integrated .sweep-roll {right:32px;top:42%;bottom:auto;transform:translateY(-50%);font-size:clamp(20px,3svh,28px)}
+.sweep-vertical-tick {stroke:#c2d6dd12;stroke-width:1}
+.sweep-vertical-tick.major {stroke:#c2d6dd30}
+.chart-scale {left:10px;right:10px}
+.chart-jackpot-label {position:absolute;right:16px;top:4px;z-index:2;color:#e2ca87;font:11px var(--mono);pointer-events:none}
+/* Give the removed 22px heading back to the chart on the standard desk. */
+.desk-layout .shared-spin .roll-station:has(.sweep-integrated:not(.with-growth)) {grid-template-rows:clamp(63px,calc(13svh - 22px),108px) var(--spin-metrics-height) 3px}
+.desk-layout .spin-size-expanded .shared-spin .roll-station:has(.sweep-integrated:not(.with-growth)) {grid-template-rows:clamp(93px,calc(19svh - 22px),168px) var(--spin-metrics-height) 3px}
+@media(max-height:650px){
+ .desk-layout .shared-spin .roll-station:has(.sweep-integrated:not(.with-growth)),.desk-layout .spin-size-expanded .shared-spin .roll-station:has(.sweep-integrated:not(.with-growth)) {grid-template-rows:minmax(40px,1fr) var(--spin-metrics-height) 3px}
+}
+@media(max-height:550px){
+ .sweep-integrated.with-growth .spin-growth {position:static;inset:auto;height:100%;min-height:0}
+ .sweep-integrated.with-growth,.shared-spin .sweep-panel.sweep-integrated.with-growth,.desk-layout .shared-spin .sweep-panel.sweep-integrated.with-growth {grid-template-rows:20px minmax(36px,1fr)}
+ .sweep-integrated .payoff-reel>strong,.sweep-integrated .sweep-roll {font-size:18px;right:30px}
+}
+.sweep-integrated .payoff-reel:has(.double-high-zone)>strong {right:calc(10% + 20px)}
+@media(max-height:650px){
+ .desk-layout .compact-workspace.has-chart:has(.sweep-integrated.with-growth) {grid-template-rows:110px minmax(40px,1fr) 190px}
+ .desk-layout .compact-workspace.has-chart.lab-card-expanded:has(.sweep-integrated.with-growth) {grid-template-rows:110px minmax(25px,1fr) 245px}
+ .app.desk-layout:has(.sweep-integrated.with-growth) {height:auto;min-height:100dvh;grid-template-rows:var(--header-h) var(--news-h) var(--balance-h) minmax(400px,1fr) var(--dock-h)}
+ .app.desk-layout.news-bottom:has(.sweep-integrated.with-growth) {grid-template-rows:var(--header-h) var(--balance-h) minmax(400px,1fr) var(--news-h) var(--dock-h)}
+}

@@ -1,0 +1,90 @@
+/* Coin controls stay below the shared sweep and chart. */
+.coin-panel {min-height:0;overflow-y:auto;overscroll-behavior:contain;touch-action:pan-y;border:1px solid #566b4d;background:linear-gradient(125deg,#1e2b1c,#121912);border-radius:8px;padding:8px 10px;display:flex;flex-direction:column;gap:6px}
+.coin-panel .workspace-heading {margin:0;padding:0;min-height:24px}
+.coin-panel .workspace-heading>span {font:14px var(--mono);color:#e7d398;white-space:nowrap}
+.coin-switch.setting-row {padding:2px 0;min-height:38px;font-size:14px;gap:8px}
+.coin-switch small {font-size:12px;display:block;line-height:1.35}
+.coin-stakes {display:flex;gap:5px;flex-shrink:0;overflow-x:auto;touch-action:pan-x;scrollbar-width:thin;padding:3px 0 5px}
+.coin-stakes button {flex:0 0 auto;min-width:52px;min-height:38px;padding:6px 10px;font:600 14px var(--mono)}
+.coin-stakes button.selected {border-color:#caba79;color:#fff0b1;background:#4d4323}
+.coin-summary {display:flex;gap:10px;align-items:center;justify-content:space-between;min-height:37px;font-size:14px}
+.coin-summary>strong {font:700 22px var(--mono)}
+.coin-summary small {display:block;font-size:12px;color:var(--muted)}
+.coin-summary output {font:650 19px var(--mono)}
+.coin-panel .setting-note {font-size:12px;line-height:1.35;margin:0}
+.app.desk-layout .play-dock {grid-template-columns:minmax(0,1fr) minmax(116px,1fr) minmax(0,1fr)}
+.dock-cycle>span {font-size:14px;white-space:nowrap;animation:dock-turn .2s ease-out}
+.dock-cycle small {font-size:12px;color:#b5c6a8}
+@keyframes dock-turn {from{opacity:.3;transform:translateY(8px) rotateX(-45deg)}to{opacity:1;transform:none}}
+.flip-button {border-color:#b7a35c;background:linear-gradient(120deg,#403a20,#222b19)}
+.flip-button>span {color:#fff0ae}
+.flip-button img {width:28px;height:28px;object-fit:contain;float:right}
+.coin-flight-layer,.result-visual-layer {position:fixed;inset:0;z-index:91;overflow:hidden;pointer-events:none;contain:strict}
+.flying-coin {position:absolute;width:52px;height:52px;object-fit:contain;will-change:transform,opacity;filter:drop-shadow(0 0 9px #efc561a0)}
+.result-particle {position:absolute;will-change:transform,opacity;pointer-events:none}
+.particle-cash {width:125px;height:55px;object-fit:contain;filter:drop-shadow(0 2px 4px #10250a)}
+.particle-cash>img {position:absolute;inset:0;display:block;width:100%;height:100%;object-fit:contain;transform:translate(calc(var(--cash-layer)*-3px),calc(var(--cash-layer)*-4px));filter:brightness(calc(1 - var(--cash-layer)*.12))}
+.particle-cash[data-kind="coin"] {width:42px;height:42px}
+.work-coin {width:44px;height:44px}
+.cash-preview-controls {position:relative;z-index:3;display:flex;align-items:end;gap:12px;flex-wrap:wrap;margin:12px 0}
+.cash-preview-controls label {display:grid;gap:5px;font-size:14px}
+.cash-preview-controls select {font-size:14px;max-width:100%;padding:8px;background:var(--panel);color:inherit;border:1px solid var(--line);border-radius:4px}
+.cash-preview-controls button {font-size:14px;padding:9px 12px}
+.particle-gold {width:44px;height:44px;object-fit:contain;filter:drop-shadow(0 0 10px #ffe58980)}
+.particle-confetti {width:9px;height:17px;background:var(--particle-color);box-shadow:0 0 8px var(--particle-color)}
+.particle-neon {width:22px;height:22px;border:2px solid var(--particle-color);border-radius:50%;box-shadow:0 0 14px var(--particle-color)}
+.effect-preview {position:relative;overflow:hidden;isolation:isolate}
+.effect-preview .preview-visuals {position:absolute;inset:0;pointer-events:none;z-index:2}
+.wealth-plot {isolation:isolate}
+.wealth-plot>svg {position:relative;z-index:1}
+.chart-backdrop {position:absolute;inset:0;overflow:hidden;pointer-events:none;z-index:0;--flow-color:#30df96;opacity:calc(.1 + var(--wealth-energy)*.22)}
+.chart-backdrop.falling {--flow-color:#ee546d}
+.chart-backdrop>i,.chart-backdrop>b {position:absolute;inset:-40%;display:block;will-change:transform,opacity}
+.backdrop-aurora>i {background:radial-gradient(ellipse at 35% 60%,var(--flow-color),transparent 48%);animation:wealth-aurora 8s ease-in-out infinite alternate}
+.backdrop-aurora>b {background:radial-gradient(ellipse at 75% 40%,#2771a5,transparent 40%);animation:wealth-aurora 11s ease-in-out infinite alternate-reverse}
+.backdrop-flow>i {background:repeating-linear-gradient(110deg,transparent 0 70px,var(--flow-color) 71px 73px,transparent 74px 140px);animation:wealth-flow 5s linear infinite}
+.backdrop-flow.falling>i {animation-direction:reverse}
+.backdrop-pulse>i {inset:0;background:radial-gradient(ellipse at 98% 60%,var(--flow-color),transparent 68%);animation:wealth-pulse .9s ease-out both}
+@keyframes wealth-aurora {to{transform:translate(13%,-8%) rotate(18deg) scale(1.25)}}
+@keyframes wealth-flow {to{transform:translateX(140px)}}
+@keyframes wealth-pulse {from{opacity:1;transform:scale(.8)}to{opacity:.15;transform:scale(1.3)}}
+/* One slim bar per possible result; height still carries the amount. */
+.payoff-reel-bars.net-bars {gap:1px}
+.payoff-reel-bars.net-bars>i {min-width:0}
+.game-help {font-size:16px;line-height:1.75}
+.game-help h3 {font-size:20px;color:#ddedb9;margin:22px 0 8px}
+.game-help p {margin:10px 0}
+.help-news {border-left:3px solid #d3c374;padding:10px 14px;background:#d3c37410;color:#ede9cd}
+.rating-panel {text-align:center;padding:20px 0}
+.rating-panel h3 {font-size:23px;margin:8px 0}
+.rating-stars {display:flex;justify-content:center;gap:4px;margin:18px 0}
+.rating-stars button {border:0;background:transparent;color:#6b705e;font-size:42px;width:52px;height:56px;padding:0;touch-action:manipulation}
+.rating-stars button.selected {color:#f5d778;text-shadow:0 0 16px #f5cd5460}
+.rating-panel .primary {min-width:160px}
+@media(max-width:390px){.app.desk-layout .play-dock {gap:5px;grid-template-columns:minmax(0,1fr) 116px minmax(0,1fr)}.desk-layout .work-button,.desk-layout .auto-control,.desk-layout .dock-cycle {padding:6px}.coin-summary>strong{font-size:19px}.coin-summary output{font-size:17px}}
+@media(prefers-reduced-motion:reduce){.chart-backdrop>i,.chart-backdrop>b,.dock-cycle>span{animation:none!important}}
+.reduced-motion .chart-backdrop>i,.reduced-motion .chart-backdrop>b,.reduced-motion .dock-cycle>span {animation:none!important}
+.result-visual-layer {z-index:75}
+.tab-layout .main-tabs {display:grid;grid-template-columns:repeat(4,minmax(0,1fr))}
+.tab-layout .main-tabs button {min-width:0;white-space:normal;padding:6px 3px;overflow-wrap:anywhere;font-size:14px;line-height:1.3}
+
+.cash-flood-halo {position:absolute;inset:-25%;pointer-events:none;background:conic-gradient(from 15deg,transparent 0deg,#ffe78880 20deg,transparent 40deg,#7beaff70 60deg,transparent 85deg,#fff3b380 105deg,transparent 135deg,#ffdf6880 160deg,transparent 195deg,#c5ff8070 215deg,transparent 250deg,#ffd55d80 280deg,transparent 320deg);will-change:transform,opacity}
+
+.banknote-picker {min-width:0;margin:16px 0 22px;padding:0;border:0}
+.banknote-picker legend {font-size:16px;font-weight:700}
+.banknote-options {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.banknote-option {position:relative;display:flex;flex-direction:column;gap:8px;min-width:0;padding:12px;border:1px solid var(--line);border-radius:8px;background:#10120f;cursor:pointer}
+.banknote-option:has(input:checked) {border-color:var(--lime);background:#1b2818;box-shadow:inset 0 0 0 1px var(--lime)}
+.banknote-option:has(input:focus-visible) {outline:2px solid var(--lime);outline-offset:3px}
+.banknote-option input {position:absolute;top:10px;right:10px;margin:0;accent-color:var(--lime)}
+.banknote-option img {display:block;width:100%;height:auto;aspect-ratio:2.3;object-fit:contain;margin:12px 0 4px}
+.banknote-mix {display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:3px;align-items:center;aspect-ratio:2.3;grid-row:1/3}
+.banknote-mix img {margin:0}
+.banknote-option>span {font-size:14px;font-weight:700;line-height:1.5}
+.banknote-option small {display:block;font-size:12px;line-height:1.5;color:var(--muted)}
+.banknote-option>span small {display:inline;margin-left:6px;color:var(--lime);font-weight:400}
+@media(max-width:560px) {
+  .banknote-options {grid-template-columns:1fr}
+  .banknote-option {display:grid;grid-template-columns:96px minmax(0,1fr);gap:4px 12px;padding-right:34px;align-items:center}
+  .banknote-option img {grid-row:1/3;margin:0}
+}

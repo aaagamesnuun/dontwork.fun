@@ -1,0 +1,203 @@
+/* A compact trading toy: spin, wealth, and one horizontal strip of positions. */
+.app.desk-layout {--page-gutter:20px;--header-h:48px;--balance-h:64px;--dock-h:78px;--news-h:48px;max-width:1080px;grid-template-rows:var(--header-h) var(--news-h) var(--balance-h) minmax(0,1fr) var(--dock-h)}
+.app.desk-layout.news-bottom {grid-template-rows:var(--header-h) var(--balance-h) minmax(0,1fr) var(--news-h) var(--dock-h)}
+.desk-layout .topbar {min-height:0}
+.desk-layout .balance-header {min-height:0;padding:4px 0}
+.desk-layout .balance-header h1 {font-size:clamp(28px,4vw,38px);margin:3px 0}
+.desk-layout .balance-meta {font-size:12px;gap:10px}
+.desk-layout .balance-header .pnl {font-size:clamp(23px,4vw,34px)}
+.desk-layout .compact-workspace {display:grid;grid-template-columns:minmax(0,1fr);grid-template-rows:auto minmax(0,1fr);gap:8px;padding:4px 0 8px;overflow:hidden}
+.desk-layout .compact-workspace.has-chart {grid-template-rows:auto minmax(85px,1fr) minmax(180px,auto)}
+.desk-layout .shared-spin {grid-area:auto;display:block;padding:0;border:0}
+.desk-layout .shared-spin .roll-station {height:auto;max-height:none;grid-template-rows:clamp(85px,13svh,130px) var(--spin-metrics-height) 3px;gap:3px}
+.desk-layout .spin-size-expanded .shared-spin .roll-station {grid-template-rows:clamp(115px,19svh,190px) var(--spin-metrics-height) 3px}
+.desk-layout .shared-spin .sweep-panel {height:100%;min-height:0}
+.desk-layout .shared-spin .sweep-panel.with-growth {grid-template-rows:18px 30px minmax(0,1fr)}
+.desk-layout .payoff-reel {min-height:0;height:100%;max-height:none;width:100%}
+.desk-layout .shared-spin .classic-payoff {display:block;height:100%;min-height:0}
+.desk-layout .chart-page {height:100%;min-height:0;grid-area:auto;padding:0}
+.desk-layout .wealth-chart,.desk-layout .wealth-plot {height:100%;min-height:0}
+.desk-layout .positions-page {display:flex;flex-direction:column;min-height:0;height:auto;overflow:hidden;padding:0}
+.desk-layout .workspace-heading {padding:4px 0;gap:8px;min-height:32px;position:static;flex-wrap:nowrap;align-items:center}
+.desk-layout .workspace-heading h2 {font-size:16px;margin:0;white-space:nowrap}
+.desk-layout .workspace-heading h2 small {color:var(--muted);font:12px var(--mono);margin-left:6px}
+.desk-layout .positions-page .workspace-heading p {display:none}
+.desk-layout .position-tools {display:flex;flex-wrap:nowrap;gap:4px;overflow-x:auto;min-width:0}
+.desk-layout .position-tools button {font-size:12px;padding:7px 8px;min-height:34px;white-space:nowrap}
+.desk-layout .positions-grid,.desk-layout .shared-spin-workspace .positions-grid {display:flex;flex-direction:row;gap:10px;overflow-x:auto;overflow-y:hidden;touch-action:pan-x;overscroll-behavior-x:contain;scroll-snap-type:x proximity;scrollbar-width:thin;min-height:0;padding:7px 3px 9px;grid-template-columns:none}
+.desk-layout .positions-grid .bet-card {flex:0 0 270px;display:flex;flex-direction:column;gap:5px;padding:10px;min-width:0;height:auto;scroll-snap-align:start;overflow:visible}
+.desk-layout .positions-grid .bet-heading {height:auto;min-height:14px;font-size:12px;margin:0;gap:5px}
+.desk-layout .positions-grid .bet-heading .muted {display:none}
+.desk-layout .positions-grid .position-tag {font-size:11px;padding:2px 5px}
+.desk-layout .positions-grid .card-title {display:flex;gap:8px;align-items:center;margin:0}
+.desk-layout .positions-grid .bet-card h3 {font-size:16px;margin:0;white-space:normal;line-height:1.2}
+.desk-layout .positions-grid .card-details {font-size:12px;width:auto;padding:0;min-width:42px;min-height:26px}
+.desk-layout .positions-grid .card-details::after {content:none}
+.desk-layout .positions-grid .bet-description {display:none}
+.desk-layout .positions-grid .mini-spectrum {height:7px;display:flex;margin:0;flex-shrink:0}
+.desk-layout .positions-grid .bet-odds {font-size:12px;line-height:1.25;margin:0;display:block}
+.desk-layout .positions-grid .bet-odds>span {display:none}
+.desk-layout .positions-grid .memory-line {font-size:12px;line-height:1.2;margin:0;padding:0;white-space:normal}
+.desk-layout .positions-grid .bet-bottom {display:flex;align-items:center;gap:7px;margin-top:auto;padding:0}
+.desk-layout .positions-grid .bet-bottom strong {font-size:14px}
+.desk-layout .positions-grid .bet-bottom .micro {font-size:10px}
+.desk-layout .positions-grid .bet-arrow {display:none}
+.desk-layout .positions-grid .counter {margin-left:auto;display:flex;grid-column:auto;gap:4px;width:auto}
+.desk-layout .positions-grid .counter button {width:38px;min-width:38px;height:38px;min-height:38px;font-size:23px;touch-action:manipulation}
+.desk-layout .positions-grid .counter>span {min-width:15px;font-size:14px}
+.desk-layout .upgrades-page {min-height:0;max-height:100%;height:100%;overflow-y:auto;overscroll-behavior:contain;touch-action:pan-y;padding:0 3px}
+.desk-layout .upgrades-page .workspace-heading p {display:none}
+.desk-layout .upgrades-grid {grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:8px;margin-top:8px}
+.desk-layout .upgrade-card {padding:12px;min-height:96px}
+.desk-layout .upgrade-card h3 {font-size:16px;margin:4px 0}
+.desk-layout .upgrade-card p {font-size:13px;line-height:1.4;margin:4px 0}
+.desk-layout .upgrade-card .upgrade-actions button {padding:8px;min-height:44px}
+.app.desk-layout .play-dock {grid-template-columns:minmax(0,1fr) 84px minmax(0,1fr);gap:8px;max-width:none;width:100%;padding:8px 0 max(8px,env(safe-area-inset-bottom));align-items:stretch}
+.desk-layout .play-dock .compute {display:none}
+.desk-layout .work-button,.desk-layout .auto-control,.desk-layout .dock-upgrade {height:auto;min-height:52px;width:100%;padding:8px 10px;touch-action:manipulation}
+.dock-upgrade {border:1px solid #66704d;background:#243021;color:#dbefc7;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:5px;border-radius:5px}
+.dock-upgrade.selected {background:#3c5129}
+.dock-upgrade>span {font-size:16px;font-weight:700}
+.dock-upgrade small {font-size:10px;white-space:nowrap}
+.desk-layout .auto-control>span {gap:5px}
+.desk-layout .auto-control small,.desk-layout .work-button small {font-size:11px;white-space:nowrap}
+.desk-layout .news-strip {margin:2px 0;padding:5px 9px;min-height:0}
+.desk-layout .news-strip p {font-size:13px;line-height:1.4}
+.desk-layout .news-label {font-size:11px}
+/* The guide is the only saturated yellow control. Its border stays on-target. */
+.guide-target {position:relative;outline:3px solid #ffe066!important;outline-offset:-2px;box-shadow:0 0 0 3px #ffe06640,0 0 24px #ffd166a0;animation:guide-spotlight 1.3s ease-in-out infinite!important;background-color:#66501d!important;color:#fff3bd!important;z-index:2}
+.counter button.guide-target {background:#ffe066!important;color:#211a09!important;font-weight:800}
+.news-strip.needs-action {border-left:5px solid #ffe066!important;background:#493d16!important}
+.news-strip.needs-action p {color:#fff4ca;font-weight:650}
+@keyframes guide-spotlight {0%,100%{box-shadow:0 0 0 3px #ffe06655,0 0 15px #ffd16680}50%{box-shadow:0 0 0 5px #ffe06630,0 0 30px #ffd166c0}}
+.work-burst-layer {position:fixed;inset:0;z-index:90;pointer-events:none;overflow:hidden;contain:strict}
+.work-banknote {position:absolute;width:120px;height:53px;object-fit:contain;will-change:transform,opacity;pointer-events:none}
+.tap-anywhere {cursor:pointer}
+.common-roll-help {text-align:center;font-size:16px;line-height:1.8}
+.common-roll-number {display:grid;place-items:center;width:92px;height:92px;margin:16px auto;border:2px solid #ffe066;border-radius:12px;color:#ffe066;font:700 48px var(--mono);box-shadow:0 0 28px #ffe06640}
+.common-roll-help .primary {width:100%;margin-top:15px}
+.odds-formula {font:12px/1.5 var(--mono);color:#c9dcb5}
+.odds-formula small {display:block;font-size:11px;color:var(--muted)}
+.probability-upgrade {padding:6px 8px;text-align:left;font-size:12px;color:#c7e9b2;border:1px solid #485c39}
+.probability-upgrade small {display:block;font-size:10px;margin-top:3px}
+.baccarat-panel {min-height:0;overflow-y:auto;touch-action:pan-y;padding:8px;border:1px solid #40573c;border-radius:8px;background:#13231b}
+.baccarat-panel p {font-size:13px;margin:5px 0}
+.baccarat-cards {display:flex;align-items:center;justify-content:center;gap:20px;margin:8px 0}
+.baccarat-cards>div {padding:6px 20px;border-radius:6px;background:#e4e8d9;color:#15261c;display:flex;align-items:center;gap:14px}
+.baccarat-cards strong {font:700 30px var(--mono)}
+.baccarat-cards span {font:11px var(--mono)}
+.baccarat-bet {display:flex;align-items:center;gap:6px;justify-content:center}
+.baccarat-bet input {width:110px;padding:8px;margin:0 6px;font-size:16px}
+.baccarat-bet button {padding:8px}
+.baccarat-actions {display:flex;gap:8px;justify-content:center;margin:8px 0}
+.baccarat-actions button {font-size:13px;padding:9px}
+.baccarat-panel output {display:block;text-align:center;font:14px var(--mono);color:#dce9a1}
+.baccarat-panel>small {display:block;font-size:11px;color:var(--muted);text-align:center;margin-top:8px}
+/* Legacy tabs can also pin the chart while their editor scrolls. */
+.tab-layout .shared-spin-workspace.has-chart {grid-template-columns:minmax(0,1fr);grid-template-rows:auto minmax(90px,1fr) minmax(0,1fr)}
+.tab-layout .shared-spin-workspace.has-chart:has(>.chart-page:last-child) {grid-template-rows:auto minmax(0,1fr)}
+@media(max-width:600px){
+ .app.desk-layout {--page-gutter:10px;--header-h:45px;--balance-h:59px;--dock-h:74px;--news-h:48px}
+ .desk-layout .balance-meta {display:none}
+ .desk-layout .compact-workspace.has-chart {grid-template-rows:auto minmax(65px,1fr) minmax(180px,auto)}
+ .desk-layout .workspace-heading h2 {font-size:14px}
+ .desk-layout .positions-grid .bet-card {flex-basis:250px}
+ .desk-layout .play-dock {grid-template-columns:minmax(0,1fr) 70px minmax(0,1fr)}
+ .desk-layout .wordmark .brand-name {font-size:19px}
+ .desk-layout .topbar nav {gap:0}
+ .desk-layout .shared-spin .spin-result {gap:5px}
+ .desk-layout .shared-spin .spin-result span {font-size:10px}
+ .desk-layout .shared-spin .spin-result b {font-size:12px;margin-left:3px}
+}
+@media(max-height:650px){
+ .desk-layout .compact-workspace.has-chart {grid-template-rows:110px minmax(55px,1fr) minmax(160px,auto);gap:4px}
+ .desk-layout .shared-spin .roll-station,.desk-layout .spin-size-expanded .shared-spin .roll-station {height:100%;grid-template-rows:minmax(40px,1fr) var(--spin-metrics-height) 3px;gap:2px}
+ .desk-layout .positions-grid .bet-heading,.desk-layout .positions-grid .mini-spectrum {display:none}
+ .app.desk-layout {--header-h:40px;--balance-h:50px;--dock-h:67px;--news-h:44px}
+}
+@media(max-height:540px){
+ .app.desk-layout {height:auto;min-height:100dvh;grid-template-rows:40px 44px var(--balance-h) minmax(340px,1fr) 67px}
+ .app.desk-layout.news-bottom {grid-template-rows:40px var(--balance-h) minmax(340px,1fr) 44px 67px}
+}
+@media(prefers-reduced-motion:reduce){.guide-target {animation:none!important}}
+.reduced-motion .guide-target {animation:none!important}
+/* Adjacent equal outcomes form a solid box, with no 100-column striping. */
+.payoff-reel-bars.net-bars {gap:0}
+.payoff-reel-bars.net-bars>i {flex:1 1 0;opacity:.95}
+.desk-layout .compact-workspace.has-chart {grid-template-rows:auto minmax(65px,1fr) 195px}
+.desk-layout .compact-workspace.has-chart.lab-card-expanded {grid-template-rows:auto minmax(65px,1fr) 265px}
+@media(min-height:850px){.desk-layout .compact-workspace.has-chart {grid-template-rows:auto minmax(100px,1fr) 210px}.desk-layout .compact-workspace.has-chart.lab-card-expanded {grid-template-rows:auto minmax(100px,1fr) 280px}}
+@media(max-height:650px){.desk-layout .compact-workspace.has-chart {grid-template-rows:100px minmax(50px,1fr) 165px}.desk-layout .compact-workspace.has-chart.lab-card-expanded {grid-template-rows:90px minmax(35px,1fr) 225px}.desk-layout .lab-card-expanded .positions-grid .bet-heading {display:none}}
+
+.desk-layout .positions-page {gap:0}
+.desk-layout .positions-grid {flex:1 1 auto;align-items:stretch;padding-top:5px;padding-bottom:6px}
+.desk-layout .workspace-heading {flex:0 0 auto}
+.desk-layout .positions-grid .bet-card {padding:8px;gap:4px}
+.desk-layout .compact-workspace.has-chart {grid-template-rows:auto minmax(65px,1fr) 215px}
+.desk-layout .compact-workspace.has-chart.lab-card-expanded {grid-template-rows:auto minmax(50px,1fr) 285px}
+@media(max-height:650px){.desk-layout .compact-workspace.has-chart {grid-template-rows:100px minmax(45px,1fr) 180px}.desk-layout .compact-workspace.has-chart.lab-card-expanded {grid-template-rows:80px minmax(30px,1fr) 245px}}
+
+.desk-layout .positions-grid .bet-odds strong {font-size:14px}
+.desk-layout .positions-grid .counter button {width:44px;min-width:44px;height:44px;min-height:44px}
+.desk-layout .compact-workspace.has-chart {grid-template-rows:auto minmax(65px,1fr) 225px}
+.desk-layout .compact-workspace.has-chart.lab-card-expanded {grid-template-rows:auto minmax(40px,1fr) 260px}
+.desk-layout .lab-card-expanded .positions-grid .bet-heading,.desk-layout .lab-card-expanded .probability-upgrade small {display:none}
+@media(max-height:650px){.desk-layout .compact-workspace.has-chart {grid-template-rows:95px minmax(40px,1fr) 190px}.desk-layout .compact-workspace.has-chart.lab-card-expanded {grid-template-rows:90px minmax(25px,1fr) 245px}}
+/* A readable hierarchy: payout first, chance second, condition last. */
+.bet-card .odds-primary,.desk-layout .positions-grid .bet-odds>.odds-primary {display:flex;align-items:baseline;gap:8px;color:#c8d1bd}
+.bet-card .odds-primary small {font-size:12px;font-weight:400}
+.bet-card .odds-primary strong,.desk-layout .positions-grid .bet-odds .odds-primary strong {font:650 23px/1.15 var(--mono);color:#f0f6e7}
+.bet-card .bet-description {font-size:14px;color:#a6b09d;line-height:1.5}
+.desk-layout .positions-grid .bet-card h3 {font-size:17px;font-weight:700;letter-spacing:.02em}
+.desk-layout .positions-grid .bet-bottom .pay-column strong {font-size:22px;color:#b2efdf;line-height:1.1}
+.desk-layout .positions-grid .bet-bottom>div:first-child strong {font-size:15px;color:#d4ddc9}
+.desk-layout .positions-grid .bet-bottom .micro {font-size:11px;letter-spacing:.04em;color:#a9b59a}
+.desk-layout .positions-grid .bet-bottom {flex-wrap:wrap;row-gap:5px}
+.desk-layout .positions-grid .bet-heading {font-size:12px;opacity:.75}
+.desk-layout .positions-grid .odds-formula {font-size:12px;line-height:1.35}
+.desk-layout .positions-grid .odds-formula b {font-size:16px;color:#b2efdf}
+.desk-layout .positions-grid .memory-line {color:#dccb9a}
+.guide-target {outline-width:4px!important;box-shadow:0 0 0 4px #ffe06655,0 0 30px #ffce39b0;background-color:#806019!important}
+.work-button.guide-target>span {color:#fff4b0}
+.work-button.guide-target>small::after {content:' ← 連打！';font-weight:800;color:#fff0a4}
+.draw-activity {display:inline-flex;align-items:center;gap:5px;color:#d2dcbd;font-size:12px;white-space:nowrap}
+.draw-activity i {font-style:normal;font-size:21px;line-height:1}
+.draw-activity b {font-size:11px;color:#98a889}
+.draw-activity.rolling i {animation:die-tumble .28s linear infinite;color:#ffe185}
+@keyframes die-tumble {to{transform:rotate(180deg)}}
+.classic-jackpot-line.double-high-zone {left:90%;width:10%;border-left:1px solid #eccb6c;background:#eec45d15}
+.classic-jackpot-line.double-high-zone>span {white-space:nowrap;right:2px}
+.news-strip.jackpot-news .rush-remaining {display:flex;align-items:baseline;gap:7px;margin:0;overflow:visible}
+.rush-remaining>strong {font:750 30px/1 var(--mono);color:#ffe292}
+.rush-remaining>span {font-size:13px;font-weight:650;color:#f2e4c2}
+.rush-remaining>small {font-size:12px;color:#d8c79b;margin-left:auto}
+.jackpot-counter {font:11px var(--mono);color:#c7c1a5;flex-shrink:0;max-width:100px;white-space:normal}
+.balance-header.has-clear-notice {position:relative;padding-bottom:38px;min-height:var(--balance-h)}
+.app.desk-layout:has(.has-clear-notice),.app.tab-layout:has(.has-clear-notice) {--balance-h:96px}
+.clear-notice {position:absolute;inset:auto 0 1px;display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:33px;padding:5px 10px;border:1px solid #cfac52;border-radius:6px;background:linear-gradient(100deg,#55451b,#263817);color:#fff1bf;font-size:12px;animation:clear-notice-glow 2s ease-in-out infinite}
+.clear-notice strong {font-size:12px}.clear-notice>span {font-weight:750}
+@keyframes clear-notice-glow {50%{box-shadow:inset 0 0 18px #ffd46430,0 0 8px #ffe79055}}
+.celebration.goal {z-index:99;background:radial-gradient(ellipse,#31411ef5,#0d150adb);border:1px solid #e7d588;box-shadow:0 0 70px #cce98160;pointer-events:none;animation:goal-enter .6s ease-out}
+.celebration.goal>strong {font-size:clamp(27px,7vw,64px);color:#e5ffaf}
+.celebration.goal>small {max-width:30em;padding:0 16px;text-align:center;line-height:1.6;white-space:normal;font-size:14px}
+@keyframes goal-enter {from{opacity:0;transform:translate(-50%,-50%) scale(.7)}to{opacity:1;transform:translate(-50%,-50%) scale(1)}}
+.clear-name-intro {text-align:center;padding:22px 0 14px}
+.clear-name-intro>span {font:12px var(--mono);letter-spacing:.16em;color:#b5ce86}
+.clear-name-intro h3 {font:750 40px var(--mono);color:#dcffae;margin:12px 0}
+.clear-name-intro>strong {font:600 26px var(--mono)}
+.clear-name-intro p {font-size:18px;margin:20px 0 8px}
+.clear-name-intro small {font-size:12px;color:#bdc7af}
+.clear-modal .score-form {grid-template-columns:1fr}
+.clear-modal .score-form button {font-size:15px;min-height:44px}
+.result-ranking {display:block;margin:8px auto 0;font-size:12px}
+.clear-modal .result-hero p {font-size:21px;color:white}
+@media(max-height:650px){.desk-layout .positions-grid .odds-primary strong {font-size:19px}.app.desk-layout:has(.has-clear-notice) {--balance-h:87px}.clear-modal .result-card .wealth-chart {height:80px}.clear-modal .result-hero h3 {font-size:38px}.clear-modal .result-numbers {padding:5px 0}.clear-modal .result-hero p {font-size:17px}}
+@media(prefers-reduced-motion:reduce){.draw-activity.rolling i,.clear-notice,.celebration.goal {animation:none}}
+.reduced-motion .draw-activity.rolling i,.reduced-motion .clear-notice,.reduced-motion .celebration.goal {animation:none}
+
+.desk-layout .positions-grid .bet-card {flex-basis:300px;min-width:300px}
+.desk-layout .positions-grid .bet-bottom {flex-wrap:nowrap}
+.desk-layout .positions-grid .bet-bottom .pay-column {min-width:0;flex:1}
+.desk-layout .positions-grid .bet-bottom strong {overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%}
+.desk-layout .positions-grid .bet-bottom .counter {flex-shrink:0}
+.news-strip.jackpot-news .news-label {max-width:85px;white-space:normal}

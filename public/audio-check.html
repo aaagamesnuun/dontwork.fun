@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="theme-color" content="#07120f">
+  <title>録画の音を確認 · dontwork.fun</title>
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; background: #07120f; color: #eef8f2; font: 16px/1.65 system-ui, sans-serif; }
+    main { max-width: 540px; margin: auto; padding: max(24px, env(safe-area-inset-top)) 24px max(32px, env(safe-area-inset-bottom)); }
+    .brand { color: #82cca8; font-size: 14px; letter-spacing: .12em; }
+    h1 { font-size: 26px; line-height: 1.4; margin: 10px 0 20px; }
+    ol { padding-left: 24px; } li { margin: 8px 0; }
+    .stage { border: 1px solid #355147; border-radius: 16px; padding: 24px; margin: 24px 0; text-align: center; background: #101e19; }
+    #label { font-size: 22px; font-weight: 700; }
+    #clock { color: #a5bcaf; font-variant-numeric: tabular-nums; }
+    progress { display: block; width: 100%; height: 12px; accent-color: #7cf5b1; margin: 20px 0 14px; }
+    button { display: block; width: 100%; min-height: 54px; border: 1px solid #497060; border-radius: 10px; background: #182c23; color: inherit; font: inherit; font-weight: 700; padding: 12px 16px; margin-top: 12px; cursor: pointer; touch-action: manipulation; }
+    button.primary { color: #06130d; background: #7cf5b1; border-color: #7cf5b1; }
+    button:disabled { opacity: .38; cursor: default; }
+    button:focus-visible { outline: 3px solid #fff; outline-offset: 3px; }
+    #status { min-height: 3.3em; }
+    .note { color: #a5bcaf; font-size: 14px; }
+    [hidden] { display: none !important; }
+  </style>
+</head>
+<body>
+<main>
+  <div class="brand">DONTWORK.FUN · AUDIO CHECK 1</div>
+  <h1>録画の音を確認</h1>
+  <ol>
+    <li>ゲームの音を止め、ゲームのタブ・アプリを閉じてから、このページを開きます。</li>
+    <li>iPhoneの画面収録を始めます。マイクはOFFにします。</li>
+    <li>A → Bの順に押します。それぞれ7秒で終わります。</li>
+    <li>収録を止め、保存された動画をこのチャットへ送ってください。</li>
+  </ol>
+  <section class="stage" aria-label="再生状態">
+    <div id="label">Aから始めてください</div>
+    <div id="clock">0.0 / 7.0 秒</div>
+    <progress id="progress" max="7" value="0" aria-label="再生の進み具合"></progress>
+    <p id="status" role="status">AとBで同じ音が鳴ります。比較するのは、保存された動画の音です。</p>
+    <button id="play-a" class="primary">Aを再生 · 音声ファイル</button>
+    <button id="play-b" disabled>Bを再生 · ゲームと同じ方式</button>
+    <button id="stop" hidden>停止</button>
+    <button id="restart" hidden>最初からやり直す</button>
+  </section>
+  <p class="note">音が聞こえない場合は、端末の音量と消音設定を確認してください。録画のアップロードやゲームのセーブ変更は、このページでは行いません。</p>
+  <p id="details" class="note"></p>
+</main>
+<script type="module" src="/audio-check-v1.js"></script>
+</body>
+</html>

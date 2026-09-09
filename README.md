@@ -1,2 +1,129 @@
 # dontwork.fun
-An open-source incremental browser game with shared rolls, jackpot chains, and a 30-minute challenge. 日本語・English / PWA / React + TypeScript.
+
+**働かず、相場で遊ぶ。**
+
+WORKで元手を作り、ポジションを組み合わせ、架空の資産を増やしていくブラウザゲームです。1〜100の共通の出目で全ポジションが決着。連勝、急落、ジャックポットを眺めながら、$1Bを目指します。
+
+[ゲームを遊ぶ](https://dontwork.fun/) · [開発に参加](CONTRIBUTING.md) · [素材とライセンス](ASSETS.md)
+
+- ポジションとアップグレードを組み合わせる通常プレイ、時間制チャレンジ、LABの比較ルール。
+- 日本語・英語、モバイル・デスクトップ、PWAに対応。
+- ブラウザ内の自動保存とセーブの書き出し・読み込み。
+- コードで生成する効果音・BGMと、選択式の録音BGM。音量や動きを調整できます。
+- React / TypeScript / Vite。オンライン機能には任意でCloudflare Workers / D1を使用します。
+
+## ローカルで遊ぶ・開発する
+
+**Node.js 22.13以上とnpm**を使用します。サーバーのテストには組み込みの`node:sqlite`が必要です。
+
+```sh
+npm ci
+npm run dev
+```
+
+表示されたローカルURLを開きます。音は最初の操作後に再生できます。進行はブラウザのlocalStorageに保存されるため、配信元・ブラウザ・端末が変わると別のセーブになります。
+
+```sh
+npm test
+npm run build
+npm run preview
+```
+
+`npm test`はゲーム・UI・Worker・生成スクリプトのテストを実行します。ビルドした静的ファイルは`dist/client/`に出力されます。`npm run preview`はその確認用です。
+
+静的ホスティングだけでもゲームとローカル保存を利用できます。現在の配信パスはサイトのルート(`/`)です。サブディレクトリで配信する場合は、Viteの`base`に加え、PWAと絶対パスの素材参照も合わせて変更してください。
+
+## forkとオンライン機能
+
+通常のforkでは、ランキング・合言葉セーブ・問い合わせなどのオンラインサービスは**初期状態でOFF**です。公式サイト用のサービス接続を用意する必要はありません。
+
+自分のAPIを同じ配信元の`/api/*`で運用する場合は、`.env.local`に次を設定してビルドします。
+
+```dotenv
+VITE_ENABLE_SERVICES=true
+VITE_ENABLE_TELEMETRY=false
+```
+
+`VITE_ENABLE_TELEMETRY=true`は計測を別途有効にしたい場合の設定で、新規プレイの計測設定の初期値を変えます。保存済みの選択はゲーム内の設定で変更できます。localhostでの計測送信は抑止されます。
+
+`VITE_*`はブラウザに公開されるビルド時設定です。サーバーの秘密情報は入れないでください。フォントのGoogle Fonts読み込みは、このオンラインサービス設定とは別です。[外部素材の詳細](THIRD_PARTY_NOTICES.md)を参照してください。
+
+## 自分のCloudflare環境で動かす
+
+以下は自分のWorkerとD1を使うための最小例です。ローカルゲームの開発には不要です。
+
+1. [Cloudflare D1の手順](https://developers.cloudflare.com/d1/get-started/)で自分のデータベースを作成します。
+2. 次の内容を`wrangler.jsonc`として保存し、名前とデータベースIDを置き換えます。
+
+```jsonc
+{
+  "name": "dontwork-fork",
+  "main": "server/worker.js",
+  "compatibility_date": "2026-09-01",
+  "assets": {
+    "directory": "./dist/client",
+    "binding": "ASSETS",
+    "run_worker_first": true
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "dontwork-fork",
+      "database_id": "YOUR_D1_DATABASE_ID",
+      "migrations_dir": "drizzle"
+    }
+  ]
+}
+```
+
+`DB`と`ASSETS`はコードが参照するbinding名なので、そのまま使います。`drizzle/`には空のデータベースから始めるためのマイグレーションがあります。
+
+ローカルのWorkerには、Git管理しない`.dev.vars`で独立した秘密情報を渡します。
+
+```dotenv
+TELEMETRY_HASH_KEY=replace-with-your-own-random-local-key
+SAVE_CODE_SECRET=replace-with-another-random-local-key
+```
+
+前者は計測・問い合わせなどの識別子のハッシュ化、後者は合言葉セーブの検索に使います。公開環境には[Wranglerのsecret storage](https://developers.cloudflare.com/workers/configuration/secrets/)で別の値を設定します。継続運用するデータに対応する秘密情報は保持してください。
+
+```sh
+npm run build
+npx wrangler d1 migrations apply DB --local
+npx wrangler dev
+```
+
+自分の公開環境へ配信する場合は、そのDBにマイグレーションを適用し、秘密情報を設定してからデプロイします。
+
+```sh
+npx wrangler d1 migrations apply DB --remote
+npx wrangler secret put TELEMETRY_HASH_KEY
+npx wrangler secret put SAVE_CODE_SECRET
+npx wrangler deploy
+```
+
+独自ドメインで配信するときは、`index.html`の共有用URLなども自分のURLに合わせてください。
+
+## コードの構成
+
+| パス | 内容 |
+| --- | --- |
+| `src/game/` | 抽選・精算・ポジション・強化・セーブ検証 |
+| `src/presentation.ts` | 確定した結果と画面への公開タイミング |
+| `src/` | React UI、翻訳、音、演出、PWA、ローカル保存 |
+| `server/` | 任意のWorkers APIとテスト |
+| `db/`, `drizzle/` | DBスキーマとマイグレーション |
+| `public/` | 画像、アイコン、録音BGMとクレジット |
+| `scripts/` | ビルド後処理、PWA生成、開発用ツール |
+
+## ライセンス
+
+オリジナルのコード・文書・生成画像・合成音源は[MIT](LICENSE)です。録音BGM4曲はKevin MacLeod作のCC BY 4.0作品で、[音楽クレジット](public/music/ATTRIBUTION.md)が適用されます。フォントと依存パッケージは各作者のライセンスに従います。
+
+詳しくは[ASSETS.md](ASSETS.md)と[THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)を参照してください。
+
+## English overview
+
+**dontwork.fun** is an incremental browser game about fictional money, shared random rolls, portfolio combinations, and jackpot chains. Play with local saves, experiment in the LAB, or try a timed challenge. Japanese and English UI, synthesized audio, optional recorded music, and PWA support are included.
+
+Use Node.js 22.13+ and run `npm ci`, then `npm run dev`. Validate changes with `npm test` and `npm run build`. Ordinary forks start with online services disabled; opt in with `VITE_ENABLE_SERVICES=true` only when hosting your own same-origin API. Telemetry has a separate setting. Original code and generated artwork use MIT; the four recorded music tracks use CC BY 4.0 with attribution.

@@ -1,0 +1,32 @@
+{
+  "id": "/",
+  "name": "dontwork.fun",
+  "short_name": "dontwork.fun",
+  "description": "$0から$1Bへ。ギャンブルと強化で資産を育てるゲーム。",
+  "lang": "ja",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#10160f",
+  "theme_color": "#10160f",
+  "icons": [
+    {
+      "src": "/icons/icon-192-dw.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-512-dw.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/maskable-512-dw.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}

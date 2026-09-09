@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, viewport-fit=cover"
+    />
+    <meta name="referrer" content="no-referrer" />
+    <title>dontwork.fun · セーブを送る</title>
+    <link rel="icon" href="/icons/icon-192-dw.png" type="image/png" />
+    <style>
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        background: #10160f;
+        color: #edf3e5;
+        font:
+          16px/1.7 system-ui,
+          sans-serif;
+        padding: max(28px, env(safe-area-inset-top))
+          max(24px, env(safe-area-inset-right)) 32px
+          max(24px, env(safe-area-inset-left));
+      }
+      main {
+        max-width: 480px;
+        margin: 0 auto;
+      }
+      img {
+        width: 52px;
+        height: 52px;
+        border-radius: 12px;
+      }
+      h1 {
+        font-size: 26px;
+        line-height: 1.4;
+      }
+      p {
+        color: #bec8b3;
+      }
+      button {
+        width: 100%;
+        font: inherit;
+        padding: 14px;
+        border-radius: 9px;
+        border: 1px solid #a8d379;
+        background: #b5ed70;
+        color: #17240c;
+        cursor: pointer;
+        margin: 8px 0;
+      }
+      button:disabled {
+        opacity: 0.4;
+        cursor: default;
+      }
+      .secondary {
+        background: transparent;
+        color: #dbeacb;
+        border-color: #415036;
+      }
+      #preview {
+        padding: 14px;
+        background: #24301d;
+        border-radius: 9px;
+      }
+      small {
+        font-size: 14px;
+        color: #a6b299;
+      }
+    </style>
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <link
+      rel="apple-touch-icon"
+      sizes="180x180"
+      href="/icons/apple-touch-icon-dw.png"
+    />
+  </head>
+  <body>
+    <main>
+      <img src="/icons/icon-192.png" alt="dontwork.fun" />
+      <h1>前の続きで、遊ぼう。</h1>
+      <p id="status" role="status">新版との接続を確認しています。</p>
+      <p id="preview" hidden></p>
+      <button id="send" disabled>このセーブを送る</button>
+      <p>
+        <small
+          >旧版のセーブはこのまま残ります。送信後、新版で内容を確認してから再開できます。</small
+        >
+      </p>
+      <button class="secondary" id="download">
+        セーブをファイルに書き出す
+      </button>
+      <p>
+        <small
+          >接続できないときは、ここで書き出したファイルを新版の引き継ぎ画面で選んでください。ホーム画面版で遊んでいた場合は、そのアプリの設定から書き出してください。</small
+        >
+      </p>
+    </main>
+    <script src="/transfer.js" defer></script>
+  </body>
+</html>

@@ -1,0 +1,42 @@
+/* One readable equation replaces repeated values in the LAB formula view. */
+.expected-equation {display:grid;grid-template-columns:minmax(0,1.15fr) auto minmax(0,1fr) auto minmax(0,.9fr) auto minmax(0,1fr);gap:3px;align-items:end;padding:6px 0;font-family:var(--mono)}
+.equation-term {display:flex;flex-direction:column;gap:5px;min-width:0;text-align:center}
+.equation-term small {font:12px/1.2 system-ui,sans-serif;color:#aebba5;white-space:normal}
+.equation-term strong {font:650 15px/1.2 var(--mono);color:#e7eddf;white-space:nowrap;letter-spacing:-.045em}
+.equation-term.expected-term strong {font-size:17px;color:#8edec4}
+.equation-term.expected-term strong.negative {color:#f39188}
+.equation-sign {padding-bottom:1px;font-size:15px;color:#798674}
+.bet-card .hit-faces {display:block;margin:2px 0 0;font:13px/1.4 system-ui,sans-serif;color:#aebba5;overflow-wrap:anywhere}
+.hit-faces strong {margin-left:4px;font:600 14px/1.4 var(--mono);color:#e7eddf}
+.bet-card .bet-effect {margin:0;font:13px/1.35 system-ui,sans-serif;color:#d8c498}
+.app .positions-grid .bet-card .mini-spectrum {display:flex;height:8px;min-height:8px;flex-shrink:0}
+.app .bet-card .card-details,.app.desk-layout .positions-grid .card-details {display:grid;place-items:center;min-height:32px;min-width:32px;width:32px;padding:0;font:600 16px var(--mono);border-radius:50%;border:1px solid #57634d;flex-shrink:0}
+.app .bet-card .card-details::after {content:none}
+.formula-card .bet-bottom {justify-content:flex-end}
+.desk-layout .positions-page>.workspace-heading {min-height:24px;padding:0 0 3px}
+.desk-layout .positions-grid .formula-card {gap:4px}
+/* Notifications track the chart instead of covering the footer controls. */
+.chart-page {position:relative}
+.chart-notifications {position:absolute;inset:7px 7px auto;z-index:12;display:grid;justify-items:center;gap:6px;pointer-events:none}
+.chart-notifications .toast {position:relative;inset:auto;transform:none;margin:0;padding:10px 14px;max-width:min(650px,100%);width:max-content;font-size:14px;line-height:1.5}
+.chart-notifications .celebration {position:relative;inset:auto;transform:none;min-width:0;width:min(650px,100%);padding:10px 16px;border:1px solid #9f863e70;border-radius:8px;background:#1c271bef;animation:chart-notice-in .3s ease-out;text-align:center;box-shadow:0 4px 24px #0006}
+.chart-notifications .celebration>span {display:none}
+.chart-notifications .celebration>strong {font:700 clamp(20px,3vw,34px)/1.1 var(--mono);letter-spacing:0;white-space:normal;overflow-wrap:anywhere}
+.chart-notifications .celebration>small {font:13px/1.4 system-ui,sans-serif;letter-spacing:0;margin-top:5px;white-space:normal;padding:0;max-width:none}
+.chart-notifications .celebration.goal>strong {font-size:clamp(24px,4vw,40px)}
+.chart-notification-fallback {position:absolute;inset:0 0 auto;z-index:12}
+.game-workspace {position:relative}
+@keyframes chart-notice-in {from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:translateY(0)}}
+.reduced-motion .chart-notifications .celebration {animation:none}
+@media(prefers-reduced-motion:reduce){.chart-notifications .celebration {animation:none}}
+@media(max-height:650px){.chart-notifications .celebration {padding:6px 10px}.chart-notifications .celebration>strong {font-size:21px}.chart-notifications .toast {padding:7px 10px}}
+
+.app.tab-layout .positions-grid:has(.formula-card) {grid-template-columns:repeat(auto-fit,minmax(min(100%,280px),1fr))}
+.desk-layout .lab-card-expanded .positions-grid {overflow-y:auto;touch-action:pan-x pan-y}
+
+.equation-note {font-size:14px;line-height:1.6;color:#b4bfaa}
+@media(max-height:650px){
+ .desk-layout .positions-grid .bet-card {padding:6px;gap:3px}
+ .app.desk-layout .positions-grid .card-details {min-height:28px;min-width:28px;width:28px}
+ .desk-layout .positions-grid .bet-odds .odds-primary strong {font-size:21px}
+}

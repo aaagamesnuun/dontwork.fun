@@ -1,0 +1,92 @@
+.workspace-panels { display: contents; }
+/* A filming layout: keep the real game surfaces, open controls only on demand. */
+.app.capture-mode.desk-layout {
+  --page-gutter: 16px;
+  --header-h: 44px;
+  --news-h: 48px;
+  --balance-h: 104px;
+  --dock-h: 76px;
+  height: 100dvh;
+  min-height: 650px;
+  max-width: 780px;
+  grid-template-rows: var(--header-h) var(--news-h) var(--balance-h) minmax(340px,1fr) var(--dock-h);
+}
+.app.capture-mode.desk-layout.news-bottom { grid-template-rows: var(--header-h) var(--balance-h) minmax(340px,1fr) var(--news-h) var(--dock-h); }
+.capture-mode .topbar .header-center,
+.capture-mode .topbar .contact-button:not(.menu-button),
+.capture-mode .balance-meta,
+.capture-mode .balance-header .eyebrow span { display: none; }
+.capture-mode .brand-name { font-size: 23px; }
+.capture-mode .balance-header { align-items: center; padding: 10px 0; }
+.capture-mode .balance-wallet { width: 100%; }
+.capture-mode .balance-money-line { justify-content: space-between; gap: 12px; }
+.capture-mode .balance-header .eyebrow { font-size: 14px; }
+.capture-mode .balance-header h1 { font-size: clamp(38px,8.5vw,64px); line-height: 1.1; }
+.capture-mode .balance-header .pnl { font-size: clamp(24px,5.5vw,38px); }
+.app.capture-mode .game-workspace.compact-workspace.has-chart {
+  position: relative;
+  grid-template-rows: minmax(150px,.9fr) minmax(180px,1.1fr);
+  gap: 14px;
+  padding-bottom: 12px;
+}
+.app.capture-mode .shared-spin .roll-station,
+.app.capture-mode .shared-spin .roll-station:has(.sweep-integrated:not(.with-growth)) {
+  height: 100%;
+  grid-template-rows: minmax(0,1fr) var(--spin-metrics-height) 3px;
+}
+.capture-mode .sweep-integrated .payoff-reel>strong,
+.capture-mode .sweep-integrated .sweep-roll { font-size: clamp(38px,7svh,58px); font-weight: 800; }
+.capture-mode .payoff-scale { font-size: 14px; height: 15px; }
+.capture-mode .chart-caption { font-size: 14px; }
+.capture-mode .capture-controls {
+  position: absolute;
+  z-index: 30;
+  inset: 24% 0 0;
+  display: flex;
+  flex-direction: column;
+  padding: 12px;
+  gap: 12px;
+  border: 1px solid #728863;
+  border-radius: 12px;
+  background: #102018fa;
+  box-shadow: 0 -12px 40px #0008;
+  overflow: hidden;
+}
+.capture-mode .capture-controls.is-closed { display: none; }
+.capture-panel-header { display: flex; justify-content: space-between; align-items: center; gap: 6px; flex-shrink: 0; }
+.capture-panel-header nav { display: flex; gap: 4px; }
+.capture-panel-header button { min-height: 40px; padding: 8px; font-size: 14px; white-space: nowrap; }
+.capture-panel-header button[aria-pressed=true] { background: #c6ec95; color: #132215; border-color: #c6ec95; }
+.capture-mode .capture-panel-close { background: transparent; color: #e4efdc; border-color: transparent; }
+.capture-mode .capture-controls .positions-page,
+.capture-mode .capture-controls .upgrades-page { flex: 1; min-height: 0; height: auto; }
+.capture-mode .capture-controls .positions-grid { flex: 1; }
+.capture-mode .capture-controls .positions-grid .bet-card { flex-basis: min(290px,90%); }
+.capture-mode .capture-controls .upgrades-grid { grid-template-columns: 1fr; }
+.capture-mode .capture-controls .upgrade-card { min-height: 108px; }
+.capture-mode .capture-controls .workspace-heading { min-height: 28px; }
+.capture-mode .play-dock .capture-open small { font-size: 10px; }
+@media(min-height:850px) {
+  .app.capture-mode.desk-layout { --balance-h: 120px; --dock-h: 84px; }
+}
+@media(max-width:380px) {
+  .app.capture-mode.desk-layout { --page-gutter: 10px; }
+  .capture-panel-header button { padding: 6px; font-size: 13px; }
+}
+/* Keep axis values outside the SVG so neither grid nor price lines cross text. */
+.capture-mode .wealth-plot {
+  grid-template-columns: 72px minmax(0,1fr);
+  column-gap: 8px;
+  padding-left: 0;
+}
+.capture-mode .wealth-plot>svg { grid-area: 1 / 2; }
+.capture-mode .wealth-left-labels { grid-area: 1 / 1; z-index: 2; }
+.capture-mode .wealth-left-labels>span {
+  left: auto;
+  right: 0;
+  padding: 2px 0;
+  background: transparent;
+  font-size: 14px;
+  text-align: right;
+}
+.capture-mode .wealth-x-axis { grid-area: 2 / 2; }

@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="650" height="132" viewBox="0 0 650 132" role="img" aria-labelledby="title description">
+  <title id="title">dontwork.fun</title>
+  <desc id="description">Lowercase bold sans-serif wordmark with a lime .fun suffix on deep green.</desc>
+  <!-- Uses the app's Manrope face when available. Text and colors remain editable. -->
+  <rect id="background" width="650" height="132" fill="#10160f"/>
+  <text id="wordmark" x="24" y="94" font-family="Manrope, Arial, Helvetica, sans-serif" font-size="94" font-weight="800" letter-spacing="-4" fill="#e9ece4"><tspan id="name">dontwork</tspan><tspan id="suffix" fill="#b5ed70">.fun</tspan></text>
+</svg>
