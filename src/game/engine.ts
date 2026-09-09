@@ -113,6 +113,7 @@ export interface Settings {
   workCosmetics: boolean;
   upgradeTutorial: "money" | "scripted";
   spinAssist: boolean;
+  secondBetAssist: boolean;
   spinAssistSequence: string;
   presentationRevision: 1;
   spinSound: "rhythm" | "original";
@@ -315,6 +316,7 @@ export const defaultSettings: Settings = {
   workCosmetics: false,
   upgradeTutorial: "money",
   spinAssist: true,
+  secondBetAssist: false,
   spinAssistSequence: "WWLWW",
   presentationRevision: 1,
   spinSound: "rhythm",
@@ -357,7 +359,7 @@ export const defaultSettings: Settings = {
 };
 export const customRules = (settings: Settings, trial = false) =>
   settings.handToys || settings.jackpotRule !== "combined" || settings.probabilityUpgrades || settings.baccarat ||
-  settings.workMode === "gamble" || settings.workCosmetics ||
+  settings.workMode === "gamble" || settings.workCosmetics || settings.secondBetAssist ||
   (!trial && (!settings.spinAssist || settings.spinAssistSequence !== "WWLWW")) ||
   JSON.stringify([
     settings.opening,
@@ -825,7 +827,7 @@ export function spin(s: Run, forced?: number, elapsed = interval(s)): Run {
   const baseline = s.portfolio.find(row => row.count > 0 && ["edge-50", "long-edge-50"].includes(row.id));
   const second = introductoryBets(s)?.second;
   const firstSecondSpin = s.secondBetTutorial === "active" && second && s.portfolio.some(row => row.id === second.id && row.count > 0);
-  const assistedSecond = forced === undefined && firstSecondSpin && s.settings.spinAssist;
+  const assistedSecond = forced === undefined && firstSecondSpin && s.settings.secondBetAssist;
   const assistedOpening = !assistedSecond && forced === undefined && !s.trial && s.settings.spinAssist && s.spins < 5 && s.rushLeft === 0 && baseline;
   let openingRoll: number | undefined;
   if (assistedSecond) {
@@ -1234,6 +1236,7 @@ export function playBaccarat(s: Run, wager: number, side: "player" | "banker", t
 }
 export function configure(s: Run, patch: Partial<Settings>): Run {
   if (patch.spinAssistSequence !== undefined && !/^[WL]{5}$/.test(patch.spinAssistSequence)) return s;
+  if (s.trial && patch.secondBetAssist !== undefined) patch = {...patch,secondBetAssist:false};
   if (s.trial && patch.spinAssist !== undefined) patch = {...patch,spinAssist:false};
   if(s.trial && patch.assist!==undefined)patch={...patch,assist:false};
   if(patch.workMode === "gamble" || (s.settings.workMode === "gamble" && patch.fuelEnabled)) patch={...patch,fuelEnabled:false};
@@ -1261,6 +1264,7 @@ export function configure(s: Run, patch: Partial<Settings>): Run {
         "workMode",
         "workCosmetics",
         "spinAssist",
+        "secondBetAssist",
         "spinAssistSequence",
         "fuelEnabled",
         "opening",
@@ -1420,7 +1424,7 @@ export function readSave(raw: string | null): Run | null {
       running: false,
       last: null,
     } as Run;
-    if (typeof n.settings.spinAssist !== "boolean" || typeof n.settings.spinAssistSequence !== "string" || !/^[WL]{5}$/.test(n.settings.spinAssistSequence)) return null;
+    if (typeof n.settings.secondBetAssist !== "boolean" || typeof n.settings.spinAssist !== "boolean" || typeof n.settings.spinAssistSequence !== "string" || !/^[WL]{5}$/.test(n.settings.spinAssistSequence)) return null;
     if (v.secondBetTutorial === undefined) {
       const second = introductoryBets(n)?.second;
       n.secondBetTutorial = !second || n.peak >= second.unlock ? "done" : "waiting";
@@ -1837,6 +1841,7 @@ export function readSave(raw: string | null): Run | null {
         !Number.isSafeInteger(t.purchases)||t.purchases<0 || !Number.isFinite(t.spent)||t.spent<0 || t.spent>MONEY_CEILING || (t.rule==="fixed" && (t.addedMs!==0 || t.purchases!==0)))return null;
       n.settings.assist=false;
       n.settings.spinAssist=false;
+      n.settings.secondBetAssist=false;
       if(t.rule!=="fixed")n.debug=true;
       if(t.result){
         const r=t.result;
@@ -1926,7 +1931,7 @@ export const firstBet = (s: Run) =>
 // A separate wall clock; activeMs remains the ordinary play-statistics clock.
 export function freshTrial(settings:Settings=defaultSettings,rule:TrialRule="fixed"):Run {
   const normalized={...settings};
-  for(const key of ["jackpotRule","handToys","baccarat","probabilityUpgrades","workMode","workCosmetics","upgradeTutorial","spinAssist","spinAssistSequence","fuelEnabled","opening","assist","assistAfter","spinSpeedScale","jackpotSpinIntervalMs","rushBase","upgradePrices","economyProfile","upgradeMode","positionPriceBase","positionPriceMultiplier","speedPriceBase","speedPriceMultiplier"] as const)
+  for(const key of ["jackpotRule","handToys","baccarat","probabilityUpgrades","workMode","workCosmetics","upgradeTutorial","spinAssist","secondBetAssist","spinAssistSequence","fuelEnabled","opening","assist","assistAfter","spinSpeedScale","jackpotSpinIntervalMs","rushBase","upgradePrices","economyProfile","upgradeMode","positionPriceBase","positionPriceMultiplier","speedPriceBase","speedPriceMultiplier"] as const)
     Object.assign(normalized,{[key]:defaultSettings[key]});
   const run=freshRun("classic",normalized);
   return {...run,debug:rule!=="fixed",settings:{...normalized,assist:false,spinAssist:false,dockToy:"off"},trial:{scoring:"assets",rule,elapsedMs:0,addedMs:0,anchor:null,started:false,paused:true,result:null,nickname:"",submitted:false,purchases:0,spent:0,lastPurchase:null}};
