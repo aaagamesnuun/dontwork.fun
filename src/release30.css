@@ -60,3 +60,31 @@ html[lang=en] .spin-result small{font-size:9px}html[lang=en] .bet-card h3{letter
  .particle-cash,.particle-cash>img {filter:none}
  .particle-confetti {box-shadow:none}
 }
+
+/* Extra room only while the first position swap is being taught. */
+.app.position-lesson,.app.capture-mode.desk-layout.position-lesson {--news-h:76px}
+.app.position-lesson .news-strip>.news-label {display:none}
+.app.position-lesson .news-strip p {white-space:normal;overflow:visible;margin:0;font-size:14px;line-height:1.4}
+.app .balance-header .eyebrow>span {letter-spacing:0}
+.intro-message>strong {color:#d3ff93;font-weight:800}
+/* Full amounts stay readable; exceptionally long values can be scrolled. */
+.app.full-money .balance-money-line {flex-wrap:wrap;gap:2px 12px}
+.app.full-money .balance-money-line h1 {font-size:clamp(21px,5vw,36px);max-width:100%;min-width:0;overflow-x:auto;white-space:nowrap}
+.app.full-money .balance-result {max-width:100%;min-width:0;overflow-x:auto}
+.app.full-money .balance-result .pnl {font-size:clamp(17px,4vw,28px)}
+.app.full-money.desk-layout {--balance-h:98px}
+.app.full-money.desk-layout:has(.has-clear-notice) {--balance-h:126px}
+.app.full-money .spin-result b,.app.full-money .equation-term strong,.app.full-money .bet-bottom strong {display:block;max-width:100%;overflow-x:auto;white-space:nowrap;scrollbar-width:thin}
+.app.full-money .equation-term {min-width:0}
+.app.full-money .wealth-left-labels>span {max-width:65%;width:max-content;overflow-x:auto;background:#10160fe8;font-size:10px;white-space:nowrap}
+.app.full-money .result-numbers b,.app.full-money .result-hero h3,.app.full-money .score-row strong {max-width:100%;overflow-x:auto;font-size:clamp(13px,3vw,23px)}
+.app.full-money .result-numbers>div {min-width:0}
+.app.full-money .coin-summary {flex-wrap:wrap}
+.app.full-money .upgrade-actions button {overflow-wrap:anywhere;white-space:normal}
+
+.app.full-money .wealth-left-labels>span {pointer-events:auto;touch-action:pan-x}
+.app.full-money.capture-mode .wealth-left-labels>span {max-width:100%;font-size:10px}
+.app.full-money .stats-grid {grid-template-columns:repeat(2,minmax(0,1fr))}
+.app.full-money .stats-grid>div {min-width:0}
+.app.full-money .stats-grid strong {display:block;max-width:100%;overflow-x:auto;white-space:nowrap}
+.app.full-money .trial-ranking li>b {display:block;max-width:55%;min-width:0;overflow-x:auto;white-space:nowrap;font-size:clamp(12px,3vw,19px)}

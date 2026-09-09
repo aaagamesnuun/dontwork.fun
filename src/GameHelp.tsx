@@ -9,7 +9,7 @@ export function newsTopic(key: string) {
         return "jackpot";
     if (["first-work", "cash", "recover-cheaper", "fuel", "work-gamble"].includes(key))
         return "work";
-    if (["equip", "cheaper", "tip-2", "tip-4"].includes(key))
+    if (key.startsWith("second-bet-") || ["equip", "cheaper", "tip-2", "tip-4"].includes(key))
         return "positions";
     if (["first-upgrade", "tip-1"].includes(key))
         return "upgrades";

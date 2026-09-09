@@ -33,7 +33,7 @@ export function GameOverview({ settings = defaultSettings, onDone, fuelEnabled: 
     }, [page, onDone, settings]);
     return <div className={`intro-pages ${page === 0 ? "tap-anywhere" : ""}`} ref={root}>
  <div className="intro-pagination" aria-label={_t("全2ページ中{0}ページ", page + 1)}><i className={page === 0 ? 'current' : ''}/><i className={page === 1 ? 'current' : ''}/></div>
- {page === 0 ? <><img className="intro-cash" src="/intro-cash-front.png" alt={_t("札束の手前を走る、上昇チャート")} width="1536" height="1024"/><h3 className="intro-message">{_t("ギャンブルで")}<br /><em>{_t("1ビリオン")}</em>{_t("を稼げ！")}</h3><button className="primary intro-start" onClick={advance}>{_t("タップして次へ")}</button></> : <>
+ {page === 0 ? <><img className="intro-cash" src="/intro-cash-front.png" alt={_t("札束の手前を走る、上昇チャート")} width="1536" height="1024"/><h3 className="intro-message">{_t("ギャンブルで")}<br /><em>{_t("1ビリオン")}</em>{_t("稼いだら")}<br /><strong>{_t("クリア！")}</strong></h3><button className="primary intro-start" onClick={advance}>{_t("タップして次へ")}</button></> : <>
  <svg className="intro-volume" viewBox="0 0 100 100" fill="none" stroke="currentColor" strokeWidth="5" aria-hidden="true"><path d="M18 40h15l20-18v56L33 60H18Z"/><path d="M66 34q19 16 0 32M76 22q32 28 0 56" strokeLinecap="round"/></svg>
  <h3 className="intro-message">{_t("音量を上げると")}<br />{_t("ドパれます")}</h3>
  <button className={`secondary intro-start ${!previewed ? 'guide-target' : ''}`} onClick={() => { wakeAudio(true); sound('jackpot', { ...settings, sound: true, soundVolume: 1 }); setPreviewed(true); }}>{_t("♫ 音を試す")}</button>

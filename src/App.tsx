@@ -1,3 +1,5 @@
+import { useMoneyStyle } from "./moneyPreferences";
+import { secondBetStep } from "./game/positionTutorial";
 import { JackpotNews } from "./JackpotNews";
 import { createProgressSignal, SpinProgress } from "./SpinProgress";
 import { useBetNameStyle } from "./betNamePreferences";
@@ -46,7 +48,7 @@ import { betOdds, hitFacesText, percent } from "./game/odds";
 import { useReducedMotion } from "./useReducedMotion";
 import { useCallback, useEffect, useMemo, useReducer, useRef, useState, type ReactNode } from "react";
 import { betById, catalogById, type Bet } from "./game/catalog";
-import { purchaseProbability, probabilityPrice, probabilityCap, SAVE_KEY, TARGET, availableBets, rollWeights, workCosmeticPrice, purchaseWorkCosmetic, canSpin, configure, duration, firstBet, freshRun, fuelCapacity, interval, isInfinite, mem, money, nextDistribution, payoutOf, purchase, drawUpgrade, upgradeDrawPool, upgradeDrawPrice, readSave, resolve, rollFloor, setCount, spin, stakeOf, totalCost, unlocked, upgradePrice, upgradeUnlocked, VERSION, usedSlots, work, type Run, type PositionIntent, type Upgrade, } from "./game/engine";
+import { purchaseProbability, probabilityPrice, probabilityCap, SAVE_KEY, availableBets, rollWeights, workCosmeticPrice, purchaseWorkCosmetic, canSpin, configure, duration, firstBet, freshRun, fuelCapacity, interval, isInfinite, mem, money, nextDistribution, payoutOf, purchase, drawUpgrade, upgradeDrawPool, upgradeDrawPrice, readSave, resolve, rollFloor, setCount, spin, stakeOf, totalCost, unlocked, upgradePrice, upgradeUnlocked, VERSION, usedSlots, work, type Run, type PositionIntent, type Upgrade, } from "./game/engine";
 import { Draft, Feedback, Lab, Leaderboard, Presets, SettingsPanel, Stats, } from "./Panels";
 import { sound, uiSound, wakeAudio, installAudioRecovery, setAudioEnabled, setBackgroundAudio, spinCharge, stopSpinCharge, stopSounds, drainAudioHealth, musicPulse, playingMusicPack, audioEnabled, } from "./audio";
 import { installUISounds } from "./uiSounds";
@@ -152,7 +154,7 @@ export function BetCard({ b, s, change, onDetails, guided = false, highlightRemo
         : b.pattern === "drought"
             ? payoutOf(b, s) + m.misses * (b.increment ?? 0)
             : payoutOf(b, s);
-    return (<article className={`bet-card ${formula ? "formula-card" : ""} ${count ? "equipped" : ""} ${open ? "" : "locked"} ${m.armed ? "armed" : ""}`}>
+    return (<article data-bet-id={b.id} className={`bet-card ${formula ? "formula-card" : ""} ${count ? "equipped" : ""} ${open ? "" : "locked"} ${m.armed ? "armed" : ""}`}>
       {!concise && <div className="bet-heading">
         <span className="bet-code">
           {b.pattern === "ladder"
@@ -260,6 +262,7 @@ export default function App({ onOpenDesk, studio }: {
     const osReduced = useReducedMotion();
     const uiLanguage=useLanguage();
     const betNameStyle=useBetNameStyle();
+    const numberStyle=useMoneyStyle();
     const pwa = usePwa();
     const [updating, setUpdating] = useState(false), [updateError, setUpdateError] = useState("");
     const autoUpdateAllowed = useRef(true), reloadStarted = useRef(false);
@@ -1200,7 +1203,7 @@ export default function App({ onOpenDesk, studio }: {
     // off the tap/scroll path until one of their actual inputs changes.
     const sweepInputs = [shown.portfolio, shown.memory, shown.betLevels, shown.removed, shown.rushLeft, shown.fuel, shown.spins, shown.last, shown.settings];
     const distribution = useMemo(() => nextDistribution(shown), sweepInputs);
-    const sweep = useMemo(() => sweepSnapshot(shown), [...sweepInputs,uiLanguage,betNameStyle]);
+    const sweep = useMemo(() => sweepSnapshot(shown), [...sweepInputs,uiLanguage,betNameStyle,numberStyle]);
     // Every result-bearing view reads the same published state.
     const shownSweep = sweep;
     const weights = rollWeights(shown), ev = distribution.reduce<number>((n, v, i) => n + (v ?? 0) * weights[i], 0), chance = distribution.reduce<number>((n, v, i) => n + ((v ?? 0) > 0 ? weights[i] : 0), 0) * 100;
@@ -1227,6 +1230,11 @@ export default function App({ onOpenDesk, studio }: {
         setTab("positions"); }, [tab, canOpenCoin]);
     const guideTab = tab === "coin" ? "spin" : desk && tab !== "upgrades" ? "positions" : tab;
     const guide = guidance(shown, tipTick, guideTab);
+    useEffect(() => {
+        if (!guide.betId || !["remove", "equip"].includes(guide.target ?? "") || modal) return;
+        const card = document.querySelector<HTMLElement>(`.positions-page [data-bet-id="${guide.betId}"]`);
+        card?.scrollIntoView({ block: "nearest", inline: "nearest", behavior: osReduced || shown.settings.motion === "reduced" ? "auto" : "smooth" });
+    }, [guide.key, guide.betId, guide.target, tab, modal]);
     const chartVisible = desk || tab === "spin" || tab === "coin" || shown.settings.sharedChart;
     useEffect(() => {
         if (shown.rushLeft > 0 && modal === "draft")
@@ -1256,7 +1264,7 @@ export default function App({ onOpenDesk, studio }: {
             title: unlockQueue.length === 1
                 ? betById(unlockQueue[0]).name
                 : _t("{0}種のギャンブルを解放", unlockQueue.length),
-            sub: _t("新しく解放！ ポジションの＋でセットできます。"),
+            sub: secondBetStep(shown) ? _t("ポジションは{0}個まで。ニュースに沿って入れ替えてみよう。", shown.slots) : _t("新しく解放！ ポジションの＋でセットできます。"),
         }
         : celebration);
     const chartNotices = !modal && (announcement || toast) && <ChartNotices anchor={chartTarget} plotOnly={captureMode} reduced={osReduced || shown.settings.motion === "reduced"}>
@@ -1378,7 +1386,7 @@ export default function App({ onOpenDesk, studio }: {
     </div>);
     if (!releaseCheck.checked || releaseCheck.latest)
         return <ReleaseNotice check={releaseCheck}/>;
-    return (<div inert={updating && updateDialogSafe(modal)} data-capture-spin={captureMode ? shown.spins : undefined} data-capture-roll={captureMode ? shown.last?.roll : undefined} data-capture-jackpot={captureMode ? !!shown.last?.jackpot : undefined} data-capture-rush={captureMode ? rush : undefined} data-capture-assisted={captureMode ? !!shown.last?.assisted : undefined} data-capture-scripted={studio ? true : undefined} data-capture-cursor={studio ? shown.spins - studio.initialRun.spins : undefined} className={`app ${s.trial ? "trial-mode" : ""} ${s.trial && !trialActive(s) ? "trial-frozen" : ""} ${captureMode ? "capture-mode" : ""} ${desk ? "desk-layout" : "tab-layout"} wealth-${wealthStage(shown)} ${shown.settings.newsPosition === "bottom" ? "news-bottom" : ""} ${shown.settings.fuelEnabled ? "" : "no-fuel"} fx-${shown.settings.fx} ${rush ? "rush-mode" : ""} ${isInfinite(shown) ? "infinity-mode" : ""} ${shown.settings.motion === "reduced" ? "reduced-motion" : ""}`}>
+    return (<div inert={updating && updateDialogSafe(modal)} data-capture-spin={captureMode ? shown.spins : undefined} data-capture-roll={captureMode ? shown.last?.roll : undefined} data-capture-jackpot={captureMode ? !!shown.last?.jackpot : undefined} data-capture-rush={captureMode ? rush : undefined} data-capture-assisted={captureMode ? !!shown.last?.assisted : undefined} data-capture-scripted={studio ? true : undefined} data-capture-cursor={studio ? shown.spins - studio.initialRun.spins : undefined} className={`app ${numberStyle === "full" ? "full-money" : ""} ${guide.key.startsWith("second-bet-") ? "position-lesson" : ""} ${s.trial ? "trial-mode" : ""} ${s.trial && !trialActive(s) ? "trial-frozen" : ""} ${captureMode ? "capture-mode" : ""} ${desk ? "desk-layout" : "tab-layout"} wealth-${wealthStage(shown)} ${shown.settings.newsPosition === "bottom" ? "news-bottom" : ""} ${shown.settings.fuelEnabled ? "" : "no-fuel"} fx-${shown.settings.fx} ${rush ? "rush-mode" : ""} ${isInfinite(shown) ? "infinity-mode" : ""} ${shown.settings.motion === "reduced" ? "reduced-motion" : ""}`}>
       {pwa.update && modal === null && <aside className="pwa-update-notice" role="status">
         <span>{updateError || (updating ? _t("続きを保存して更新しています…") : _t("最新版の準備ができました"))}</span>
         {!updating && !updateError && <button className="primary" onClick={() => { setUpdating(true); setS(run => ({ ...run, running: false })); }}>{_t("保存して更新")}</button>}
@@ -1388,8 +1396,8 @@ export default function App({ onOpenDesk, studio }: {
             e.preventDefault();
             setTab("spin");
         }}>
+          <img className="brand-icon" src="/icons/dontwork.svg" alt="" width="32" height="32"/>
           <span className="brand-name">dontwork<em>.fun</em></span>
-          <img className="brand-icon" src={"/icons/dontwork.svg"} alt="" width="32" height="32"/>
         </a>
         <div className="header-center">
           <span className="live-dot"/>
@@ -1418,7 +1426,7 @@ export default function App({ onOpenDesk, studio }: {
         <div className="balance-wallet">
           <div className="eyebrow">{_t("総資産")}{" "}
             <span>
-              {shown.trial ? "30 MIN CHALLENGE" : shown.clearAt !== null ? "GOAL CLEARED" : "TARGET " + money(TARGET)}
+              {shown.trial ? "30 MIN CHALLENGE" : shown.clearAt !== null ? "GOAL CLEARED" : _t("クリア目標:{0}$", numberStyle === "full" ? "1,000,000,000" : "1B")}
             </span>
           </div>
           <div className="balance-money-line"><h1>{money(shown.trial ? trialAssets(shown) : shown.cash)}</h1>        <div className="balance-result">
@@ -1466,9 +1474,8 @@ export default function App({ onOpenDesk, studio }: {
               </div>
             </div>
             <div className="positions-grid">
-              {positionBets.map((b) => (<BetCard key={b.id} b={b} s={shown} change={change} pending={!!model.positionRequest} onPosition={requestPosition} onProbability={upgradeProbability} onBlocked={blockedPosition} highlightRemove={(removeHint !== null && (b.id !== removeHint || equipped.length === 1)) || (desk && guide.target === "positions")} guided={guide.target === "equip" &&
-                    shown.portfolio.length === 0 &&
-                    b.id === firstBet(shown)} onDetails={() => {
+              {positionBets.map((b) => (<BetCard key={b.id} b={b} s={shown} change={change} pending={!!model.positionRequest} onPosition={requestPosition} onProbability={upgradeProbability} onBlocked={blockedPosition} highlightRemove={(guide.target === "remove" && guide.betId === b.id) || (removeHint !== null && (b.id !== removeHint || equipped.length === 1)) || (desk && guide.target === "positions" && !guide.betId)} guided={guide.target === "equip" &&
+                    (guide.betId ? b.id === guide.betId : shown.portfolio.length === 0 && b.id === firstBet(shown))} onDetails={() => {
                     setDetailBet(b.id);
                     setModal("bet");
                 }}/>))}

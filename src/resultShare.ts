@@ -35,7 +35,7 @@ export async function resultImage(s: Run, name: string): Promise<Blob> {
     ctx.strokeStyle = '#647b43';
     ctx.lineWidth = 2;
     ctx.strokeRect(24, 24, 852, 1152);
-    const text = (value: string, x: number, y: number, size: number, color = '#edf6e8', align: CanvasTextAlign = 'left') => { ctx.textAlign = align; ctx.fillStyle = color; ctx.font = `600 ${size}px system-ui, sans-serif`; ctx.fillText(value, x, y, 800); };
+    const text = (value: string, x: number, y: number, size: number, color = '#edf6e8', align: CanvasTextAlign = 'left', maxWidth = 800) => { ctx.textAlign = align; ctx.fillStyle = color; ctx.font = `600 ${size}px system-ui, sans-serif`; ctx.fillText(value, x, y, maxWidth); };
     text('dontwork.fun', 54, 94, 32);
     text(trial?'TIME UP':'GOAL CLEARED', 846, 94, 19, '#cfefa0', 'right');
     text(trial?'FINAL ASSETS':'FROM $0 TO', 450, 200, 23, '#aebb9b', 'center');
@@ -70,7 +70,7 @@ export async function resultImage(s: Run, name: string): Promise<Blob> {
     text(trial?duration(trial.durationMs):`${s.clearSpins ?? s.spins} SPINS`, 846, 910, 20, '#adbd9d', 'right');
     for (const [i, value, label] of [[0, (s.clearSpins ?? s.spins).toLocaleString(), _t("スピン")], [1, s.maxChain.toLocaleString(), _t("最大連鎖")], [2, money(s.spent), _t("強化への投資")], [3, effort.work, _t("WORK回数")], [4, effort.wager, _t("FLIPの賭け金累計")], [5, effort.profit, _t("FLIPの損益")]] as const) {
         const xx = 170 + (i % 3) * 280, yy = i < 3 ? 972 : 1052;
-        text(value, xx, yy, 29, '#edf6e8', 'center');
+        text(value, xx, yy, 29, '#edf6e8', 'center', 248);
         text(label, xx, yy + 29, 18, '#adbd9d', 'center');
     }
     text(catalogById(s.completion?.catalog ?? s.catalog).name, 54, 1125, 22, '#adbd9d');

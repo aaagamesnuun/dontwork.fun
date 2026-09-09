@@ -26,7 +26,7 @@ describe("game rendering", () => {
     expect(html.indexOf('class="dock-upgrade')).toBeGreaterThan(html.indexOf('id="work-button"'));
     expect(html).toContain("WORK");
     expect(html).toContain("AUTO");
-    expect(html).toContain("$1B");
+    expect(html).toContain("クリア目標:1B$");
     expect(html).not.toContain("NaN");
   });
   it("renders saved infinity and very large balances without crashing", () => {

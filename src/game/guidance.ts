@@ -1,7 +1,8 @@
 import { t as _t } from "../i18n";
 import { availableBets, firstBet, isInfinite, money, stakeOf, status, totalCost, unlocked, UPGRADES, upgradePrice, upgradeUnlocked, upgradeDrawPrice, type Upgrade, type Run, } from "./engine";
 import { betById } from "./catalog";
-export type GuideTarget = "work" | "positions" | "equip" | "spin" | "auto" | "upgrades" | "purchase" | null;
+import { secondBetStep } from "./positionTutorial";
+export type GuideTarget = "work" | "positions" | "equip" | "remove" | "spin" | "auto" | "upgrades" | "purchase" | null;
 export interface Guidance {
     key: string;
     label: string;
@@ -9,6 +10,7 @@ export interface Guidance {
     target: GuideTarget;
     urgent: boolean;
     upgrade?: Upgrade | "gacha";
+    betId?: string;
 }
 export const visibleBets = (s: Run) => availableBets(s).filter((b) => unlocked(s, b));
 export function jackpotCondition(rule: Run["settings"]["jackpotRule"]) {
@@ -33,9 +35,17 @@ export function guidance(s: Run, tick = 0, tab: "spin" | "positions" | "upgrades
         return result("work-gamble", tab === "positions" ? _t("賭け金が足りないときは、他を外してWORKをセット。コスト$0で毎スピン$5増える。") : _t("「ポジション」でWORKをセットしよう。コスト$0で毎スピン$5稼げる。"), tab === "positions" ? "equip" : "positions");
     if (s.spins === 0 && s.cash < opening)
         return result("first-work", _t("まずWORKを連打して{0}貯めよう。1回で$1増える。", money(opening)), "work");
+    const lesson = secondBetStep(s);
+    if (lesson && lesson.action !== "spin") {
+        if (tab !== "positions") return { ...result("second-bet-open", _t("{0}解放！ 「ポジション」を開いて入れ替えよう。", lesson.second.name), "positions"), betId: lesson.id };
+        return { ...result(`second-bet-${lesson.action}`, lesson.action === "remove"
+            ? _t("ポジションは{0}個まで。{1}の−で枠を空けよう。", s.slots, betById(lesson.id).name)
+            : _t("枠が空いた！ {0}の＋を押してセットしよう。", lesson.second.name), lesson.action), betId: lesson.id };
+    }
     if (current === "empty")
         return result("equip", s.spins === 0 ? (tab === "positions" ? _t("{0}の＋を押して、最初のポジションをセットしよう。",betById(firstBet(s)).name) : _t("「ポジション」タブを開いて、最初のギャンブルを選ぼう。")) : _t("ポジションをセットしよう。"), tab === "positions" ? "equip" : "positions");
     if (current === "cash") {
+        if (lesson?.action === "spin") return result("second-bet-funds", _t("あと{0}で回せる。WORKで賭け金を補充しよう。", money(Math.max(0,totalCost(s)-s.cash))), "work");
         const minimum = Math.min(...visibleBets(s).map((b) => stakeOf(b, s)));
         const cheaper = visibleBets(s).some((b) => stakeOf(b, s) <= s.cash && stakeOf(b, s) < totalCost(s));
         return cheaper
@@ -50,6 +60,11 @@ export function guidance(s: Run, tick = 0, tab: "spin" | "positions" | "upgrades
         return result("first-spin-tab", _t("セットできた！ 「チャート」タブを押して、資産の動きを見よう。"), "spin");
     if (s.rushLeft > 0)
         return result("jackpot", _t("{0}連鎖 · 残り{1}スピン{2}", s.chain, isInfinite(s) ? "∞" : s.rushLeft, !s.running ? _t(" · AUTOで再開") : ""), null, "JACKPOT", false);
+    if (lesson?.action === "spin") {
+        if (!desk && tab !== "spin") return result("second-bet-chart", _t("セット完了！ 「チャート」タブでスピンを見よう。"), "spin");
+        return result("second-bet-spin", s.running ? _t("{0}をセットできた！ スピンの結果を見てみよう。", lesson.second.name)
+            : _t("セット完了！ AUTOをONにして{0}を回そう。", lesson.second.name), s.running ? null : "auto");
+    }
     if (!s.running)
         return result("auto", s.rushLeft > 0
             ? _t("{0}が待機中。AUTOをONにして再開しよう。", isInfinite(s) ? "INFINITY JACKPOT" : "JACKPOT") : s.spins === 0

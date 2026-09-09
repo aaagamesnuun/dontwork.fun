@@ -1052,5 +1052,19 @@
   "100、または91以上が2回連続でジャックポット。": "100 or two consecutive 91+ rolls → JACKPOT.",
   "91以上が2回連続でジャックポット。90以下でリセット。": "Two consecutive 91+ rolls → JACKPOT. 90 or lower resets.",
   "再発動すると残り回数を最大まで補充。連鎖が続く！": "Hit JACKPOT again to refill spins and keep the chain going!",
-  "91以上が出た！ 次も91以上ならジャックポット。90以下でリセット。": "91+ rolled! Another 91+ triggers JACKPOT. 90 or lower resets the streak."
+  "91以上が出た！ 次も91以上ならジャックポット。90以下でリセット。": "91+ rolled! Another 91+ triggers JACKPOT. 90 or lower resets the streak.",
+  "稼いだら": " to",
+  "クリア！": "CLEAR!",
+  "クリア目標:{0}$": "Clear goal: {0}$",
+  "金額の表示": "Amount display",
+  "省略 · $1K / $1M（標準）": "Compact · $1K / $1M (default)",
+  "全桁 · $1,000 / $1,000,000": "Full numbers · $1,000 / $1,000,000",
+  "{0}解放！ 「ポジション」を開いて入れ替えよう。": "{0} unlocked! Open Positions to swap it in.",
+  "ポジションは{0}個まで。{1}の−で枠を空けよう。": "You have {0} position slots. Tap − on {1} to free a slot.",
+  "枠が空いた！ {0}の＋を押してセットしよう。": "Slot ready! Tap + on {0} to add it.",
+  "セット完了！ 「チャート」タブでスピンを見よう。": "Position ready! Open Chart to watch the spin.",
+  "{0}をセットできた！ スピンの結果を見てみよう。": "{0} is ready! Watch the next spin.",
+  "セット完了！ AUTOをONにして{0}を回そう。": "Position ready! Turn AUTO on to spin {0}.",
+  "ポジションは{0}個まで。ニュースに沿って入れ替えてみよう。": "You have {0} position slots. Follow the news to try swapping.",
+  "あと{0}で回せる。WORKで賭け金を補充しよう。": "You need {0} more to spin. Tap WORK to cover the wager."
 }

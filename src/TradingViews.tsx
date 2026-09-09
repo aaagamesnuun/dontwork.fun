@@ -1,3 +1,4 @@
+import { useMoneyStyle } from "./moneyPreferences";
 import { t as _t, textValue as _text, useLanguage } from "./i18n";
 import { ChartBackdrop } from "./ChartBackdrop";
 import { useEffect, useState, useId, useMemo, memo } from "react";
@@ -43,6 +44,7 @@ export const PayoffSweep = memo(function PayoffSweep({ values, frame, reduced, s
     signal?: SweepSignal;
 }) {
     const uiLanguage = useLanguage();
+    const numberStyle = useMoneyStyle();
     const [localSignal] = useState(createSweepSignal);
     const channel = signal ?? localSignal;
     const { cursor: animatedCursor, moving: sweeping, slowing } = useSweepReading(channel);
@@ -81,7 +83,7 @@ export const PayoffSweep = memo(function PayoffSweep({ values, frame, reduced, s
                     }}/>
                     </>)}
                 </i>))}
-            </div>), [bars, scale, style, current, displayed, uiLanguage]);
+            </div>), [bars, scale, style, current, displayed, uiLanguage, numberStyle]);
     const chartBars = useMemo(() => <>{bars.map((v, i) => {
                 const ph = barFraction(v?.payout ?? 0, scale) * 78, ch = barFraction(v?.cost ?? 0, scale) * 78;
                 return (<g key={i}>
@@ -93,7 +95,7 @@ export const PayoffSweep = memo(function PayoffSweep({ values, frame, reduced, s
                       {v.cost > scale && (<path d={`M${12 + i * 9.76} 163l3.75 5l3.75 -5`} fill="none" stroke="#fff"/>)}
                     </>)}
                 </g>);
-            })}</>, [bars, scale, current, displayed, uiLanguage]);
+            })}</>, [bars, scale, current, displayed, uiLanguage, numberStyle]);
     return (<section className={`sweep-panel sweep-integrated ${anticipating ? "jackpot-ready" : ""} ${anticipating && moving ? "jackpot-suspense" : ""} ${growth.length ? "with-growth" : ""}`}>
       <GrowthStrip growth={growth}/>
       {style !== "chart" ? (<div className="classic-payoff">
@@ -184,6 +186,7 @@ export const WealthChart = memo(function WealthChart({ s, summary = false }: {
     summary?: boolean;
 }) {
     useLanguage();
+    useMoneyStyle();
     const fillId = useId();
     const [range, setRange] = useState<"recent" | "all">("recent");
     useEffect(() => setRange("recent"), [s.id, s.settings.chartWindowSpins]);

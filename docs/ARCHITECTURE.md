@@ -13,13 +13,14 @@ dontwork.fun 3.0.0の実装を読むための案内です。ローカル起動�
 | [App.tsx](../src/App.tsx) | presentation reducer、入力、AUTO・30分の時計、自動保存、各UI・音・演出の接続。 |
 | [game/engine.ts](../src/game/engine.ts) | `Run` / `Settings`、抽選・精算、WORK、強化、FLIP、クリア記録、セーブ検証・移行、30分ルール。 |
 | [game/catalog.ts](../src/game/catalog.ts)、[game/odds.ts](../src/game/odds.ts)、[game/sweep.ts](../src/game/sweep.ts) | ギャンブルと比較用カタログ、現在の状態での確率・期待値、スイープ表示用の分布。 |
+| [game/positionTutorial.ts](../src/game/positionTutorial.ts)、[game/guidance.ts](../src/game/guidance.ts) | 2番目のギャンブルへの入替進行と、公開状態に応じた次の操作案内。 |
 | [presentation.ts](../src/presentation.ts)、[spinTiming.ts](../src/spinTiming.ts) | 確定済み結果の公開、演出中に使える資金、ポジション変更、AUTOと公開待ちのタイミング。 |
 | [TradingViews.tsx](../src/TradingViews.tsx)、[SweepReadout.tsx](../src/SweepReadout.tsx)、[SpinProgress.tsx](../src/SpinProgress.tsx) | チャート・スイープ・進捗表示。フレームごとの表示には専用signalも使う。 |
 | [Panels.tsx](../src/Panels.tsx)、[CoinFlip.tsx](../src/CoinFlip.tsx)、[TimeTrial.tsx](../src/TimeTrial.tsx)、[Leaderboard.tsx](../src/Leaderboard.tsx) | 設定・LAB・セーブ入出力、FLIP、30分UI、クリアカード・ランキング。 |
 | [trialSaves.ts](../src/trialSaves.ts)、[rankingOutbox.ts](../src/rankingOutbox.ts)、[trialScores.ts](../src/trialScores.ts) | モード別保存と、通信が失敗しても残るランキング送信待ち。 |
 | [backgroundPlay.ts](../src/backgroundPlay.ts)、[jackpotNotifications.ts](../src/jackpotNotifications.ts) | 離席中の計算・上限・チェックポイントと通知。 |
 | [audio.ts](../src/audio.ts)、[music.ts](../src/music.ts)、[ResultVisuals.ts](../src/ResultVisuals.ts) | 音声出力、合成BGM、結果に応じたコイン・紙幣などの演出。 |
-| [i18n.ts](../src/i18n.ts)、[locales/](../src/locales/)、[betNamePreferences.ts](../src/betNamePreferences.ts) | 日本語・英語の文言と、ギャンブル名の表示設定。 |
+| [i18n.ts](../src/i18n.ts)、[locales/](../src/locales/)、[betNamePreferences.ts](../src/betNamePreferences.ts) | 日本語・英語の文言と、ギャンブル名の表示設定。[moneyPreferences.ts](../src/moneyPreferences.ts)は金額の省略・全桁表示。 |
 | [serviceConfig.ts](../src/serviceConfig.ts)、[api.ts](../src/api.ts)、[server/](../server/) | オンライン機能の有効化、通信・計測、任意のWorker API。 |
 | [pwaUpdates.ts](../src/pwaUpdates.ts)、[scripts/](../scripts/)、[drizzle/](../drizzle/) | PWA更新、ビルド後処理、DBの順序付きマイグレーション。 |
 
@@ -42,6 +43,10 @@ flowchart LR
 `spin`は1〜100の範囲から共通の出目を決め、全ポジションをその出目で精算します。ポジションごとに独立して抽選する仕組みではありません。ジャックポット中の低い出目の除外、出目加算、通常モードの序盤補助を適用し、賭け金・配当・追加損失・記憶・ジャックポット・履歴を更新します。`last`はその確定結果です。確率表示も同じルールを参照するため、新しいパターンでは勝敗だけでなく分布・期待値との整合も確認します。
 
 「純粋な計算」と「環境との接点」は区別してください。エンジンは状態変換を中心にしていますが、全関数が厳密な純粋関数というわけではありません。ID・時刻・乱数の生成、初期言語・計測設定にはブラウザ環境への依存があります。テストでは`spin`の確定出目、`drawUpgrade`の乱数、30分・背景処理の`now`など、用意された引数や時計のモックで再現性を持たせます。
+
+通常モードの入替チュートリアルは [positionTutorial.ts](../src/game/positionTutorial.ts) と [guidance.ts](../src/game/guidance.ts) が担当します。対象は `classic` / `billion` / `longgame` のクリックWORKで、2番目のギャンブル解放後に「外す→セット→AUTO」を案内します。`Run.secondBetTutorial` の `waiting` / `active` / `done` を保存し、表示段階は公開済みの編成から決めます。Jackpot中は入替案内を保留します。
+
+対象を初めて賭けるスピンは、スピン補助がONなら有効な当たり出目を選びます。受理済みの別ポジションの結果は変更せず、完了状態も結果公開まで隠します。途中のWORKによる公開ピーク到達を取りこぼさず、旧セーブで既に対象を解放済みの場合は新たな補助を与えません。30分モードは対象外です。
 
 ### 一度だけ精算し、公開を遅らせる
 
@@ -136,6 +141,8 @@ flowchart LR
 
 ギャンブル名はUI言語とは別設定です。[betNamePreferences.ts](../src/betNamePreferences.ts)と[locales/bet-names-ja.json](../src/locales/bet-names-ja.json)を使い、英語名が標準、カタカナ・日本語名はLABで選びます。文言追加は両言語、金額・変数の置換、狭い幅、アクセシブルなラベルを合わせて確認します。
 
+金額表記は [moneyPreferences.ts](../src/moneyPreferences.ts) が管理します。標準の省略表示と、桁区切り付きの全桁表示をLABで切り替え、`dontwork-money-style-v1`へ保存します。`Settings`やセーブJSONには含めず、ゲーム内の数値・計算・ランキング適格性は変更しません。`money()`がこの設定を参照し、常に省略表記が必要な箇所には`compactMoney()`を使えます。
+
 ## 任意のWorker / D1とfork
 
 [serviceConfig.ts](../src/serviceConfig.ts)が接続の境界です。通常のforkはオンラインサービス・新規プレイの計測設定ともにOFFです。自分の同一配信元のAPIを使うビルドでは`VITE_ENABLE_SERVICES=true`、計測の初期値を変更する場合は別に`VITE_ENABLE_TELEMETRY=true`を指定します。保存済みの計測選択は環境変数で上書きしません。localhost / 開発環境からの計測送信は[Telemetry](../src/api.ts)が抑止します。
@@ -174,6 +181,8 @@ DB変更では、新しいSQLを追加し、APIが使う列・制約・インデ
 | 変更する契約 | 関連する既存テスト |
 | --- | --- |
 | 精算・価格・カタログ・旧セーブ | [engine.test.ts](../src/game/engine.test.ts)、[upgradeDraw.test.ts](../src/game/upgradeDraw.test.ts)、[game/内のreleaseテスト](../src/game/) |
+| 入替案内・一度だけの初回当たり・復帰 | [positionTutorial.test.tsx](../src/positionTutorial.test.tsx)、[spinAssist.test.ts](../src/spinAssist.test.ts) |
+| 全桁金額表示と表示設定の独立性 | [moneyPreferences.test.tsx](../src/moneyPreferences.test.tsx) |
 | 未公開結果、WORK・購入・FLIP、古いタイマー | [presentation.test.ts](../src/presentation.test.ts)、[coinFlip.test.tsx](../src/coinFlip.test.tsx)、[release30.test.tsx](../src/release30.test.tsx) |
 | 30分の締切・一時停止・不変結果・モード保存と解放 | [timeTrial.test.ts](../src/timeTrial.test.ts)、[timeTrialUI.test.tsx](../src/timeTrialUI.test.tsx)、[release30.test.tsx](../src/release30.test.tsx)、[playerAccess.test.tsx](../src/playerAccess.test.tsx) |
 | 排他所有・離席中の保存・時計の巻き戻り | [experience.test.tsx](../src/experience.test.tsx)、[backgroundPlay.test.ts](../src/backgroundPlay.test.ts)、[domainMigration.test.ts](../src/domainMigration.test.ts) |

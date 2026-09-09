@@ -1,4 +1,5 @@
 import {advanceBackground} from "./backgroundPlay";
+import { activatePositionTutorial } from "./game/positionTutorial";
 import { advanceTrial, trialAssets, trialDeadline, pauseTrial, resumeTrial, buyTrialTime, trialActive } from "./game/engine";
 import { appendHistory, MONEY_CEILING, finiteMoney, finish, fuelCapacity, coinUnlocked, nextDistribution, playCoinFlip, applyPositionIntent, samePositions, endJackpot, type PositionIntent, type Run } from "./game/engine";
 
@@ -26,7 +27,9 @@ export type PresentationAction =
 // Keep the simulation and its presentation in one reducer. An unresolved spin
 // is hidden in the very first render, before any animation effect can run.
 export function presentationReducer(state:Presentation,action:PresentationAction):Presentation {
-  const next=reducePresentation(state,action),run=next.run;
+  let next=reducePresentation(state,action);
+  const run=next.run===state.run ? next.run : activatePositionTutorial(next.run);
+  if(run!==next.run)next={...next,run};
   if(!run.trial || run===state.run || run.trial.result || run.id!==state.run.id)return next;
   if(run.cash===state.run.cash && run.spent===state.run.spent && run.spins===state.run.spins && Math.floor(run.trial.elapsedMs/1000)===Math.floor((state.run.trial?.elapsedMs??0)/1000))return next;
   const tail=run.history.at(-1)!;
@@ -204,6 +207,7 @@ export function presentedRun({ run, pending }: Presentation): Run {
     winStreak: before.winStreak,
     lifetimeProfit: before.lifetimeProfit,
     assistUsed: before.assistUsed,
+    secondBetTutorial: before.secondBetTutorial,
     infinityAt: before.infinityAt,
     clearAt: before.clearAt,
     clearActiveMs: before.clearActiveMs,

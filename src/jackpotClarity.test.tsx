@@ -8,7 +8,7 @@ import { setLanguage } from "./i18n";
 import { createProgressSignal, SpinProgress } from "./SpinProgress";
 import { presentationReducer, presentedRun } from "./presentation";
 afterEach(() => setLanguage("ja"));
-const playable = () => setCount({ ...freshRun(), cash: 1e6, peak: 1e6, spent: 100, running: true }, "edge-50", 1);
+const playable = () => setCount({ ...freshRun(), cash: 1e6, peak: 1e6, spent: 100, running: true, secondBetTutorial: "done" }, "edge-50", 1);
 
 it("keeps the remaining spins and cut range alongside each rotating explanation", () => {
   const s = { ...playable(), rushLeft: 18, chain: 4, removed: 10 };

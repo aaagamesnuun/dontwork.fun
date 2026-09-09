@@ -1,4 +1,6 @@
 import { defaultTelemetry } from "../serviceConfig";
+import { moneyStyle } from "../moneyPreferences";
+import { activatePositionTutorial, introductoryBets, type SecondBetTutorial } from "./positionTutorial";
 import { defaultLanguage } from "../i18n";
 import { CASH_RAIN_SETTINGS, SPIN_REVEAL_DEFAULTS } from "../soundPresets";
 import { isBanknoteStyle, type BanknoteStyle } from "../banknotes";
@@ -205,6 +207,7 @@ export interface Run {
   jackpotHigh: boolean;
   spinsSinceJackpot: number | null;
   commonRollExplained: boolean;
+  secondBetTutorial: SecondBetTutorial;
   betLevels: Record<string, number>;
   baccaratRounds: number;
   baccaratResult: { player: number; banker: number; side: "player" | "banker"; wager: number; profit: number } | null;
@@ -407,6 +410,7 @@ export const freshRun = (
   jackpotHigh: false,
   spinsSinceJackpot: 0,
   commonRollExplained: false,
+  secondBetTutorial: "waiting",
   betLevels: {},
   coinEnabled: false, coinUnlockAnnounced: false, coinStake: 10, coinRounds: 0, coinWins: 0, coinWagered: 0, coinPaid: 0, coinResult: null, coinChartHold: null, coinPendingProfit: 0, coinPendingCount: 0,
   baccaratRounds: 0,
@@ -462,7 +466,7 @@ export const freshRun = (
   settings: { ...settings },
   telemetry: defaultTelemetry(),
 });
-export const money = (n: number, decimals = 2): string => {
+export const compactMoney = (n: number, decimals = 2): string => {
   const value = Math.abs(n);
   const sign = n < 0 ? "−" : "";
   if (value >= MONEY_CEILING) return sign + "$1e200+";
@@ -494,6 +498,9 @@ export const money = (n: number, decimals = 2): string => {
     })
   );
 };
+export const money = (n: number, decimals = 2): string => moneyStyle() === "full"
+  ? (n < 0 ? "−" : "") + "$" + Math.abs(n).toLocaleString("en-US", { maximumFractionDigits: decimals })
+  : compactMoney(n, decimals);
 export const duration = (ms: number) => {
   const s = Math.floor(ms / 1000);
   return (
@@ -780,7 +787,7 @@ export function appendHistory(
   return compactHistory([...points, point]);
 }
 export function finish(s: Run): Run {
-  const n = { ...s, peak: Math.max(s.peak, s.cash) };
+  const n = activatePositionTutorial({ ...s, peak: Math.max(s.peak, s.cash) });
   if (!n.trial && n.cash >= TARGET && n.clearAt === null) {
     n.clearAt = Date.now();
     n.clearActiveMs = n.activeMs;
@@ -811,13 +818,21 @@ export function finish(s: Run): Run {
 }
 export function spin(s: Run, forced?: number, elapsed = interval(s)): Run {
   if (!canSpin(s)) return s;
+  s = activatePositionTutorial(s);
   const beforeUnlocked = availableBets(s)
     .filter((b) => unlocked(s, b))
     .map((b) => b.id);
   const baseline = s.portfolio.find(row => row.count > 0 && ["edge-50", "long-edge-50"].includes(row.id));
-  const assistedOpening = forced === undefined && !s.trial && s.settings.spinAssist && s.spins < 5 && s.rushLeft === 0 && baseline;
+  const second = introductoryBets(s)?.second;
+  const firstSecondSpin = s.secondBetTutorial === "active" && second && s.portfolio.some(row => row.id === second.id && row.count > 0);
+  const assistedSecond = forced === undefined && firstSecondSpin && s.settings.spinAssist;
+  const assistedOpening = !assistedSecond && forced === undefined && !s.trial && s.settings.spinAssist && s.spins < 5 && s.rushLeft === 0 && baseline;
   let openingRoll: number | undefined;
-  if (assistedOpening) {
+  if (assistedSecond) {
+    const eligible = Array.from({length:100},(_,i)=>i+1).filter(face => face >= rollFloor(s) && resolve(s,second!,face).payout > 0);
+    const quiet = eligible.filter(face => face <= 90), faces = quiet.length ? quiet : eligible;
+    openingRoll = faces[Math.floor(faces.length / 2)];
+  } else if (assistedOpening) {
     const bet = betById(baseline.id), hit = s.settings.spinAssistSequence[s.spins] === "W";
     const faces = Array.from({length:90},(_,i)=>i+1).filter(face => (resolve(s,bet,face).payout > 0) === hit);
     openingRoll = faces[Math.floor(faces.length / 2)];
@@ -902,6 +917,7 @@ export function spin(s: Run, forced?: number, elapsed = interval(s)): Run {
     persistentRemoved,
     chain,
     spins: s.spins + 1,
+    secondBetTutorial: firstSecondSpin ? "done" : s.secondBetTutorial,
     coinChartHold: null,
     coinPendingProfit: 0, coinPendingCount: 0,
     jackpots: s.jackpots + (jackpot ? 1 : 0),
@@ -1405,6 +1421,12 @@ export function readSave(raw: string | null): Run | null {
       last: null,
     } as Run;
     if (typeof n.settings.spinAssist !== "boolean" || typeof n.settings.spinAssistSequence !== "string" || !/^[WL]{5}$/.test(n.settings.spinAssistSequence)) return null;
+    if (v.secondBetTutorial === undefined) {
+      const second = introductoryBets(n)?.second;
+      n.secondBetTutorial = !second || n.peak >= second.unlock ? "done" : "waiting";
+    }
+    if (!["waiting", "active", "done"].includes(n.secondBetTutorial)) return null;
+    n.secondBetTutorial = activatePositionTutorial(n).secondBetTutorial;
     if (["bit-quest", "pixelland", "cipher", "envision"].includes(n.settings.musicPack)) {
       n.settings.musicPack = "pulse";
       n.settings.music = false;

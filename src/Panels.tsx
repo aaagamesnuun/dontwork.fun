@@ -1,3 +1,4 @@
+import { useMoneyStyle, setMoneyStyle, type MoneyStyle } from "./moneyPreferences";
 import { useBetNameStyle, setBetNameStyle, type BetNameStyle } from "./betNamePreferences";
 import { t as _t, textValue as _text } from "./i18n";
 import { soundPackSettings } from "./soundPresets";
@@ -25,10 +26,12 @@ export function Lab({ s, change, notify, preparePreview, onWorkMode, }: {
     onWorkMode?: (mode: Settings["workMode"], dockToy?: Settings["dockToy"]) => void;
 }) {
     const nameStyle = useBetNameStyle();
+    const numberStyle = useMoneyStyle();
     const [selected, setSelected] = useState<CatalogId>(s.catalog), [reset, setReset] = useState(false), [forced, setForced] = useState(100);
     const settings = (patch: Partial<Settings>) => change((s) => configure(s, patch));
     return (<>
       <label className="setting-row"><span>{_t("ギャンブル名")}</span><select value={nameStyle} onChange={e => setBetNameStyle(e.target.value as BetNameStyle)}><option value="english">{_t("英語 · 標準")}</option><option value="katakana">{_t("日本語 · 金融用語風")}</option></select></label>
+      <label className="setting-row"><span>{_t("金額の表示")}</span><select value={numberStyle} onChange={e => setMoneyStyle(e.target.value as MoneyStyle)}><option value="compact">{_t("省略 · $1K / $1M（標準）")}</option><option value="full">{_t("全桁 · $1,000 / $1,000,000")}</option></select></label>
       <section className="settings-section"><h3>{_t("スピン補助機能")}</h3>
         <label className="setting-row"><span>{_t("スピン補助機能")}</span><input type="checkbox" disabled={!!s.trial} checked={s.settings.spinAssist} onChange={e => settings({spinAssist:e.target.checked})}/></label>
         <p className="setting-note">{_t("通常モードの最初の5スピン。BASELINEをセットしているときに適用します。")}</p>
