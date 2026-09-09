@@ -66,7 +66,10 @@ export function impact(
       illumination.set(flash,glow);
       glow.onfinish=()=>{if(illumination.get(flash)===glow)illumination.delete(flash);};
     }
-    if(typeof surface.animate==="function"){
+    // On phones the full-screen opacity layer supplies the flash without
+    // filtering/rasterizing the entire live game again on every hit.
+    const overlayOnly = !!flash && typeof matchMedia === "function" && matchMedia("(pointer: coarse)").matches;
+    if(!overlayOnly && typeof surface.animate==="function"){
       // Brightness is independent of shaking: repeated WORK cannot cut a win's light short.
       const filter=illumination.has(surface) && typeof getComputedStyle==="function"?getComputedStyle(surface).filter:"brightness(1)";
       illumination.get(surface)?.cancel();

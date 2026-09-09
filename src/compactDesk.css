@@ -116,8 +116,8 @@
  .app.desk-layout {--header-h:40px;--balance-h:50px;--dock-h:67px;--news-h:44px}
 }
 @media(max-height:540px){
- .app.desk-layout {height:auto;min-height:100dvh;grid-template-rows:40px 44px var(--balance-h) minmax(340px,1fr) 67px}
- .app.desk-layout.news-bottom {grid-template-rows:40px var(--balance-h) minmax(340px,1fr) 44px 67px}
+ .app.desk-layout {height:auto;min-height:100dvh;grid-template-rows:var(--header-h) var(--news-h) var(--balance-h) minmax(340px,1fr) var(--dock-h)}
+ .app.desk-layout.news-bottom {grid-template-rows:var(--header-h) var(--balance-h) minmax(340px,1fr) var(--news-h) var(--dock-h)}
 }
 @media(prefers-reduced-motion:reduce){.guide-target {animation:none!important}}
 .reduced-motion .guide-target {animation:none!important}

@@ -11,3 +11,52 @@
 
 .language-switch{display:flex;gap:8px;grid-column:1/-1}.language-switch button{flex:1}.language-switch [aria-pressed=true]{background:#465a24;border-color:#b5ed70;color:#f5ffe4}
 html[lang=en] .spin-result small{font-size:9px}html[lang=en] .bet-card h3{letter-spacing:0}
+
+/* The brand and dock share one responsive sizing contract. */
+.app.desk-layout {--dock-base:78px;--dock-h:calc(var(--dock-base) + max(0px, env(safe-area-inset-bottom, 0px) - 8px))}
+.app .topbar {gap:8px;justify-content:space-between}
+.app .topbar .wordmark {display:inline-flex;align-items:center;gap:6px;flex-shrink:0;line-height:1}
+.app .topbar .wordmark .brand-icon {display:block;width:34px;height:34px;flex:0 0 34px;object-fit:contain}
+.app .topbar nav {display:flex;align-items:center;gap:2px;margin-left:auto}
+.app.desk-layout .play-dock {grid-template-columns:minmax(0,1fr) minmax(0,1.25fr) minmax(0,1.05fr);gap:6px}
+.app.desk-layout .play-dock>button,.app.desk-layout .play-dock>label {box-sizing:border-box;min-width:0;padding-inline:6px}
+.app .auto-control {display:flex;flex-direction:column;align-items:stretch;justify-content:center}
+.app .auto-control>span {display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:3px 5px;width:100%;min-width:0}
+.app .auto-label {font:600 13px/1.1 var(--mono);white-space:nowrap}
+.app .auto-control input.native-switch {margin:0;flex:0 0 auto;max-width:100%}
+.app .auto-control .trial-clock {flex-wrap:wrap;justify-content:center;gap:2px 6px}
+.app .auto-control .trial-clock>small {display:none}
+.app.desk-layout.trial-mode {--dock-base:92px}
+.app .news-strip.jackpot-news {gap:8px;padding-block:5px}
+.app.rush-mode,.app.capture-mode.desk-layout.rush-mode {--news-h:84px}
+.app .jackpot-news-body {flex:1;min-width:0;display:flex;flex-direction:column;gap:4px}
+.app .news-strip .jackpot-news-rule {margin:0;white-space:normal;overflow:visible;font:500 12px/1.35 system-ui,sans-serif;color:#ffe6a1}
+.app .news-strip.jackpot-news>button {position:static;transform:none;align-self:center;min-width:28px;width:28px;height:28px}
+.app .news-strip .rush-remaining {gap:5px}
+.app .news-strip .rush-remaining>small {font-size:11px}
+.app .news-strip.jackpot-news .jackpot-counter {display:none}
+@media(max-width:759px){
+ .app.desk-layout {--dock-base:80px}
+ .app.desk-layout.trial-mode {--dock-base:94px}
+ .app .topbar {gap:6px}
+ .app .topbar nav {gap:0}
+ .app .topbar .contact-button,.app .topbar .menu-button {box-sizing:border-box;width:36px;min-width:36px;height:40px;padding:6px}
+ .app .topbar .wordmark .brand-name {font-size:18px}
+ .app .topbar .wordmark .brand-icon {width:32px;height:32px;flex-basis:32px}
+ .app.desk-layout .dock-cycle>span {font-size:12px}
+ .app.rush-mode .news-strip>.news-label {display:none}
+}
+@media(max-width:360px){
+ .app .topbar {gap:4px}
+ .app .topbar .wordmark {gap:4px}
+ .app .topbar .wordmark .brand-name {font-size:14px}
+ .app .topbar .contact-button,.app .topbar .menu-button {width:32px;min-width:32px;padding:5px}
+ .app.desk-layout .dock-cycle>span {font-size:11px}
+ .app.desk-layout {--dock-base:82px}
+ .app.desk-layout.trial-mode {--dock-base:98px}
+}
+@media(pointer:coarse){
+ /* Retain the artwork and slow flight, without hundreds of filtered layers. */
+ .particle-cash,.particle-cash>img {filter:none}
+ .particle-confetti {box-shadow:none}
+}

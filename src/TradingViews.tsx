@@ -1,10 +1,13 @@
-import { t as _t, textValue as _text } from "./i18n";
+import { t as _t, textValue as _text, useLanguage } from "./i18n";
 import { ChartBackdrop } from "./ChartBackdrop";
-import { useEffect, useState, useId } from "react";
+import { useEffect, useState, useId, useMemo, memo } from "react";
 import { duration, money, TRIAL_MS, trialAssets, type Run, type Settings } from "./game/engine";
 import { barFraction, framePending, type SweepSnapshot } from "./game/sweep";
 import { startSweep } from "./sweepMotion";
 import { createSweepSignal, useSweepReading, SweepReadout, type SweepSignal } from "./SweepReadout";
+const SWEEP_TICKS = [1, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100];
+const REEL_GRID = <div className="payoff-grid-lines" aria-hidden="true">{Array.from({ length: 99 }, (_, i) => <span key={i} className={SWEEP_TICKS.includes(i + 1) ? "major" : ""} style={{ left: `${i + .5}%` }}/>)}</div>;
+const CHART_GRID = <>{Array.from({ length: 99 }, (_, i) => <line key={`tick-${i}`} className={`sweep-vertical-tick ${SWEEP_TICKS.includes(i + 1) ? "major" : ""}`} x1={12 + (i + .5) * 9.76} x2={12 + (i + .5) * 9.76} y1="7" y2="173" vectorEffect="non-scaling-stroke"/>)}</>;
 export type SweepFrame = {
     id: number;
     roll: number;
@@ -28,7 +31,7 @@ export function GrowthStrip({ growth }: {
         </div>)}
     </>);
 }
-export function PayoffSweep({ values, frame, reduced, snapshot, style = "classic", motion = "classic", jackpotRule = "combined", jackpotHigh = false, signal }: {
+export const PayoffSweep = memo(function PayoffSweep({ values, frame, reduced, snapshot, style = "classic", motion = "classic", jackpotRule = "combined", jackpotHigh = false, signal }: {
     values: (number | null)[];
     frame: SweepFrame | null;
     reduced: boolean;
@@ -39,6 +42,7 @@ export function PayoffSweep({ values, frame, reduced, snapshot, style = "classic
     jackpotHigh?: boolean;
     signal?: SweepSignal;
 }) {
+    const uiLanguage = useLanguage();
     const [localSignal] = useState(createSweepSignal);
     const channel = signal ?? localSignal;
     const { cursor: animatedCursor, moving: sweeping, slowing } = useSweepReading(channel);
@@ -47,15 +51,15 @@ export function PayoffSweep({ values, frame, reduced, snapshot, style = "classic
         ? (frame?.snapshot ?? snapshot)
         : snapshot;
     const displayed = frame?.values ?? values;
-    const bars = current?.bars ??
-        displayed.map((v) => v === null ? null : { payout: Math.max(0, v), cost: Math.max(0, -v) });
+    const bars = useMemo(() => current?.bars ??
+        displayed.map((v) => v === null ? null : { payout: Math.max(0, v), cost: Math.max(0, -v) }), [current?.bars, displayed]);
     const scale = current?.scale ?? Math.max(1, ...displayed.map((v) => Math.abs(v ?? 0)));
     const growth = current?.growth ?? [];
     const cursor = signal ? animatedCursor : frame?.settled ? frame.roll : animatedCursor;
     const moving = !reduced && (signal ? sweeping : !frame?.settled && sweeping);
     const overflow = bars.some((v) => v && (v.payout > scale || v.cost > scale));
     const readout = <SweepReadout cursor={cursor} moving={moving}/>;
-    const ticks = [1, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100];
+    const ticks = SWEEP_TICKS;
     const jackpotLabel = "JACKPOT";
     const anticipating = jackpotRule !== "hundred" && jackpotHigh;
     const jackpotPosition = anticipating ? 91 : 100;
@@ -66,13 +70,7 @@ export function PayoffSweep({ values, frame, reduced, snapshot, style = "classic
             ? _t("{0}: カット済み", i + 1) : current
             ? _t("{0}: 配当 {1} / 支払 {2} / 純損益 {3}", i + 1, money(v.payout), money(v.cost), money(v.payout - v.cost)) : `${i + 1}: ${money(displayed[i] ?? 0)}`;
     };
-    return (<section className={`sweep-panel sweep-integrated ${anticipating ? "jackpot-ready" : ""} ${anticipating && moving ? "jackpot-suspense" : ""} ${growth.length ? "with-growth" : ""}`}>
-      <GrowthStrip growth={growth}/>
-      {style !== "chart" ? (<div className="classic-payoff">
-          <div className={`payoff-reel ${moving ? "is-spinning" : ""} ${slowing ? "is-slowing" : ""} ${reduced ? "no-sweep-motion" : ""}`} role="img" aria-label={_t("出目1から100。青はプラス、赤はマイナス。同じ固定尺度の金額を表示。灰色はカット済み。{0}", overflow ? _t("山形は枠の上限を超えた金額。") : "")}>
-            {readout}{highBand}
-            <div className="payoff-grid-lines" aria-hidden="true">{Array.from({ length: 99 }, (_, i) => <span key={i} className={ticks.includes(i + 1) ? "major" : ""} style={{ left: `${i + .5}%` }}/>)}</div>
-            <div className={style === "net" ? "payoff-reel-bars net-bars" : "payoff-reel-bars flow-bars"}>
+    const reelBars = useMemo(() => (<div className={style === "net" ? "payoff-reel-bars net-bars" : "payoff-reel-bars flow-bars"}>
               {bars.map((v, i) => (<i key={i} className={v === null ? "is-cut" : style === "net" ? (v.payout - v.cost >= 0 ? "net-profit" : "net-loss") : "flow-column"} style={style === "net" && v !== null ? { height: `${barFraction(Math.abs(v.payout - v.cost), scale) * 100}%` } : undefined} title={describe(i)}>
                   {v !== null && style !== "net" && (<>
                       <span className={`flow-payout ${v.payout > scale ? "clipped" : ""}`} style={{
@@ -83,7 +81,26 @@ export function PayoffSweep({ values, frame, reduced, snapshot, style = "classic
                     }}/>
                     </>)}
                 </i>))}
-            </div>
+            </div>), [bars, scale, style, current, displayed, uiLanguage]);
+    const chartBars = useMemo(() => <>{bars.map((v, i) => {
+                const ph = barFraction(v?.payout ?? 0, scale) * 78, ch = barFraction(v?.cost ?? 0, scale) * 78;
+                return (<g key={i}>
+                  <title>{describe(i)}</title>
+                  {v === null ? (<rect x={12 + i * 9.76} y="88" width="7.5" height="4" fill="#38413b"/>) : (<>
+                      <rect x={12 + i * 9.76} y={90 - ph} width="7.5" height={ph} fill="#70b8ff"/>
+                      <rect x={12 + i * 9.76} y="90" width="7.5" height={ch} fill="#ff756e"/>
+                      {v.payout > scale && (<path d={`M${12 + i * 9.76} 17l3.75 -5l3.75 5`} fill="none" stroke="#fff"/>)}
+                      {v.cost > scale && (<path d={`M${12 + i * 9.76} 163l3.75 5l3.75 -5`} fill="none" stroke="#fff"/>)}
+                    </>)}
+                </g>);
+            })}</>, [bars, scale, current, displayed, uiLanguage]);
+    return (<section className={`sweep-panel sweep-integrated ${anticipating ? "jackpot-ready" : ""} ${anticipating && moving ? "jackpot-suspense" : ""} ${growth.length ? "with-growth" : ""}`}>
+      <GrowthStrip growth={growth}/>
+      {style !== "chart" ? (<div className="classic-payoff">
+          <div className={`payoff-reel ${moving ? "is-spinning" : ""} ${slowing ? "is-slowing" : ""} ${reduced ? "no-sweep-motion" : ""}`} role="img" aria-label={_t("出目1から100。青はプラス、赤はマイナス。同じ固定尺度の金額を表示。灰色はカット済み。{0}", overflow ? _t("山形は枠の上限を超えた金額。") : "")}>
+            {readout}{highBand}
+            {REEL_GRID}
+            {reelBars}
             <div className="payoff-cursor-track">
               <span className="classic-jackpot-line" style={{ left: `${jackpotPosition - .5}%`, right: "auto" }}>
                 <span>{jackpotLabel}</span>
@@ -96,27 +113,16 @@ export function PayoffSweep({ values, frame, reduced, snapshot, style = "classic
           {readout}{highBand}
           <span className="chart-jackpot-label" style={{ right: `calc(10px + ${100 - (12 + (jackpotPosition - .5) * 9.76) / 10}%)` }} aria-hidden="true">{jackpotLabel}</span>
           <svg viewBox="0 0 1000 180" preserveAspectRatio="none" role="img" aria-label={_t("出目1から100。青は配当、赤は支払。同じ固定尺度の金額バー。")}>
-            {Array.from({ length: 99 }, (_, i) => <line key={`tick-${i}`} className={`sweep-vertical-tick ${ticks.includes(i + 1) ? "major" : ""}`} x1={12 + (i + .5) * 9.76} x2={12 + (i + .5) * 9.76} y1="7" y2="173" vectorEffect="non-scaling-stroke"/>)}
+            {CHART_GRID}
             {[45, 90, 135].map((y) => (<path key={y} d={`M12 ${y}H988`} className="sweep-grid"/>))}
-            {bars.map((v, i) => {
-                const ph = barFraction(v?.payout ?? 0, scale) * 78, ch = barFraction(v?.cost ?? 0, scale) * 78;
-                return (<g key={i}>
-                  <title>{describe(i)}</title>
-                  {v === null ? (<rect x={12 + i * 9.76} y="88" width="7.5" height="4" fill="#38413b"/>) : (<>
-                      <rect x={12 + i * 9.76} y={90 - ph} width="7.5" height={ph} fill="#70b8ff"/>
-                      <rect x={12 + i * 9.76} y="90" width="7.5" height={ch} fill="#ff756e"/>
-                      {v.payout > scale && (<path d={`M${12 + i * 9.76} 17l3.75 -5l3.75 5`} fill="none" stroke="#fff"/>)}
-                      {v.cost > scale && (<path d={`M${12 + i * 9.76} 163l3.75 5l3.75 -5`} fill="none" stroke="#fff"/>)}
-                    </>)}
-                </g>);
-            })}
+            {chartBars}
             <line x1={12 + (jackpotPosition - .5) * 9.76} x2={12 + (jackpotPosition - .5) * 9.76} y1="7" y2="173" stroke="#ffd166" strokeWidth="2"/>
             {cursor !== null && (<line className="sweep-cursor" x1={12 + (cursor - 0.5) * 9.76} x2={12 + (cursor - 0.5) * 9.76} y1="7" y2="173"/>)}
           </svg>
           <div className="payoff-scale chart-scale" aria-hidden="true">{ticks.map(n => <span key={n} style={{ left: `${(12 + (n - .5) * 9.76) / 10}%` }}>{n}</span>)}</div>
         </div>)}
     </section>);
-}
+});
 export function chartGeometry(s: Run, range: "recent" | "all" = "recent") {
     const time = !!s.trial || s.settings.chartAxis === "time";
     const raw = s.coinChartHold ?? s.history;
@@ -173,15 +179,18 @@ export function chartGeometry(s: Run, range: "recent" | "all" = "recent") {
         points: coords.map((p) => `${p.x},${p.y}`).join(" "),
     };
 }
-export function WealthChart({ s, summary = false }: {
+export const WealthChart = memo(function WealthChart({ s, summary = false }: {
     s: Run;
     summary?: boolean;
 }) {
+    useLanguage();
     const fillId = useId();
     const [range, setRange] = useState<"recent" | "all">("recent");
     useEffect(() => setRange("recent"), [s.id, s.settings.chartWindowSpins]);
     const canExpand = !s.trial && !summary && s.spins > s.settings.chartWindowSpins;
-    const { start, end, coords, points, time, recordedCash, upgrades, coins, ceiling } = chartGeometry(summary ? { ...s, coinChartHold: null } : s, summary ? "all" : canExpand ? range : "recent"), last = coords[coords.length - 1];
+    const geometry = useMemo(() => chartGeometry(summary ? { ...s, coinChartHold: null } : s, summary ? "all" : canExpand ? range : "recent"),
+        [s.history, s.coinChartHold, s.spins, s.trial, s.trial ? s.cash : null, s.trial ? s.spent : null, s.settings.chartAxis, s.settings.chartWindowSpins, summary, canExpand, range]);
+    const { start, end, coords, points, time, recordedCash, upgrades, coins, ceiling } = geometry, last = coords[coords.length - 1];
     return (<section className="wealth-chart">
       <div className="wealth-plot">
         {!summary && <ChartBackdrop s={s} recordedCash={recordedCash}/>}
@@ -223,4 +232,4 @@ export function WealthChart({ s, summary = false }: {
         </div>
       </div>
     </section>);
-}
+});

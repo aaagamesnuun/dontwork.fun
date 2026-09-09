@@ -37,13 +37,11 @@
 @media(max-width:759px){
  .topbar nav {gap:0}
  .wordmark .brand-name {font-size:clamp(14px,4vw,19px)}
- .wordmark .brand-icon {width:20px;height:20px}
  .balance-result {gap:8px}
  .balance-header .balance-result .pnl {font-size:clamp(20px,5.4vw,30px)}
 }
 @media(max-width:390px){
  .topbar .wordmark {gap:3px}
- .topbar .wordmark .brand-icon {display:none}
  .topbar .contact-button,.topbar .menu-button {width:36px;min-width:36px;padding:7px}
  .balance-result {gap:5px}
  .desk-layout .auto-control .native-switch {flex-shrink:0}

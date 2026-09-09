@@ -1,3 +1,5 @@
+import { JackpotNews } from "./JackpotNews";
+import { createProgressSignal, SpinProgress } from "./SpinProgress";
 import { useBetNameStyle } from "./betNamePreferences";
 import { MusicSettings } from "./MusicSettings";
 import { useLanguage, setLanguage } from "./i18n";
@@ -297,7 +299,9 @@ export default function App({ onOpenDesk, studio }: {
     const setS = useCallback((update: (run: Run) => Run) => dispatch({ type: "change", update: studio ? run => recordingRun(update(run)) : update }), [studio]);
     useEffect(() => { if (studio?.controlsOpen)
         setS(run => ({ ...run, running: false })); }, [studio?.controlsOpen, setS]);
-    const [progress, setProgress] = useState(0), [tab, setTab] = useState<DockPanel>("spin"), [frame, setFrame] = useState<SweepFrame | null>(null), [detailBet, setDetailBet] = useState<string | null>(null), [modal, setModal] = useState<"trial-mode" | "trial-result" | "trial-ranking" | "common-roll" | "jackpot-help" | "news-help" | "intro" | "install" | "pwa" | "help" | "lab" | "sound" | "settings" | "feedback" | "rating" | "stats" | "leaderboard" | "clear" | "restart" | "presets" | "draft" | "menu" | "bet" | null>(() => {
+    const [progressSignal] = useState(createProgressSignal);
+    const setProgress = progressSignal.update;
+    const [tab, setTab] = useState<DockPanel>("spin"), [frame, setFrame] = useState<SweepFrame | null>(null), [detailBet, setDetailBet] = useState<string | null>(null), [modal, setModal] = useState<"trial-mode" | "trial-result" | "trial-ranking" | "common-roll" | "jackpot-help" | "news-help" | "intro" | "install" | "pwa" | "help" | "lab" | "sound" | "settings" | "feedback" | "rating" | "stats" | "leaderboard" | "clear" | "restart" | "presets" | "draft" | "menu" | "bet" | null>(() => {
         if (studio)
             return null;
         if (needsPwa())
@@ -819,7 +823,7 @@ export default function App({ onOpenDesk, studio }: {
         if (!media || !s.settings.backgroundPlay)
             return;
         if (typeof MediaMetadata !== "undefined")
-            media.metadata = new MediaMetadata({ title: "dontwork.fun", artist: _t("AUTO · スピンの音"), artwork: [{ src: new URL("/icons/icon-512-dw.png", location.href).href, sizes: "512x512", type: "image/png" }] });
+            media.metadata = new MediaMetadata({ title: "dontwork.fun", artist: _t("AUTO · スピンの音"), artwork: [{ src: new URL("/icons/icon-512-dw-arrow.png", location.href).href, sizes: "512x512", type: "image/png" }] });
         const pause = () => { if (state.current.trial && !state.current.trial.paused) {
             toggleTrial();
             return;
@@ -1364,15 +1368,13 @@ export default function App({ onOpenDesk, studio }: {
                   <small>{_t("スピン周期")}</small><b>{_t("{0}秒", (interval(shown) / 1000).toFixed(2))}</b>
                 </span>
               </div>
-              <div className="next-spin-track">
-                <i style={{ width: `${progress * 100}%` }}/>
-              </div>
+              <SpinProgress signal={progressSignal}/>
             </section>);
     const news = (<div className={`news-strip ${rush ? "jackpot-news" : ""} ${guide.urgent ? "needs-action" : ""}`} role="status" aria-live={guide.urgent ? "polite" : "off"}>
       <span className="news-label">{_text(rush ? isInfinite(shown) ? "INFINITY JACKPOT" : "JACKPOT" : guide.label)}</span>
-      {rush ? <p className="rush-remaining"><strong>{isInfinite(shown) ? "∞" : shown.rushLeft.toLocaleString()}</strong><span>{_t("スピン残り")}</span><small><span>{_t("{0}連鎖{1}", shown.chain, shown.running ? "" : _t(" · AUTOで再開"))}</span><span>{rollFloor(shown) > 1 ? _t("1〜{0}をカット", rollFloor(shown) - 1) : _t("カットなし")}</span></small></p> : <p key={guide.key}>{_text(guide.text)}</p>}
+      {rush ? <JackpotNews s={shown} tick={tipTick}/> : <p key={guide.key}>{_text(guide.text)}</p>}
       {shown.settings.showJackpotCounter && <small className="jackpot-counter">{shown.spinsSinceJackpot === null ? _t("次のJPから計測") : _t("{0} {1}回", shown.jackpots ? _t("前回JPから") : _t("開始から"), shown.spinsSinceJackpot)}</small>}
-      {!rush && <button aria-label={_t("このニュースの説明")} onClick={() => { setNewsDetail({ ...guide }); setModal("news-help"); }}>?</button>}
+      <button aria-label={_t("このニュースの説明")} onClick={() => { if (rush) setModal("jackpot-help"); else { setNewsDetail({ ...guide }); setModal("news-help"); } }}>?</button>
     </div>);
     if (!releaseCheck.checked || releaseCheck.latest)
         return <ReleaseNotice check={releaseCheck}/>;
@@ -1610,7 +1612,7 @@ export default function App({ onOpenDesk, studio }: {
         </button>}
         <label className={`auto-control ${shown.running ? "on" : ""} ${guide.target === "auto" ? "guide-target" : ""}`} data-ui-cue="auto">
           <span>
-            AUTO{" "}
+            <b className="auto-label">AUTO</b>
             <NativeSwitch label="AUTO" checked={shown.running} disabled={shown.trial ? !!shown.trial.result : !shown.portfolio.length || (!desk && shown.spins === 0 && !shown.running && tab !== "spin")} tactile={shown.settings.haptics} onChange={(running) => shown.trial ? toggleTrial() : change((shown) => ({
             ...shown,
             running,

@@ -16,7 +16,7 @@
   "{0} 標準では20回のジャックポットスピンが始まる。": "{0} A standard Jackpot starts with 20 spins.",
   "100が出るか、91以上を2回連続で引くとジャックポット。90以下で連続判定はリセット。": "Roll 100, or 91+ twice in a row, to trigger a Jackpot. A roll of 90 or lower resets the streak.",
   "91以上を2回連続で引くとジャックポット。90以下でリセット。91以上が続く間は、2回目以降毎回発動。": "Roll 91+ twice in a row to trigger a Jackpot. A roll of 90 or lower resets the streak. Every consecutive 91+ after the first triggers another Jackpot.",
-  "100が出るとジャックポット。": "Roll 100 to trigger a Jackpot.",
+  "100が出るとジャックポット。": "Roll 100 to trigger JACKPOT.",
   "標準では20回のジャックポットスピンが始まる。": "A standard Jackpot starts with 20 spins.",
   "ジャックポットが重なると、残り回数を最大値まで補充して連鎖が続く。": "Another Jackpot refills your remaining spins up to the grant amount, keeping the chain alive.",
   "カット量は未強化なら0。強化後は、発動するたびその分だけ低い出目をカット。連鎖が終わるとカットは元に戻る。": "Roll Cut starts at 0. After upgrading it, each Jackpot cuts that many low rolls. The cuts reset when the chain ends.",
@@ -1048,5 +1048,9 @@
   "スピン補助機能": "Spin assistance",
   "通常モードの最初の5スピン。BASELINEをセットしているときに適用します。": "Applies to the first five normal-mode spins while BASELINE is equipped.",
   "{0}回目": "Spin {0}",
-  "通常時をOFF、ジャックポット中を「流す」にすると、当選した瞬間から音楽が始まります。": "Keep normal BGM off and choose Play during jackpots to start music when a jackpot hits."
+  "通常時をOFF、ジャックポット中を「流す」にすると、当選した瞬間から音楽が始まります。": "Keep normal BGM off and choose Play during jackpots to start music when a jackpot hits.",
+  "100、または91以上が2回連続でジャックポット。": "100 or two consecutive 91+ rolls → JACKPOT.",
+  "91以上が2回連続でジャックポット。90以下でリセット。": "Two consecutive 91+ rolls → JACKPOT. 90 or lower resets.",
+  "再発動すると残り回数を最大まで補充。連鎖が続く！": "Hit JACKPOT again to refill spins and keep the chain going!",
+  "91以上が出た！ 次も91以上ならジャックポット。90以下でリセット。": "91+ rolled! Another 91+ triggers JACKPOT. 90 or lower resets the streak."
 }

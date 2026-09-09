@@ -11,6 +11,10 @@ export interface Guidance {
     upgrade?: Upgrade | "gacha";
 }
 export const visibleBets = (s: Run) => availableBets(s).filter((b) => unlocked(s, b));
+export function jackpotCondition(rule: Run["settings"]["jackpotRule"]) {
+    return rule === "combined" ? _t("100、または91以上が2回連続でジャックポット。") :
+        rule === "double-high" ? _t("91以上が2回連続でジャックポット。90以下でリセット。") : _t("100が出るとジャックポット。");
+}
 export function unlockedSince(before: Run, after: Run) {
     if (before.id !== after.id || before.catalog !== after.catalog)
         return [];
@@ -50,6 +54,10 @@ export function guidance(s: Run, tick = 0, tab: "spin" | "positions" | "upgrades
         return result("auto", s.rushLeft > 0
             ? _t("{0}が待機中。AUTOをONにして再開しよう。", isInfinite(s) ? "INFINITY JACKPOT" : "JACKPOT") : s.spins === 0
             ? _t("準備完了。AUTOをONにすると、セットしたギャンブルが自動で回る。") : _t("AUTOが停止中。ONにするとスピンを再開できる。"), "auto");
+    if (s.jackpotHigh && s.settings.jackpotRule !== "hundred")
+        return result("jackpot-ready", _t("91以上が出た！ 次も91以上ならジャックポット。90以下でリセット。"), null, "JACKPOT", false);
+    if (s.jackpots > 0 && s.spinsSinceJackpot !== null && s.spinsSinceJackpot <= 3)
+        return result("jackpot-recap", jackpotCondition(s.settings.jackpotRule), null, "JACKPOT", false);
     if (s.spent === 0 && s.spins > 0 && (s.settings.upgradeTutorial === "scripted" ? s.spins >= 5 : s.peak >= 100)) {
         const upgrade = s.settings.upgradeMode === "gacha" ? "gacha" :
             (["speed", ...UPGRADES.filter(u => u !== "speed")] as Upgrade[]).find(u => upgradeUnlocked(s, u) && upgradePrice(s, u) !== null);
@@ -64,6 +72,8 @@ export function guidance(s: Run, tick = 0, tab: "spin" | "positions" | "upgrades
     const next = availableBets(s)
         .filter((b) => !unlocked(s, b))
         .sort((a, b) => a.unlock - b.unlock)[0];
+    if (s.jackpots === 0 && s.spins >= 5 && s.spins < 10)
+        return result("jackpot-intro", jackpotCondition(s.settings.jackpotRule), null, "JACKPOT", false);
     if (next && tick % 2 === 0)
         return result("goal", _t("次の目標は総資産{0}。到達すると、新しいギャンブルが使える。", money(next.unlock)), null, "GOAL", false);
     const tips = [

@@ -91,7 +91,7 @@ export function InstallInstructions() {
 export function InstallWelcome({ pwa }: {
     pwa: ReturnType<typeof usePwa>;
 }) {
-    return <div className="install-welcome"><img src="/icons/icon-192-dw.png" alt="dontwork.fun" width="64" height="64"/><p className="large-copy">{_t("ホーム画面への追加が必須です。")}</p><p>{_t("追加したアイコンから起動すると、ゲームが始まります。")}</p>
+    return <div className="install-welcome"><img src="/icons/icon-192-dw-arrow.png" alt="dontwork.fun" width="64" height="64"/><p className="large-copy">{_t("ホーム画面への追加が必須です。")}</p><p>{_t("追加したアイコンから起動すると、ゲームが始まります。")}</p>
  {pwa.canInstall && <button className="primary intro-start" onClick={() => void pwa.install()}>{_t("ホーム画面に追加")}</button>}
  <InstallInstructions />{pwa.installError && <p role="status">{pwa.installError}</p>}
  </div>;

@@ -37,7 +37,7 @@ export async function notifyJackpot(run: Run) {
         }
         await registration.showNotification(run.last.infinity ? "INFINITY JACKPOT · dontwork.fun" : "JACKPOT! · dontwork.fun", {
             body: run.last.infinity ? _t("世界は100だけに。タップしてゲームへ。") : _t("残り{0}スピン。タップしてジャックポットへ。", run.rushLeft),
-            icon: "/icons/icon-192-dw.png", badge: "/icons/icon-192-dw.png", tag: `bebullish-jackpot-${run.id}`, renotify: true, data: { url: "/play", clientId },
+            icon: "/icons/icon-192-dw-arrow.png", badge: "/icons/icon-192-dw-arrow.png", tag: `bebullish-jackpot-${run.id}`, renotify: true, data: { url: "/play", clientId },
         } as NotificationOptions & {
             renotify: boolean;
         });
@@ -75,7 +75,7 @@ export async function notifyBigChange(before: Run, after: Run) {
         const registration = await navigator.serviceWorker.getRegistration();
         if (!registration?.active || !document.hidden)
             return false;
-        await registration.showNotification("dontwork.fun", { body: _t("{0}${1} · 資産が大きく動きました。", delta >= 0 ? "+" : "", Math.round(delta).toLocaleString()), icon: "/icons/icon-192-dw.png", tag: "dontwork-big-change", silent: true, data: { url: "/play" } });
+        await registration.showNotification("dontwork.fun", { body: _t("{0}${1} · 資産が大きく動きました。", delta >= 0 ? "+" : "", Math.round(delta).toLocaleString()), icon: "/icons/icon-192-dw-arrow.png", tag: "dontwork-big-change", silent: true, data: { url: "/play" } });
         lastBigNotice = Date.now();
         return true;
     }

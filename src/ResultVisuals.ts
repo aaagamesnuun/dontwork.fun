@@ -9,9 +9,14 @@ export { cashRainPlan } from "./cashPlan";
 const active = new WeakMap<HTMLElement, Set<HTMLElement>>();
 const last = new WeakMap<HTMLElement, number>();
 const lastJackpot = new WeakMap<HTMLElement, number>();
-const VISUAL_LIMIT = 328, CASH_LIMIT = 216;
+const VISUAL_LIMIT = 328;
+export const visualBudget = (mobile: boolean) => mobile
+  ? { total: 164, cash: 96, confetti: 36, batch: 8 }
+  : { total: VISUAL_LIMIT, cash: 216, confetti: 72, batch: 14 };
+const mobileEffects = () => typeof matchMedia !== "undefined" && matchMedia("(pointer: coarse)").matches;
+type FlightBox = Pick<DOMRect, "left" | "top" | "width" | "height">;
 type CashOrigin = { x: number; y: number; width: number };
-type Rain = { queue: CashToken[]; energy: number; festival: boolean; tier: number; serial: number; accentAt: number; banknoteStyle: BanknoteStyle; motion: Settings["cashMotion"]; origin?: CashOrigin; timer?: ReturnType<typeof setTimeout> };
+type Rain = { budget: ReturnType<typeof visualBudget>; queue: CashToken[]; energy: number; festival: boolean; tier: number; serial: number; accentAt: number; banknoteStyle: BanknoteStyle; motion: Settings["cashMotion"]; origin?: CashOrigin; timer?: ReturnType<typeof setTimeout> };
 const rain = new WeakMap<HTMLElement, Rain>();
 export function setRainBanknote(host: HTMLElement | null, style: BanknoteStyle) {
   const stream = host && rain.get(host);
@@ -38,7 +43,7 @@ export function stopVisuals(host: HTMLElement | null) {
 function animateParticle(host: HTMLElement, node: HTMLElement, frames: Keyframe[], duration: number, easing="linear", delay=0, limit=VISUAL_LIMIT) {
   const nodes=active.get(host)??new Set<HTMLElement>(); active.set(host,nodes);
   // Let each particle finish falling; new wins refill the available space.
-  if (nodes.size>=limit) return null;
+  if (nodes.size>=Math.min(limit, rain.get(host)?.budget.total ?? limit)) return null;
   nodes.add(node); host.append(node);
   const remove=()=>{node.querySelectorAll("*").forEach(child=>child.getAnimations?.().forEach(a=>a.cancel())); node.remove(); nodes.delete(node);};
   if (!node.animate) { remove(); return null; }
@@ -107,8 +112,8 @@ export function cashOrigin(host: Pick<DOMRect,"left"|"top"|"width"|"height">, so
   };
 }
 
-function moneyFlight(host:HTMLElement,node:HTMLElement,energy:number,motion:Settings["cashMotion"]="rain",source?:CashOrigin) {
-  const rect=host.getBoundingClientRect();
+function moneyFlight(host:HTMLElement,node:HTMLElement,energy:number,motion:Settings["cashMotion"]="rain",source?:CashOrigin, box?:FlightBox) {
+  const rect=box ?? host.getBoundingClientRect();
   const angle=(Math.random()-.5)*100,turn=(Math.random()-.5)*170;
   if(motion==="burst") {
     const origin=cashOrigin(rect,source),spread=Math.min(rect.width*.42,180)*Math.min(1.25,Math.sqrt(energy));
@@ -136,12 +141,12 @@ function moneyFlight(host:HTMLElement,node:HTMLElement,energy:number,motion:Sett
   ],5200+Math.random()*1800);
 }
 
-function fallingParticle(host:HTMLElement,style:string,energy:number,index:number,stream?:Rain) {
+function fallingParticle(host:HTMLElement,style:string,energy:number,index:number,stream?:Rain,box?:FlightBox) {
   const node=document.createElement("i");
   node.className=`result-particle particle-${style}`;
   node.style.setProperty("--particle-color",["#ffe066","#7beaff","#ff88cc","#b5ff8a"][index%4]);
   node.style.setProperty("--particle-scale",String(Math.min(1.6,.8+energy*.2)));
-  return moneyFlight(host,node,energy,stream?.motion,stream?.origin);
+  return moneyFlight(host,node,energy,stream?.motion,stream?.origin,box);
 }
 
 function shockwaves(host:HTMLElement,energy:number) {
@@ -152,7 +157,7 @@ function shockwaves(host:HTMLElement,energy:number) {
   }
 }
 
-function rainAccent(host:HTMLElement,stream:Rain) {
+function rainAccent(host:HTMLElement,stream:Rain,box:FlightBox) {
   if(!stream.tier || performance.now()-stream.accentAt<4800)return;
   stream.accentAt=performance.now();
   shockwaves(host,stream.energy);
@@ -160,28 +165,30 @@ function rainAccent(host:HTMLElement,stream:Rain) {
     const halo=document.createElement("div");halo.className="cash-flood-halo";
     animateParticle(host,halo,[{opacity:0,transform:"scale(.8) rotate(-12deg)"},{opacity:.8,offset:.3},{opacity:.6,offset:.75},{opacity:0,transform:"scale(1.3) rotate(12deg)"}],stream.motion==="burst"?1200:6500);
   }
-  for(let i=0;i<8;i++)fallingParticle(host,"neon",stream.energy,i,stream);
+  for(let i=0;i<8;i++)fallingParticle(host,"neon",stream.energy,i,stream,box);
 }
 
 function addRain(host:HTMLElement,tokens:CashToken[],energy:number,festival:boolean,tier:number,settings:Settings,origin?:CashOrigin) {
   if(!host.animate)return;
   const current=rain.get(host);
   if(current){current.queue=compactCash([...current.queue,...tokens]);current.energy=Math.max(current.energy,energy);current.festival ||= festival;current.tier=Math.max(current.tier,tier);current.banknoteStyle=settings.banknoteStyle;current.motion=settings.cashMotion;current.origin=origin;return;}
-  const stream:Rain={queue:tokens,energy,festival,tier,banknoteStyle:settings.banknoteStyle,motion:settings.cashMotion,origin,serial:0,accentAt:-Infinity};rain.set(host,stream);
+  const stream:Rain={budget:visualBudget(mobileEffects()),queue:tokens,energy,festival,tier,banknoteStyle:settings.banknoteStyle,motion:settings.cashMotion,origin,serial:0,accentAt:-Infinity};rain.set(host,stream);
   const emit=()=>{
     if(rain.get(host)!==stream)return;
     if(document.hidden || !host.isConnected){stopVisuals(host);return;}
     const nodes=[...(active.get(host)??[])],cash=nodes.filter(n=>n.className==="result-particle particle-cash").length;
     let confetti=nodes.filter(n=>n.className==="result-particle particle-confetti").length;
-    rainAccent(host,stream);
-    const batch=Math.min(stream.queue.length,CASH_LIMIT-cash,14);
+    // Read geometry once, before appending any of this emission's particles.
+    const box=host.getBoundingClientRect();
+    rainAccent(host,stream,box);
+    const batch=Math.min(stream.queue.length,stream.budget.cash-cash,stream.budget.batch);
     for(let i=0;i<batch;i++){
       const token=stream.queue[0],node=createCashSprite(token,stream.banknoteStyle);
       const width=token.denomination<=100?42:stream.tier?170:130;
       node.style.width=`${width}px`;node.style.height=`${width*(token.denomination<=100?1:.44)}px`;
-      if(!moneyFlight(host,node,stream.energy,stream.motion,stream.origin))break;
+      if(!moneyFlight(host,node,stream.energy,stream.motion,stream.origin,box))break;
       stream.queue.shift();stream.serial++;
-      if(stream.festival && confetti<72 && fallingParticle(host,"confetti",stream.energy,stream.serial,stream)){confetti++;}
+      if(stream.festival && confetti<stream.budget.confetti && fallingParticle(host,"confetti",stream.energy,stream.serial,stream,box)){confetti++;}
     }
     if(stream.queue.length>0)stream.timer=setTimeout(emit,stream.motion==="burst"?90:200);
     else rain.delete(host);
@@ -205,8 +212,9 @@ export function playResultVisual(host:HTMLElement|null,cue:Cue,settings:Settings
   if(jackpot)shockwaves(host,energy);
   if(cash)return;
   const count=Math.min(72,Math.max(jackpot?32:4,Math.round(particleCount(detail.amount,jackpot,detail.milestone)*energy)));
+  const box=host.getBoundingClientRect(),limit=visualBudget(mobileEffects()).total;
   for(let i=0;i<count;i++){
-    if((active.get(host)?.size??0)>=288)break;
-    fallingParticle(host,style,energy,i);
+    if((active.get(host)?.size??0)>=Math.min(288,limit))break;
+    fallingParticle(host,style,energy,i,undefined,box);
   }
 }

@@ -157,6 +157,34 @@ it("counts fast wins even when they share a shower and never abruptly removes ea
   for(let i=0;i<30;i++)playResultVisual(element(h),"win",defaultSettings,{amount:1e6});
   vi.advanceTimersByTime(1000);expect(first.every(n=>h.children.includes(n))).toBe(true);expect(h.children.length).toBeLessThanOrEqual(328);
 });
+it("reads the viewport once per emission, not once per banknote or confetti",()=>{
+  const h=host(),measure=vi.spyOn(h,"getBoundingClientRect");
+  playResultVisual(element(h),"win",{...defaultSettings,cashMotion:"rain"},{amount:1e6});
+  expect(h.children.length).toBeGreaterThan(14);
+  expect(measure).toHaveBeenCalledTimes(1);
+  vi.advanceTimersByTime(200);expect(measure).toHaveBeenCalledTimes(2);
+});
+it("bounds phone particles without dropping any win value or shortening their flight",()=>{
+  vi.stubGlobal("matchMedia",(query:string)=>({matches:query==="(pointer: coarse)"}));
+  const h=host(),amounts=[1e9,1e9,1e8];
+  for(const amount of amounts)playResultVisual(element(h),"jackpot",{...defaultSettings,cashMotion:"rain"},{amount});
+  let cents=0n;
+  for(let step=0;step<160;step++){
+    vi.advanceTimersByTime(200);
+    expect(h.children.length).toBeLessThanOrEqual(164);
+    const notes=h.children.filter(n=>n.dataset.cents);
+    expect(notes.length).toBeLessThanOrEqual(96);
+    // Leave the first wave in flight until the phone budget is full.
+    if(step<40)continue;
+    for(const n of [...h.children]){
+      if(n.dataset.cents){cents+=BigInt(n.dataset.cents);expect(Number(n.motions[0].options.duration)).toBeGreaterThanOrEqual(5200);}
+      n.motions[0]?.onfinish?.();
+    }
+    if(!vi.getTimerCount()&&!h.children.length)break;
+  }
+  expect(cents).toBe(amounts.reduce((sum,n)=>sum+cashCents(n),0n));
+  expect(vi.getTimerCount()).toBe(0);
+});
 it.each(["hidden","detached"])("stops replenishing a %s surface",mode=>{
   const h=host();playResultVisual(element(h),"win",defaultSettings,{amount:1e9});
   if(mode==="hidden")vi.stubGlobal("document",{hidden:true});else h.root=false;

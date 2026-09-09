@@ -6,6 +6,15 @@ const element=(node:ReturnType<typeof target>)=>node as unknown as HTMLElement;
 beforeEach(()=>{vi.stubGlobal("document",{hidden:false});vi.stubGlobal("matchMedia",()=>({matches:false}));});
 afterEach(()=>{vi.unstubAllGlobals();vi.restoreAllMocks();});
 describe("impact effects",()=>{
+  it("keeps a strong phone flash and shake without filtering the whole game",()=>{
+    vi.stubGlobal("matchMedia",(query:string)=>({matches:query==="(pointer: coarse)"}));
+    const surface=target(),flash=target();
+    impact(element(surface),"jackpot",defaultSettings,element(flash),{amount:1e9});
+    expect(flash.animate).toHaveBeenCalledOnce();
+    expect(Number(flash.animate.mock.calls[0][0][1].opacity)).toBeGreaterThan(.7);
+    expect(surface.animate).toHaveBeenCalledOnce();
+    for(const frame of surface.animate.mock.calls[0][0])expect(frame).not.toHaveProperty("filter");
+  });
   it("keeps WORK's motion without starting either full-screen light or brightness",()=>{
     const surface=target(),flash=target();
     for(let i=0;i<10;i++)impact(element(surface),"work",defaultSettings,element(flash));

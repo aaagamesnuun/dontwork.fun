@@ -218,7 +218,7 @@ it("ships the DW logo at versioned install URLs and both Safari root fallbacks",
   const read = (path) => readFileSync(new URL("../" + path, import.meta.url));
   const original = read("public/icons/apple-touch-icon.png");
   for (const path of [
-    "public/icons/apple-touch-icon-dw.png",
+    "public/icons/apple-touch-icon-dw-arrow.png",
     "public/apple-touch-icon.png",
     "public/apple-touch-icon-precomposed.png",
   ])
@@ -226,18 +226,18 @@ it("ships the DW logo at versioned install URLs and both Safari root fallbacks",
   for (const page of ["index.html", "public/transfer.html"]) {
     const html = read(page).toString();
     expect(html).toMatch(
-      /rel="apple-touch-icon"\s+sizes="180x180"\s+href="\/icons\/apple-touch-icon-dw.png"/,
+      /rel="apple-touch-icon"\s+sizes="180x180"\s+href="\/icons\/apple-touch-icon-dw-arrow.png"/,
     );
     expect(html).toContain('rel="manifest"');
   }
   const manifest = JSON.parse(read("public/manifest.webmanifest").toString());
   const generator = read("scripts/generate-pwa.mjs").toString();
   for (const icon of manifest.icons) {
-    expect(icon.src).toMatch(/-dw\.png$/);
+    expect(icon.src).toMatch(/-dw-arrow\.png$/);
     expect(generator).toContain('"' + icon.src + '"');
     expect(
       read("public" + icon.src).equals(
-        read("public" + icon.src.replace("-dw.png", ".png")),
+        read("public" + icon.src.replace("-dw-arrow.png", ".png")),
       ),
     ).toBe(true);
   }
