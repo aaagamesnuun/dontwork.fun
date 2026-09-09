@@ -74,7 +74,7 @@ export const SWEEP_MOTIONS = [
   "mix",
 ] as const;
 export interface Settings {
-  rollDisplay: "dice" | "number";
+  rollDisplay: "number";
   spectacleRevision: 1;
   handToys: boolean;
   dockToy: "off" | "tap" | "beat" | "charge";
@@ -276,7 +276,7 @@ export interface Run {
   telemetry: boolean;
 }
 export const defaultSettings: Settings = {
-  rollDisplay: "dice",
+  rollDisplay: "number",
   spectacleRevision: 1, handToys: false, dockToy: "off",
   backgroundPlay: false,
   backgroundRevision: 2,
@@ -1652,7 +1652,7 @@ export function readSave(raw: string | null): Run | null {
     if(n.baccaratRounds>0 || Object.values(n.betLevels).some(v=>v>0) || n.settings.baccarat || n.settings.probabilityUpgrades) n.debug=true;
     if(n.settings.sharedSpinRevision !== 1 || !["compact","expanded"].includes(n.settings.spinSize) || !["arrow","bull"].includes(n.settings.brandIcon)) return null;
     n.completionNickname = typeof n.completionNickname === "string" ? n.completionNickname.replace(/[\x00-\x1f\x7f]/g,"").trim().slice(0,16) : "";
-    if(!["dice","number"].includes(n.settings.rollDisplay)) n.settings.rollDisplay="dice";
+    n.settings.rollDisplay="number";
     const record=n.clearSnapshot;
     if(record) for(const key of ["work","coinWagered","coinPaid"] as const) if(record[key]!==undefined && (!Number.isFinite(record[key]) || record[key]!<0)) delete record[key];
     if(record && (![record.cash,record.spent,record.maxChain].every(x=>typeof x==="number"&&Number.isFinite(x)&&x>=0) || !Array.isArray(record.history) || record.history.length<1 || record.history.length>150 || record.history.some(p=>!p || ![p.cash,p.at,p.spin??0,p.spent??0].every(x=>typeof x==="number"&&Number.isFinite(x)&&x>=0) || typeof p.kind!=="string"))) n.clearSnapshot=null;

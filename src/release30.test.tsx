@@ -80,10 +80,15 @@ describe('v3 player-facing defaults and records',()=>{
   vi.stubGlobal('localStorage',{getItem:()=>null});expect(defaultLanguage()).toBe('en');
   vi.stubGlobal('localStorage',{getItem:()=> 'ja'});expect(defaultLanguage()).toBe('ja');
  });
- it('defaults to D100 and leaves a plain-number option without exposing a hidden result',()=>{
-  expect(freshRun().settings).toMatchObject({rollDisplay:'dice',backgroundPlay:false,music:false});
-  const dice=renderToStaticMarkup(<SweepReadout cursor={47} moving/>);expect(dice.match(/<polygon /g)).toHaveLength(100);expect(dice).toContain('47');
-  expect(renderToStaticMarkup(<SweepReadout cursor={47} moving display="number"/>)).not.toContain('<svg');
+ it('uses the numeric readout and migrates existing dice saves without losing progress',()=>{
+  expect(freshRun().settings).toMatchObject({rollDisplay:'number',backgroundPlay:false,music:false});
+  const numeric=renderToStaticMarkup(<SweepReadout cursor={47} moving/>);
+  expect(numeric).toContain('>47<');expect(numeric).not.toMatch(/<svg|D100|d100/);
+  const run={...freshRun(),cash:12345,peak:12345,work:42,portfolio:[{id:'edge-50',count:1}]};
+  for(const rollDisplay of ['dice','number',undefined]){
+   const restored=readSave(JSON.stringify({...run,settings:{...run.settings,rollDisplay}}));
+   expect(restored).toMatchObject({id:run.id,cash:12345,work:42,portfolio:run.portfolio,settings:{rollDisplay:'number'}});
+  }
  });
  it('requires sound and granted notifications, but always allows an already-enabled setting to be turned off',()=>{
   const run={...ready(),settings:{...ready().settings,backgroundPlay:true,jackpotNotifications:true}};

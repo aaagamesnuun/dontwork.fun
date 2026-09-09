@@ -9,7 +9,7 @@ it("shares a single live route with the readout, without publishing the hidden r
   const signal=createSweepSignal(),frame:SweepFrame={id:2,roll:100,values:Array(100).fill(1),duration:1000,at:Date.now()};
   const stop=startSweep(frame,"lock",false,signal.update);
   const render=()=>renderToStaticMarkup(<SweepReadout {...signal.read()}/>);
-  expect(signal.read().moving).toBe(true);expect(render()).toContain('100面サイコロを回転中');
+  expect(signal.read().moving).toBe(true);expect(render()).toContain('出目を抽選中');
   vi.advanceTimersByTime(1000);
   expect(signal.read()).toMatchObject({cursor:100,moving:false});expect(render()).toContain('>100<');
   stop();vi.useRealTimers();

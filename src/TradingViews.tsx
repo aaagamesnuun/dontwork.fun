@@ -28,7 +28,7 @@ export function GrowthStrip({ growth }: {
         </div>)}
     </>);
 }
-export function PayoffSweep({ values, frame, reduced, snapshot, style = "classic", motion = "classic", jackpotRule = "combined", jackpotHigh = false, signal, rollDisplay = "dice", }: {
+export function PayoffSweep({ values, frame, reduced, snapshot, style = "classic", motion = "classic", jackpotRule = "combined", jackpotHigh = false, signal }: {
     values: (number | null)[];
     frame: SweepFrame | null;
     reduced: boolean;
@@ -38,7 +38,6 @@ export function PayoffSweep({ values, frame, reduced, snapshot, style = "classic
     jackpotRule?: Settings["jackpotRule"];
     jackpotHigh?: boolean;
     signal?: SweepSignal;
-    rollDisplay?: Settings["rollDisplay"];
 }) {
     const [localSignal] = useState(createSweepSignal);
     const channel = signal ?? localSignal;
@@ -55,7 +54,7 @@ export function PayoffSweep({ values, frame, reduced, snapshot, style = "classic
     const cursor = signal ? animatedCursor : frame?.settled ? frame.roll : animatedCursor;
     const moving = !reduced && (signal ? sweeping : !frame?.settled && sweeping);
     const overflow = bars.some((v) => v && (v.payout > scale || v.cost > scale));
-    const readout = <SweepReadout cursor={cursor} moving={moving} display={rollDisplay}/>;
+    const readout = <SweepReadout cursor={cursor} moving={moving}/>;
     const ticks = [1, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100];
     const jackpotLabel = "JACKPOT";
     const anticipating = jackpotRule !== "hundred" && jackpotHigh;

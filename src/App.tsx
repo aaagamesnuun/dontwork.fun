@@ -1292,7 +1292,7 @@ export default function App({ onOpenDesk, studio }: {
         return () => { clearInterval(retryTimer); removeEventListener('online', retry); };
     }, [s.id, s.completionNickname, s.trial?.nickname]);
     const spinSurface = (<section className={`roll-station ${shown.settings.reelStyle === "number" ? "number-mode" : ""}`}>
-              {shown.settings.reelStyle === "payoff" ? (<PayoffSweep signal={sweepSignal} values={distribution} snapshot={shownSweep} style={shown.settings.payoffStyle} frame={frame} reduced={osReduced || shown.settings.motion === "reduced"} motion={shown.settings.sweepMotion} rollDisplay={shown.settings.rollDisplay} jackpotRule={shown.settings.jackpotRule} jackpotHigh={shown.jackpotHigh}/>) : (<div className="number-mode-content">
+              {shown.settings.reelStyle === "payoff" ? (<PayoffSweep signal={sweepSignal} values={distribution} snapshot={shownSweep} style={shown.settings.payoffStyle} frame={frame} reduced={osReduced || shown.settings.motion === "reduced"} motion={shown.settings.sweepMotion} jackpotRule={shown.settings.jackpotRule} jackpotHigh={shown.jackpotHigh}/>) : (<div className="number-mode-content">
                   <GrowthStrip growth={framePending(frame, osReduced || shown.settings.motion === "reduced")
                 ? (frame?.snapshot?.growth ?? shownSweep.growth)
                 : shownSweep.growth}/>
