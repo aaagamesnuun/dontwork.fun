@@ -215,7 +215,7 @@ describe("jackpot chains and infinity", () => {
     expect(n.rushLeft).toBe(25);
   });
   it("supports hidden one-time assistance only before a natural jackpot", () => {
-    let s = configure(funded(), { assist: true, assistAfter: 1 });
+    let s = configure(funded(), { assist: true, assistAfter: 1, spinAssist: false });
     s = spin(s);
     expect(s.last?.assisted).toBe(true);
     expect(s.last?.roll).toBe(100);

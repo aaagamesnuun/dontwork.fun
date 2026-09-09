@@ -2,7 +2,6 @@ import { t as _t } from "./i18n";
 import { useEffect, useState, useSyncExternalStore } from "react";
 import { getPwaUpdate, getServerPwaUpdate, subscribePwaUpdate } from "./pwaUpdates";
 import { fileAudioRequested } from "./fileAudio";
-import { openDomainMigration } from './domainMigration';
 interface InstallPrompt extends Event {
     prompt: () => Promise<void>;
     userChoice: Promise<{
@@ -89,18 +88,14 @@ export function InstallInstructions() {
  <details><summary>{_t("追加の項目が見つからない")}</summary><p>{_t("LINEなどのアプリ内では、メニューからSafariまたはChromeで開いてください。共有メニュー内を下にスクロールすると「ホーム画面に追加」が見つかる場合もあります。")}</p><button className="secondary" onClick={copy}>{_t("このURLをコピー")}</button><p className="selectable-url">{typeof location !== 'undefined' ? location.origin : ''}</p></details>
  </div>;
 }
-export function InstallWelcome({ pwa, onSave }: {
+export function InstallWelcome({ pwa }: {
     pwa: ReturnType<typeof usePwa>;
-    onSave?: () => void;
 }) {
     return <div className="install-welcome"><img src="/icons/icon-192-dw.png" alt="dontwork.fun" width="64" height="64"/><p className="large-copy">{_t("ホーム画面への追加が必須です。")}</p><p>{_t("追加したアイコンから起動すると、ゲームが始まります。")}</p>
  {pwa.canInstall && <button className="primary intro-start" onClick={() => void pwa.install()}>{_t("ホーム画面に追加")}</button>}
  <InstallInstructions />{pwa.installError && <p role="status">{pwa.installError}</p>}
- <button className="secondary intro-start" onClick={() => openDomainMigration()}>{_t("旧URLのセーブを引き継ぐ")}</button>
- {onSave && <button className="secondary intro-start" onClick={onSave}>{_t("このブラウザのセーブ・合言葉")}</button>}
  </div>;
 }
-export function PwaHelp({ pwa, onSave }: {
+export function PwaHelp({ pwa }: {
     pwa: ReturnType<typeof usePwa>;
-    onSave: () => void;
-}) { return <div className="pwa-help">{pwa.standalone && <p className="install-status">{_t("✓ ホーム画面から起動しています")}</p>}<InstallInstructions />{pwa.canInstall && <button className="primary" onClick={() => void pwa.install()}>{_t("ホーム画面に追加")}</button>}<p>{_t("本番の更新は、同じアイコン・同じセーブで続けられます。更新のための再インストールは不要です。")}</p><p>{_t("別のURL・端末・ブラウザへ移る場合は、合言葉で引き継いでください。")}</p><button className="secondary" onClick={onSave}>{_t("セーブ・合言葉 →")}</button>{pwa.waiting && <p>{_t("最新版の準備ができています。この説明を閉じ、ゲーム画面の「保存して更新」を押してください。")}</p>}<p className="setting-note">{_t("ランキング・合言葉・問い合わせの送信には通信が必要です。")}</p></div>; }
+}) { return <div className="pwa-help">{pwa.standalone && <p className="install-status">{_t("✓ ホーム画面から起動しています")}</p>}<InstallInstructions />{pwa.canInstall && <button className="primary" onClick={() => void pwa.install()}>{_t("ホーム画面に追加")}</button>}<p>{_t("本番の更新は、同じアイコン・同じセーブで続けられます。更新のための再インストールは不要です。")}</p>{pwa.waiting && <p>{_t("最新版の準備ができています。この説明を閉じ、ゲーム画面の「保存して更新」を押してください。")}</p>}<p className="setting-note">{_t("ランキング・問い合わせの送信には通信が必要です。")}</p></div>; }

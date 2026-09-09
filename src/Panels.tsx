@@ -1,3 +1,4 @@
+import { useBetNameStyle, setBetNameStyle, type BetNameStyle } from "./betNamePreferences";
 import { t as _t, textValue as _text } from "./i18n";
 import { soundPackSettings } from "./soundPresets";
 import { BackgroundSettings } from "./BackgroundSettings";
@@ -23,9 +24,16 @@ export function Lab({ s, change, notify, preparePreview, onWorkMode, }: {
     preparePreview?: () => number;
     onWorkMode?: (mode: Settings["workMode"], dockToy?: Settings["dockToy"]) => void;
 }) {
+    const nameStyle = useBetNameStyle();
     const [selected, setSelected] = useState<CatalogId>(s.catalog), [reset, setReset] = useState(false), [forced, setForced] = useState(100);
     const settings = (patch: Partial<Settings>) => change((s) => configure(s, patch));
     return (<>
+      <label className="setting-row"><span>{_t("ギャンブル名")}</span><select value={nameStyle} onChange={e => setBetNameStyle(e.target.value as BetNameStyle)}><option value="english">{_t("英語 · 標準")}</option><option value="katakana">{_t("日本語 · 金融用語風")}</option></select></label>
+      <section className="settings-section"><h3>{_t("スピン補助機能")}</h3>
+        <label className="setting-row"><span>{_t("スピン補助機能")}</span><input type="checkbox" disabled={!!s.trial} checked={s.settings.spinAssist} onChange={e => settings({spinAssist:e.target.checked})}/></label>
+        <p className="setting-note">{_t("通常モードの最初の5スピン。BASELINEをセットしているときに適用します。")}</p>
+        <div className="spin-assist-order">{[...s.settings.spinAssistSequence].map((outcome,index)=><label key={index}><span>{_t("{0}回目",index+1)}</span><select disabled={!!s.trial || !s.settings.spinAssist} aria-label={_t("{0}回目",index+1)} value={outcome} onChange={e=>settings({spinAssistSequence:s.settings.spinAssistSequence.slice(0,index)+e.target.value+s.settings.spinAssistSequence.slice(index+1)})}><option value="W">{_t("当たり")}</option><option value="L">{_t("ハズレ")}</option></select></label>)}</div>
+      </section>
       <BackgroundSettings s={s} change={change}/>
       <ReleaseLab s={s} change={change} onWorkMode={onWorkMode}/>
       <EffectsLab s={s} change={change} preparePreview={preparePreview}/>
@@ -311,7 +319,6 @@ export function SettingsPanel({ s, change, notify, erase, }: {
         setTimeout(() => URL.revokeObjectURL(url), 1000);
     };
     return (<>
-      <BackgroundSettings s={s} change={change}/>
       <section className="settings-section">
         <h3>{_t("音と動き")}</h3>
         <label className="setting-row">

@@ -55,6 +55,7 @@ let pack: Settings["musicPack"] | null = null,
 const voices = new Set<() => void>();
 let busVolume = -1;
 export const musicActive = () => bus !== null;
+export const playingMusicPack = () => ctx?.state === "running" && bus !== null && busVolume > 0 ? pack : null;
 export function stopMusic() {
   for (const dispose of [...voices]) dispose();
   bus?.disconnect();

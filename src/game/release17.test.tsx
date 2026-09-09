@@ -217,7 +217,7 @@ describe("v1.7 proportional Sweep", () => {
       getItem: () => JSON.stringify(funded("flow-1")),
     });
     const html = renderToStaticMarkup(<App />);
-    expect(html).toContain("八割倶楽部");
+    expect(html).toContain("EIGHTY CLUB");
     expect(html).toContain("継続80%");
     expect(html).toContain("当たるたび×1.2");
   });

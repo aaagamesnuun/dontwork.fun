@@ -30,11 +30,6 @@ await copyFile(
   resolve(serverDirectory, "rankings.js"),
 );
 
-await copyFile(
-  resolve("server/saveCodes.js"),
-  resolve(serverDirectory, "saveCodes.js"),
-);
-
 await copyFile(resolve("server/soundExperiment.js"), resolve(serverDirectory,"soundExperiment.js"));
 
 await mkdir(migrationDirectory, { recursive: true });

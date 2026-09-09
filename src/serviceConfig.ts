@@ -1,4 +1,4 @@
-// Official deployments retain their shared rankings/save service. Forks never
+// Official deployments retain their shared ranking service. Forks never
 // send data there unless they are actually running on an official origin.
 const officialHosts = new Set(["dontwork.fun", "bebullish.fun", "dontwork-fun.ronefire.workers.dev"]);
 export const officialDeployment = () => typeof location !== "undefined" && location.protocol === "https:" && officialHosts.has(location.hostname);

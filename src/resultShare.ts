@@ -8,6 +8,13 @@ export function resultShareText(s: Run, name: string) {
     if(s.trial?.result)return _t("{0} · dontwork.fun 30分チャレンジ\n総資産 {1} / WORK {2}回\n#dontwork",name,money(s.trial.result.finalBankroll),s.work);
     return _t("{0} · dontwork.funで{1}達成！\n{2} / {3}\n#dontwork", name, money(completionTarget(s)), duration(s.completion?.timeMs ?? s.clearActiveMs ?? s.activeMs), catalogById(s.completion?.catalog ?? s.catalog).name);
 }
+export const RESULT_POST_URL = 'https://x.com/realnuun/status/2096932115355197897';
+export function resultXIntent(s: Run, name: string) {
+    const url = new URL('https://x.com/intent/tweet');
+    url.searchParams.set('text', resultShareText(s, name));
+    url.searchParams.set('url', RESULT_POST_URL);
+    return url.toString();
+}
 // The exported card uses the same frozen completion snapshot and chart geometry
 // as the screen. No live game values or external screenshot service are needed.
 export async function resultImage(s: Run, name: string): Promise<Blob> {

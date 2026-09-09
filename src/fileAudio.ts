@@ -112,6 +112,10 @@ export class FileAudioPlayer {
     this.musicKey = key;
     this.play(slot, cached(key, () => renderFileMusic(settings, rush)), true, () => { this.musicKey = ""; });
   }
+  playingMusicPack(): Settings["musicPack"] | null {
+    const slot = this.slots[9];
+    return slot && !slot.audio.paused && slot.audio.readyState >= 2 && this.musicKey ? this.musicKey.split("/")[1] as Settings["musicPack"] : null;
+  }
   stopMusic() { this.slots[9]?.dispose?.(); this.musicKey = ""; }
   stop() {
     for (const slot of this.slots) {

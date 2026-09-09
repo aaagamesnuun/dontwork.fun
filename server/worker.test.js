@@ -767,58 +767,18 @@ describe('shared clear rankings', () => {
   });
 });
 
-describe('six-character cloud saves',()=>{
-  const snapshot=()=>JSON.stringify({version:1,id:crypto.randomUUID(),catalog:'classic',cash:12345,spins:50,settings:{},history:[],rushLeft:17});
-  const environment=()=>({DB:sqliteD1(),SAVE_CODE_SECRET:'test-save-secret'});
-  const post=(env, body, path='',origin='https://bebullish-v1-11-0.realnuun.chatgpt.site')=>worker.fetch(new Request('https://game.example/api/save-codes'+path,{method:'POST',headers:{'content-type':'application/json',origin,'cf-connecting-ip':'192.0.2.1'},body:JSON.stringify(body)}),env);
-  it('creates immutable six-character snapshots and restores them across release origins',async()=>{
-    const env=environment(),save=snapshot();
-    const create=await post(env,{save,appVersion:'1.10.0'}), issued=await create.json();
-    expect(create.status).toBe(201);expect(issued.code).toMatch(/^[A-HJ-NP-Z2-9]{6}$/);
-    const next=await(await post(env,{save:snapshot(),appVersion:'1.10.0'})).json();
-    expect(next.code).not.toBe(issued.code);
-    const restored=await post(env,{code:issued.code.toLowerCase().slice(0,3)+'-'+issued.code.slice(3)},'/restore');
-    expect(restored.status).toBe(200);
-    expect(restored.headers.get('access-control-allow-origin')).toBe('https://bebullish-v1-11-0.realnuun.chatgpt.site');
-    expect(await restored.json()).toMatchObject({save,appVersion:'1.10.0',createdAt:issued.createdAt});
-    const stored=await env.DB.prepare('SELECT * FROM save_codes').all();
-    expect(stored.results).toHaveLength(2);
-    expect(stored.results[0].code_hash).toMatch(/^[a-f0-9]{64}$/);
-    expect(JSON.stringify(stored)).not.toContain(issued.code);
+describe('retired save transfer endpoints',()=>{
+  it('rejects issuance and restoration without reading or changing stored data',async()=>{
+    const DB={prepare:vi.fn(()=>{throw Error('Retired endpoints must not access saves');})};
+    for(const path of ['/api/save-codes','/api/save-codes/restore']){
+      for(const method of ['GET','POST','OPTIONS']){
+        const response=await worker.fetch(new Request('https://dontwork.fun'+path,{method,headers:{origin:'https://dontwork.fun','content-type':'application/json'},...(method==='POST'?{body:JSON.stringify({code:'ABC234',save:'existing save'})}:{})}),{DB});
+        expect(response.status).toBe(410);
+        expect(await response.json()).toEqual({error:'This feature is no longer available.'});
+      }
+    }
+    expect(DB.prepare).not.toHaveBeenCalled();
   });
-  it('rejects malformed saves/codes, missing configuration and unsupported origins without replacing existing data',async()=>{
-    const env=environment();
-    expect((await post(env,{save:'{}',appVersion:'1.10.0'})).status).toBe(400);
-    expect((await post(env,{save:snapshot(),appVersion:'wrong'})).status).toBe(400);
-    expect((await post(env,{save:'x'.repeat(2100001),appVersion:'1.10.0'})).status).toBe(400);
-    expect((await post(env,{code:'OOO111'},'/restore')).status).toBe(400);
-    expect((await post(env,{code:'ABC234'},'/restore')).status).toBe(404);
-    expect((await post(env,{save:snapshot(),appVersion:'1.10.0'},'','https://unrelated.example')).status).toBe(403);
-    expect((await post({DB:env.DB},{code:'ABC234'},'/restore')).status).toBe(503);
-    expect((await env.DB.prepare('SELECT COUNT(*) AS n FROM save_codes').first()).n).toBe(0);
-  });
-  it('limits repeated guessing and creation independently, keeping only anonymous rate keys',async()=>{
-    const env=environment();
-    for(let i=0;i<60;i++) expect((await post(env,{code:'ABC234'},'/restore')).status).toBe(404);
-    expect((await post(env,{code:'ABC234'},'/restore')).status).toBe(429);
-    expect((await post(env,{save:snapshot(),appVersion:'1.10.0'})).status).toBe(201);
-    const rates=await env.DB.prepare('SELECT * FROM save_code_rate_limits').all();
-    expect(rates.results).toHaveLength(2);
-    expect(JSON.stringify(rates)).not.toContain('192.0.2.1');
-  });
-});
-
-it('never overwrites a save when code generation collides',async()=>{
-  const env={DB:sqliteD1(),SAVE_CODE_SECRET:'test-save-secret'};
-  const create=save=>worker.fetch(new Request('https://game.example/api/save-codes',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({appVersion:'1.10.0',save:JSON.stringify({version:1,id:'test',catalog:'classic',cash:save,spins:1,settings:{},history:[]})})}),env);
-  const mock=vi.spyOn(crypto,'getRandomValues').mockImplementation(array=>{array.fill(0);return array;});
-  try {
-    expect((await create(10)).status).toBe(201);
-    expect((await create(20)).status).toBe(503);
-    const rows=await env.DB.prepare('SELECT snapshot_json FROM save_codes').all();
-    expect(rows.results).toHaveLength(1);
-    expect(JSON.parse(rows.results[0].snapshot_json).cash).toBe(10);
-  } finally {mock.mockRestore();}
 });
 
 it('accepts the v1.11 display-only release on the existing shared ranking service', async () => {
@@ -850,8 +810,8 @@ describe('v2.1 shared compatibility',()=>{
     expect(parseEvent(event).props).toEqual(props);
     expect(parseFeedback({message:'音と成長について',displayName:'',appVersion:'2.1.0',language:'ja',telemetryEnabled:true,context:{installId:crypto.randomUUID(),runId:event.runId,sessionId:event.sessionId,rulesetVersion:event.rulesetVersion,activeMs:1250,snapshot:props}}).context.snapshot).toEqual(props);
   });
-  it('accepts v2.1 clears, retains the older cohort and restores old codes from the new origin',async()=>{
-    const env={DB:sqliteD1(),SAVE_CODE_SECRET:'unchanged-test-key'};
+  it('accepts v2.1 clears and retains the older cohort',async()=>{
+    const env={DB:sqliteD1()};
     const post=(path,body)=>worker.fetch(new Request('https://game.example'+path,{method:'POST',headers:{'content-type':'application/json',origin:'https://bebullish-v2-1.realnuun.chatgpt.site'},body:JSON.stringify(body)}),env);
     const score={completionId:crypto.randomUUID(),nickname:'local-test',appVersion:'2.1.0',rulesetVersion:'astra-v7:classic',catalog:'classic',timeMs:3600000,spins:1500,ranked:true};
     expect((await post('/api/rankings',score)).status).toBe(201);
@@ -859,12 +819,7 @@ describe('v2.1 shared compatibility',()=>{
     expect((await post('/api/rankings',{...score,completionId:crypto.randomUUID(),rulesetVersion:'astra-v6:classic'})).status).toBe(400);
     const page=await worker.fetch(new Request('https://game.example/api/rankings?version=2.1.0'),env);
     expect(await page.json()).toMatchObject({total:1,scores:[{appVersion:'2.1.0',rulesetVersion:'astra-v7:classic'}]});
-    const save=JSON.stringify({version:1,id:crypto.randomUUID(),catalog:'classic',cash:1234,spins:50,settings:{},history:[]});
-    const issued=await(await post('/api/save-codes',{appVersion:'2.0.0',save})).json();
-    expect(issued.code).toHaveLength(6);
-    const restored=await post('/api/save-codes/restore',{code:issued.code});
-    expect(restored.headers.get('access-control-allow-origin')).toBe('https://bebullish-v2-1.realnuun.chatgpt.site');
-    expect(await restored.json()).toMatchObject({save,appVersion:'2.0.0'});
+
   });
 });
 
@@ -879,8 +834,8 @@ describe('v2.2 shared compatibility',()=>{
     expect(parseEvent(event).props).toEqual(props);
     expect(parseFeedback({message:'音と成長について',displayName:'',appVersion:'2.2.0',language:'ja',telemetryEnabled:true,context:{installId:crypto.randomUUID(),runId:event.runId,sessionId:event.sessionId,rulesetVersion:event.rulesetVersion,activeMs:1250,snapshot:props}}).context.snapshot).toEqual(props);
   });
-  it('accepts v2.2 clears, retains the older cohort and restores old codes from the new origin',async()=>{
-    const env={DB:sqliteD1(),SAVE_CODE_SECRET:'unchanged-test-key'};
+  it('accepts v2.2 clears and retains the older cohort',async()=>{
+    const env={DB:sqliteD1()};
     const post=(path,body)=>worker.fetch(new Request('https://game.example'+path,{method:'POST',headers:{'content-type':'application/json',origin:'https://bebullish-v2-2.realnuun.chatgpt.site'},body:JSON.stringify(body)}),env);
     const score={completionId:crypto.randomUUID(),nickname:'local-test',appVersion:'2.2.0',rulesetVersion:'astra-v8:classic',catalog:'classic',timeMs:3600000,spins:1500,ranked:true};
     expect((await post('/api/rankings',score)).status).toBe(201);
@@ -888,12 +843,7 @@ describe('v2.2 shared compatibility',()=>{
     expect((await post('/api/rankings',{...score,completionId:crypto.randomUUID(),rulesetVersion:'astra-v6:classic'})).status).toBe(400);
     const page=await worker.fetch(new Request('https://game.example/api/rankings?version=2.2.0'),env);
     expect(await page.json()).toMatchObject({total:1,scores:[{appVersion:'2.2.0',rulesetVersion:'astra-v8:classic'}]});
-    const save=JSON.stringify({version:1,id:crypto.randomUUID(),catalog:'classic',cash:1234,spins:50,settings:{},history:[]});
-    const issued=await(await post('/api/save-codes',{appVersion:'2.0.0',save})).json();
-    expect(issued.code).toHaveLength(6);
-    const restored=await post('/api/save-codes/restore',{code:issued.code});
-    expect(restored.headers.get('access-control-allow-origin')).toBe('https://bebullish-v2-2.realnuun.chatgpt.site');
-    expect(await restored.json()).toMatchObject({save,appVersion:'2.0.0'});
+
   });
 });
 
@@ -903,23 +853,21 @@ describe('v2.3 release telemetry and compatibility',()=>{
   expect(sanitizeProps({...props,completionNickname:'private'})).toEqual(props);
   for(const eventName of ['blocked_action','guidance_shown','guidance_resolved','pwa_gate']) expect(parseEvent({...validEvent(),appVersion:'2.3.0',rulesetVersion:'astra-v9:all-test',eventName,props})).not.toBeNull();
  });
- it('accepts the new ranked cohort, retains older scores, and preserves old save codes',async()=>{
-  const env={DB:sqliteD1(),SAVE_CODE_SECRET:'unchanged-test-key'};
+ it('accepts the new ranked cohort and retains older scores',async()=>{
+  const env={DB:sqliteD1()};
   const post=(path,body)=>worker.fetch(new Request('https://game.example'+path,{method:'POST',headers:{'content-type':'application/json',origin:'https://bebullish-v2-3.realnuun.chatgpt.site'},body:JSON.stringify(body)}),env);
   const score={completionId:crypto.randomUUID(),nickname:'local-only',appVersion:'2.3.0',rulesetVersion:'astra-v9:classic',catalog:'classic',timeMs:3600000,spins:1800,ranked:true};
   expect((await post('/api/rankings',score)).status).toBe(201);
   expect((await post('/api/rankings',score)).status).toBe(200);
   expect((await post('/api/rankings',{...score,completionId:crypto.randomUUID(),appVersion:'2.2.0',rulesetVersion:'astra-v8:classic'})).status).toBe(201);
-  const save=JSON.stringify({version:1,id:crypto.randomUUID(),catalog:'classic',cash:1234,spins:50,settings:{},history:[]});
-  const issued=await(await post('/api/save-codes',{appVersion:'2.2.0',save})).json();
-  expect(await(await post('/api/save-codes/restore',{code:issued.code})).json()).toMatchObject({save,appVersion:'2.2.0'});
+
  });
 });
 
 
 describe('production custom origin', () => {
- it('allows the exact production origin for shared rankings and save codes', async () => {
-  for (const path of ['/api/rankings','/api/save-codes','/api/save-codes/restore']) {
+ it('allows the exact production origin for shared rankings', async () => {
+  for (const path of ['/api/rankings']) {
    const response=await worker.fetch(new Request('https://service.example'+path,{method:'OPTIONS',headers:{origin:'https://bebullish.fun'}}),{});
    expect(response.status).toBe(204);
    expect(response.headers.get('access-control-allow-origin')).toBe('https://bebullish.fun');
@@ -928,14 +876,9 @@ describe('production custom origin', () => {
    }
   }
  });
- it('shares existing codes and completion records with production', async () => {
-  const env={DB:sqliteD1(),SAVE_CODE_SECRET:'same-local-test-key'};
+ it('shares existing completion records with production', async () => {
+  const env={DB:sqliteD1()};
   const post=(path,body,origin='https://bebullish.fun')=>worker.fetch(new Request('https://service.example'+path,{method:'POST',headers:{'content-type':'application/json',origin},body:JSON.stringify(body)}),env);
-  const save=JSON.stringify({version:1,id:crypto.randomUUID(),catalog:'classic',cash:1234,spins:50,settings:{},history:[]});
-  const issued=await(await post('/api/save-codes',{appVersion:'2.3.0',save},'https://bebullish-v2-3.realnuun.chatgpt.site')).json();
-  const restored=await post('/api/save-codes/restore',{code:issued.code});
-  expect(restored.headers.get('access-control-allow-origin')).toBe('https://bebullish.fun');
-  expect(await restored.json()).toMatchObject({save});
   const score={completionId:crypto.randomUUID(),nickname:'local-only',appVersion:'2.3.0',rulesetVersion:'astra-v9:classic',catalog:'classic',timeMs:3600000,spins:1800,ranked:true};
   expect((await post('/api/rankings',score)).status).toBe(201);
   const page=await worker.fetch(new Request('https://service.example/api/rankings?version=2.3.0',{headers:{origin:'https://bebullish.fun'}}),env);
@@ -947,7 +890,7 @@ describe('production custom origin', () => {
 
 describe('v2.4 production compatibility',()=>{
  it('accepts new completion and telemetry cohorts while rejecting mismatched economy revisions',async()=>{
-  const env={DB:sqliteD1(),TELEMETRY_HASH_KEY:'test-secret',SAVE_CODE_SECRET:'unchanged-test-key'};
+  const env={DB:sqliteD1(),TELEMETRY_HASH_KEY:'test-secret'};
   const post=(path,body)=>worker.fetch(new Request('https://bebullish.fun'+path,{method:'POST',headers:{'content-type':'application/json',origin:'https://bebullish.fun'},body:JSON.stringify(body)}),env);
   const score={completionId:crypto.randomUUID(),nickname:'local-only',appVersion:'2.4.0',rulesetVersion:'astra-v10:classic',catalog:'classic',timeMs:3600000,spins:1800,ranked:true};
   expect((await post('/api/rankings',score)).status).toBe(201);
@@ -1028,20 +971,11 @@ it('accepts v2.7 refill Jackpot cohorts and presentation fields, preserving v2.6
 describe('dontwork migration compatibility',()=>{
  const post=(env,path,body,origin='https://dontwork.fun')=>worker.fetch(new Request('https://service.example/api/'+path,{method:'POST',headers:{'content-type':'application/json',origin},body:JSON.stringify(body)}),env);
  it('accepts the exact new origin and rejects lookalikes',async()=>{
-  for(const path of ['rankings','bankroll-rankings','save-codes','save-codes/restore']){
+  for(const path of ['rankings','bankroll-rankings']){
    const r=await worker.fetch(new Request('https://service.example/api/'+path,{method:'OPTIONS',headers:{origin:'https://dontwork.fun'}}),{});
    expect(r.status).toBe(204);expect(r.headers.get('access-control-allow-origin')).toBe('https://dontwork.fun');
    for(const origin of ['http://dontwork.fun','https://dontwork.fun.example','https://other.dontwork.fun'])expect((await worker.fetch(new Request('https://service.example/api/'+path,{method:'OPTIONS',headers:{origin}}),{})).status).toBe(403);
   }
- });
- it('restores old six-character codes and bundles from the same database',async()=>{
-  const env={DB:sqliteD1(),SAVE_CODE_SECRET:'unchanged'},save=JSON.stringify({version:1,id:crypto.randomUUID(),catalog:'classic',cash:1234,spins:50,settings:{},history:[]});
-  const issued=await(await post(env,'save-codes',{appVersion:'2.8.0',save},'https://bebullish.fun')).json();
-  expect(await(await post(env,'save-codes/restore',{code:issued.code})).json()).toMatchObject({save,appVersion:'2.8.0'});
-  const bundle={kind:'dontwork-origin-migration-v1',version:1,createdAt:1000,entries:{'bebullish-save-v1':save,'bebullish-normal-slot-v1':save,'bebullish-30m-slot-v1':save,'bebullish-ranking-outbox-v1':'[]','bebullish-30m-outbox-v1':'[]'}};
-  const response=await post(env,'save-codes',{appVersion:'2.9.0',save:JSON.stringify(bundle)},'https://bebullish.fun');expect(response.status).toBe(201);
-  const code=(await response.json()).code;expect((await(await post(env,'save-codes/restore',{code})).json()).save).toBe(JSON.stringify(bundle));
-  for(const extra of [{secret:'x'},{'bebullish-save-v1':'{}'},{'bebullish-30m-outbox-v1':'{}'},{'bebullish-save-v1':JSON.stringify(bundle)}])expect((await post(env,'save-codes',{appVersion:'2.9.0',save:JSON.stringify({...bundle,entries:{...bundle.entries,...extra}})})).status).toBe(400);
  });
  it('accepts 2.9 rankings and telemetry while preserving 2.8 record identity',async()=>{
   const env={DB:sqliteD1(),TELEMETRY_HASH_KEY:'unchanged'};
@@ -1052,4 +986,12 @@ describe('dontwork migration compatibility',()=>{
    const r=await worker.fetch(new Request('https://dontwork.fun/api/telemetry',{method:'POST',headers:{origin:'https://dontwork.fun','content-type':'application/json'},body:JSON.stringify({installId:crypto.randomUUID(),consent:true,events:[event]})}),env);expect(r.status).toBe(202);
   }
  });
+});
+
+it('accepts track-specific foreground play time without keeping invalid durations',()=>{
+ const props={musicPack:'night',music:true,requested:true,durationMs:15325.5,phase:'normal',source:'foreground'};
+ const event=parseEvent({...validEvent(),eventName:'music_play_batch',props});
+ expect(event).not.toBeNull();expect(event.props).toMatchObject(props);
+ expect(sanitizeProps({...props,durationMs:-1})).not.toHaveProperty('durationMs');
+ expect(sanitizeProps({...props,musicPack:'unknown-track'})).not.toHaveProperty('musicPack');
 });

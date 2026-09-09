@@ -1,3 +1,4 @@
+import { setBetNameStyle } from "./betNamePreferences";
 import {afterEach,beforeEach,describe,expect,it,vi} from 'vitest';
 import {renderToStaticMarkup} from 'react-dom/server';
 import {freshRun,freshTrial,resumeTrial,advanceTrial,purchase,spin,work,finish,readSave,TRIAL_MS,TARGET,trialAssets,type Run} from './game/engine';
@@ -13,7 +14,7 @@ import {betById,CATALOGS} from './game/catalog';
 import {defaultLanguage,setLanguage,t} from './i18n';
 const ready=():Run=>({...resumeTrial(freshTrial(),1000),cash:1e6,peak:1e6,portfolio:[{id:'edge-50',count:1}],coinEnabled:true});
 beforeEach(()=>{vi.useFakeTimers();vi.setSystemTime(1000);setLanguage('ja')});
-afterEach(()=>{vi.unstubAllGlobals();setLanguage('ja');vi.useRealTimers()});
+afterEach(()=>{vi.unstubAllGlobals();setLanguage('ja');setBetNameStyle('english');vi.useRealTimers()});
 describe('v3 trial rules and exit safety',()=>{
  it('AUTO clocks empty portfolios and insufficient funds while OFF blocks WORK',()=>{
   let m:Presentation={run:resumeTrial(freshTrial(),1000),pending:null};
@@ -70,10 +71,12 @@ describe('v3 player-facing defaults and records',()=>{
   expect(resultShareText(card,'Player')).toContain('#dontwork');expect(renderToStaticMarkup(<ResultCard s={card} name="Player"/>)).toContain('123');
   expect(effortStats(clearCardRun({...clear,clearSnapshot:null})).known).toBe(false);
  });
- it('uses Japanese names and changes the same catalog objects immediately into English',()=>{
-  const bet=betById('edge-50'),catalog=CATALOGS[0];const ja=bet.name;expect(ja).not.toBe('BASELINE');
+ it('keeps English names by default and switches finance-style names only in the LAB',()=>{
+  const bet=betById('edge-50'),catalog=CATALOGS[0];expect(bet.name).toBe('BASELINE');
   setLanguage('en');expect(bet.name).toBe('BASELINE');expect(catalog.name).toBe(catalog.en);expect(t('期待値')).toBe('Expected value');
-  setLanguage('ja');expect(bet.name).toBe(ja);
+  setLanguage('ja');expect(bet.name).toBe('BASELINE');
+  setBetNameStyle('katakana');expect(bet.name).toBe('ベースライン');expect(betById('linear-1').name).toBe('スロー・クライム');
+  setBetNameStyle('english');expect(bet.name).toBe('BASELINE');
  });
  it('chooses EN on an English device unless the player saved JP',()=>{
   vi.stubGlobal('document',{documentElement:{lang:'en'}});vi.stubGlobal('navigator',{languages:['en-US']});

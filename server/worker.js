@@ -1,6 +1,5 @@
 import {bankrollRankingsApi} from "./bankrollRankings.js";
 import { refreshSoundExperimentReport } from "./soundExperiment.js";
-import { saveCodesApi } from "./saveCodes.js";
 import { rankingsApi } from "./rankings.js";
 const CREATE_STATEMENTS = [
   `CREATE TABLE IF NOT EXISTS leaderboard_scores (
@@ -190,7 +189,7 @@ const CREATE_STATEMENTS = [
 ];
 
 const EVENT_NAMES = new Set([
-  "sound_assignment", "baccarat_round", "probability_upgrade",
+  "music_play_batch", "sound_assignment", "baccarat_round", "probability_upgrade",
   "session_start", "session_end", "interaction_start", "snapshot", "milestone", "work_batch", "agents_toggle", "spin_batch",
   "wait_enter", "wait_exit", "draft_open", "draft_offer", "draft_choose", "draft_close", "deck_change", "deck_preset",
   "favorite_toggle", "upgrade_purchase", "jackpot", "debt_action", "bankruptcy", "reset", "clear", "setting_change",
@@ -316,6 +315,8 @@ SETTING_ENUM_VALUES.set("jackpotRule",new Set(["hundred","double-high","combined
 NUMERIC_PROP_KEYS.add("spinsSinceJackpot"); INTEGER_COUNT_PROP_KEYS.add("spinsSinceJackpot");
 for(const key of ["backgroundJackpot","bigChangeNotifications","rollDisplay","language","trialScoring"])PROP_KEYS.add(key);
 SETTING_ENUM_VALUES.set("rollDisplay",new Set(["dice","number"]));SETTING_ENUM_VALUES.set("language",new Set(["ja","en"]));SETTING_ENUM_VALUES.set("trialScoring",new Set(["none","cash","assets"]));
+PROP_KEYS.add("spinAssist"); PROP_KEYS.add("spinAssistSequence");
+SETTING_ENUM_VALUES.set("spinAssistSequence",new Set(Array.from({length:32},(_,n)=>n.toString(2).padStart(5,"0").replaceAll("0","L").replaceAll("1","W"))));
 PROP_KEYS.add("backgroundPlay"); PROP_KEYS.add("backgroundMs");
 for(const key of ["jackpotNotifications","sweepSound","coinChartMarkers","streakEffects","effectIntensity"])PROP_KEYS.add(key);
 NUMERIC_PROP_KEYS.add("effectIntensity");
@@ -1526,7 +1527,7 @@ export const ratingsApi=async(request,env,url)=>{
 const worker = {
   async fetch(request, env) {
     const url = new URL(request.url);
-    if (["/api/save-codes", "/api/save-codes/restore"].includes(url.pathname)) return saveCodesApi(request, env, url);
+    if (["/api/save-codes", "/api/save-codes/restore"].includes(url.pathname)) return json({ error: "This feature is no longer available." }, 410);
     if (url.pathname === "/api/bankroll-rankings") return bankrollRankingsApi(request,env.DB,url);
     if (url.pathname === "/api/rankings") return rankingsApi(request, env.DB, url, score => !String(score.rulesetVersion).includes("-30m") && ASTRA_V9_CATALOG_IDS.includes(score.catalog) && typeof score.rulesetVersion === "string" && score.rulesetVersion.endsWith(":" + score.catalog) && acceptsTelemetry(score));
     if (url.pathname === "/api/leaderboard" || url.pathname === "/api/telemetry" || url.pathname === "/api/feedback" || url.pathname === "/api/ratings") {

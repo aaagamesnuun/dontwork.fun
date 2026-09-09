@@ -1,4 +1,3 @@
-import { recordedTrack, playRecordedMusic, stopRecordedMusic } from "./recordedMusic";
 import {
   cueTones,
   resultTones,
@@ -8,11 +7,11 @@ import {
   type Tone,
 } from "./audioPalette";
 import type { Settings } from "./game/engine";
-import { updateMusic, stopMusic as stopWebMusic, musicActive } from "./music";
+import { updateMusic, stopMusic as stopWebMusic, musicActive, playingMusicPack as webMusicPack } from "./music";
 import { FileAudioPlayer, fileAudioRequested } from "./fileAudio";
 const fileMode = fileAudioRequested();
 const filePlayer = fileMode ? new FileAudioPlayer() : null;
-function stopMusic() { stopRecordedMusic(); stopWebMusic(); filePlayer?.stopMusic(); }
+function stopMusic() { stopWebMusic(); filePlayer?.stopMusic(); }
 export type Cue =
   | "ui"
   | "toggle-on"
@@ -65,11 +64,10 @@ const uiVoices = new Set<() => void>();
 export const audioEnabled = (s: Settings) =>
   (s.sound && s.soundVolume > 0) ||
   ((s.music || s.jackpotMusic === "on") && s.musicVolume > 0);
+export const playingMusicPack = () => filePlayer ? filePlayer.playingMusicPack() : webMusicPack();
 export function musicPulse(s: Settings, rush: boolean, active: boolean) {
   setAudioEnabled(audioEnabled(s));
   if (!s.sound || s.soundVolume <= 0) stopSounds();
-  if(recordedTrack(s.musicPack)){stopWebMusic();filePlayer?.stopMusic();playRecordedMusic(s,active&&visible(),rush);return;}
-  stopRecordedMusic();
   if (filePlayer) filePlayer.music(s, rush, active && visible());
   else updateMusic(context, s, active && visible(), rush);
 }

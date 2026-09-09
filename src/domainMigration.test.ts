@@ -1,5 +1,5 @@
 import {describe,it,expect} from 'vitest';
-import {applyMigration,collectMigration,freezeMigration,readMigration,recoverMigration,MIGRATION_APPLIED,MIGRATION_BACKUP,MIGRATION_PENDING,MIGRATION_KIND} from './domainMigration';
+import {withoutRetiredMigrationHash,applyMigration,collectMigration,freezeMigration,readMigration,recoverMigration,MIGRATION_APPLIED,MIGRATION_BACKUP,MIGRATION_PENDING,MIGRATION_KIND} from './domainMigration';
 import {freshRun,freshTrial,resumeTrial,advanceTrial,finish,readSave,SAVE_KEY,TARGET,TRIAL_MS} from './game/engine';
 import {NORMAL_SLOT,TRIAL_SLOT} from './trialSaves';
 import {startBackground} from './backgroundPlay';
@@ -54,5 +54,14 @@ describe('dontwork origin migration',()=>{
  it('recovers interrupted migration from the durable journal before game startup',()=>{
   const original=JSON.stringify(freshRun()),storage=store({[SAVE_KEY]:'partial-new-save',[TRIAL_SLOT]:'partial-new-slot',[MIGRATION_PENDING]:'1',[MIGRATION_BACKUP]:JSON.stringify({[SAVE_KEY]:original,[TRIAL_SLOT]:null})});
   recoverMigration(storage);expect(storage.getItem(SAVE_KEY)).toBe(original);expect(storage.getItem(TRIAL_SLOT)).toBeNull();expect(storage.getItem(MIGRATION_PENDING)).toBeNull();
+ });
+});
+
+describe('retired migration links',()=>{
+ it('removes old transfer entry points and preserves other launch parameters',()=>{
+  expect(withoutRetiredMigrationHash('#migrate=ABC234')).toBe('');
+  expect(withoutRetiredMigrationHash('#migration')).toBe('');
+  expect(withoutRetiredMigrationHash('#migrate=ABC234&mode=desk&migration')).toBe('#mode=desk');
+  for(const hash of ['', '#studio', '#mode=desk']) expect(withoutRetiredMigrationHash(hash)).toBe(hash);
  });
 });

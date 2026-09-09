@@ -1,5 +1,5 @@
 import { t as _t } from "./i18n";
-import { MUSIC_TRACKS, playRecordedMusic } from "./recordedMusic";
+import { wakeAudio, setAudioEnabled, audioEnabled } from "./audio";
 import { NativeSwitch } from "./NativeSwitch";
 import { configure, type Run, type Settings } from "./game/engine";
 import type { Change } from "./App";
@@ -7,13 +7,13 @@ export function MusicSettings({ s, change }: {
     s: Run;
     change: Change;
 }) {
-    const set = (patch: Partial<Settings>) => change((s) => configure(s, patch));
+    const set = (patch: Partial<Settings>) => { setAudioEnabled(audioEnabled({...s.settings,...patch})); wakeAudio(true); change((s) => configure(s, patch)); };
     return (<section className="settings-section music-settings">
       <h3>{_t("背景の音楽")}</h3>
       <label className="setting-row">
         <span>{_t("通常時のBGM")}<small>{_t("効果音とは別にON/OFF")}</small>
         </span>
-        <NativeSwitch label="BGM" checked={s.settings.music} onChange={(music) => { set({ music }); playRecordedMusic({ ...s.settings, music }, true, s.rushLeft > 0); }} tactile={s.settings.haptics}/>
+        <NativeSwitch label="BGM" checked={s.settings.music} onChange={(music) => { set({ music, ...(music ? {} : { jackpotMusic: "follow" as const }) }); }} tactile={s.settings.haptics}/>
       </label>
       <label className="setting-row">
         <span>{_t("ジャックポット中の音楽")}</span>
@@ -25,8 +25,7 @@ export function MusicSettings({ s, change }: {
       </label>
       <label className="setting-row">
         <span>{_t("曲の雰囲気")}</span>
-        <select value={s.settings.musicPack} onChange={(e) => (() => { const musicPack = e.target.value as Settings["musicPack"]; set({ musicPack, music: true, adaptiveMusic: false }); playRecordedMusic({ ...s.settings, musicPack, music: true }, true, s.rushLeft > 0); })()}>
-          {MUSIC_TRACKS.map(track => <option key={track.id} value={track.id}>{track.title} · Kevin MacLeod</option>)}
+        <select value={s.settings.musicPack} onChange={(e) => (() => { const musicPack = e.target.value as Settings["musicPack"]; set({ musicPack, music: true, adaptiveMusic: false }); })()}>
           <option value="pulse">{_t("Pulse · 弾むシンセ")}</option>
           <option value="night">{_t("Night · 静かな夜")}</option>
           <option value="arcade">{_t("Arcade · ゲームセンター")}</option>
@@ -37,7 +36,6 @@ export function MusicSettings({ s, change }: {
         </span>
         <input aria-label={_t("BGM音量")} type="range" min="0" max="1" step=".05" value={s.settings.musicVolume} onChange={(e) => set({ musicVolume: Number(e.target.value) })}/>
       </label>
-      <p className="setting-note">{_t("通常時をOFF、ジャックポット中を「流す」にすると、当選した瞬間から音楽が始まります。背景再生はLABから設定できます。")}</p>
-      <details className="music-credits"><summary>{_t("音楽のクレジット")}</summary><p>Kevin MacLeod (incompetech.com) · CC BY 4.0</p>{MUSIC_TRACKS.map(track => <p key={track.id}><a href={track.source} target="_blank" rel="noreferrer">{track.title}</a> · <a href={track.licenseUrl} target="_blank" rel="noreferrer">CC BY 4.0</a></p>)}<p>{_t("AAC形式に変換しています。作曲・テンポは変更していません。")}</p></details>
+      <p className="setting-note">{_t("通常時をOFF、ジャックポット中を「流す」にすると、当選した瞬間から音楽が始まります。")}</p>
     </section>);
 }

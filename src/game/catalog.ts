@@ -1,3 +1,4 @@
+import { betNameStyle } from "../betNamePreferences";
 import { language } from "../i18n";
 import japaneseNames from "../locales/bet-names-ja.json";
 import { t as _t } from "../i18n";
@@ -233,7 +234,7 @@ export const ALL_BETS = [
     ...NEW_BETS,
     ...LEGACY_BETS,
     ...LONG_BETS,
-].map(b=>({...b,get name(){return language()==="ja"?(japaneseNames as Record<string,string>)[b.id]??b.ja:b.name;},get description(){return _t(b.description);}}));
+].map(b=>({...b,get name(){return betNameStyle()==="katakana"?(japaneseNames as Record<string,string>)[b.name]??b.name:b.name;},get description(){return _t(b.description);}}));
 export const betById = (id: string): Bet => ALL_BETS.find((b) => b.id === id) ?? BASE_BETS[0];
 const basic = BASE_BETS.map((b) => b.id);
 const group = (prefix: string) => NEW_BETS.filter((b) => b.id.startsWith(prefix)).map((b) => b.id);

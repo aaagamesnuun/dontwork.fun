@@ -3,6 +3,3 @@
 .domain-migration h1{font-size:clamp(32px,7vw,44px);letter-spacing:-.055em;margin:0}.domain-migration h1 span{color:#b5ed70}
 .domain-migration h2{font-size:23px;margin:0}.domain-migration p{margin:0;line-height:1.7;color:#cbd6bf}.domain-migration .migration-lead{font-size:24px;line-height:1.5;color:#fff;font-weight:700}
 .domain-migration .primary,.domain-migration .secondary{width:100%;min-height:48px;display:flex;align-items:center;justify-content:center;text-decoration:none;padding:12px 16px}
-.migration-code{display:block;font:700 36px ui-monospace,monospace;letter-spacing:.16em;color:#d6ff9a;user-select:all}
-.migration-input{display:grid;gap:8px;width:100%;text-align:left}.migration-input input{width:100%;min-height:52px;text-align:center;font:600 26px ui-monospace,monospace;letter-spacing:.15em;border:1px solid #738858;color:#fff;background:#0b1009;border-radius:8px;padding:10px}
-.migration-preview{border:1px solid #71834f;border-radius:12px;padding:16px;display:grid;gap:12px;width:100%}.domain-migration .migration-error{color:#ffafa8}.domain-migration .setting-note{font-size:13px}

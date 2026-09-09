@@ -9,8 +9,14 @@ WORKで元手を作り、ポジションを組み合わせ、架空の資産を�
 - ポジションとアップグレードを組み合わせる通常プレイ、時間制チャレンジ、LABの比較ルール。
 - 日本語・英語、モバイル・デスクトップ、PWAに対応。
 - ブラウザ内の自動保存とセーブの書き出し・読み込み。
-- コードで生成する効果音・BGMと、選択式の録音BGM。音量や動きを調整できます。
+- コードで生成する効果音と3種類のBGM。BGMは標準OFFで、音楽アイコンから選べます。
 - React / TypeScript / Vite。オンライン機能には任意でCloudflare Workers / D1を使用します。
+
+通常モードをクリアすると30分チャレンジが解放されます。通常モードのセーブとクリア記録は別に残ります。LABから先に解放することもできます。
+
+背景進行、別バージョン、日本語のギャンブル名、序盤のスピン補助設定はLAB内で試せます。標準のギャンブル名は英語です。合言葉によるセーブ転送は廃止し、端末内の自動保存を継続します。
+
+曲別の計測は、同意済みプレイヤーの前景での実プレイ時間のみ記録します。集計方法は [音楽の比較](docs/music-usage.md) を参照してください。
 
 ## ローカルで遊ぶ・開発する
 
@@ -35,7 +41,7 @@ npm run preview
 
 ## forkとオンライン機能
 
-通常のforkでは、ランキング・合言葉セーブ・問い合わせなどのオンラインサービスは**初期状態でOFF**です。公式サイト用のサービス接続を用意する必要はありません。
+通常のforkでは、ランキング・問い合わせなどのオンラインサービスは**初期状態でOFF**です。公式サイト用のサービス接続を用意する必要はありません。
 
 自分のAPIを同じ配信元の`/api/*`で運用する場合は、`.env.local`に次を設定してビルドします。
 
@@ -82,10 +88,9 @@ VITE_ENABLE_TELEMETRY=false
 
 ```dotenv
 TELEMETRY_HASH_KEY=replace-with-your-own-random-local-key
-SAVE_CODE_SECRET=replace-with-another-random-local-key
 ```
 
-前者は計測・問い合わせなどの識別子のハッシュ化、後者は合言葉セーブの検索に使います。公開環境には[Wranglerのsecret storage](https://developers.cloudflare.com/workers/configuration/secrets/)で別の値を設定します。継続運用するデータに対応する秘密情報は保持してください。
+計測・問い合わせなどの識別子のハッシュ化に使います。公開環境には[Wranglerのsecret storage](https://developers.cloudflare.com/workers/configuration/secrets/)で別の値を設定します。継続運用するデータに対応する秘密情報は保持してください。
 
 ```sh
 npm run build
@@ -98,7 +103,6 @@ npx wrangler dev
 ```sh
 npx wrangler d1 migrations apply DB --remote
 npx wrangler secret put TELEMETRY_HASH_KEY
-npx wrangler secret put SAVE_CODE_SECRET
 npx wrangler deploy
 ```
 
@@ -124,6 +128,6 @@ npx wrangler deploy
 
 ## English overview
 
-**dontwork.fun** is an incremental browser game about fictional money, shared random rolls, portfolio combinations, and jackpot chains. Play with local saves, experiment in the LAB, or try a timed challenge. Japanese and English UI, synthesized audio, optional recorded music, and PWA support are included.
+**dontwork.fun** is an incremental browser game about fictional money, shared random rolls, portfolio combinations, and jackpot chains. Play with local saves, experiment in the LAB, or try a timed challenge. Japanese and English UI, synthesized audio, three optional BGM styles, and PWA support are included.
 
 Use Node.js 22.13+ and run `npm ci`, then `npm run dev`. Validate changes with `npm test` and `npm run build`. Ordinary forks start with online services disabled; opt in with `VITE_ENABLE_SERVICES=true` only when hosting your own same-origin API. Telemetry has a separate setting. Original code and generated artwork use MIT; the four recorded music tracks use CC BY 4.0 with attribution.

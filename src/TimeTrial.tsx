@@ -2,7 +2,7 @@ import { t as _t, textValue as _text } from "./i18n";
 import { useEffect, useState } from 'react';
 import { money, VERSION, trialRemaining, trialTimePrice, type Run, type TrialRule } from './game/engine';
 import { WealthChart } from './TradingViews';
-import { resultImage, resultShareText } from "./resultShare";
+import { resultImage, resultShareText, resultXIntent, RESULT_POST_URL } from "./resultShare";
 import { request } from './api';
 import { trialRankingPath, saveTrialName, flushTrialScores } from './trialScores';
 export const trialClock = (ms: number) => { const seconds = Math.ceil(ms / 1000); return `${Math.floor(seconds / 60).toString().padStart(2, '0')}:${(seconds % 60).toString().padStart(2, '0')}`; };
@@ -30,7 +30,7 @@ export function TrialModes({ s, onSwitch, lab = false }: {
     return <section className="trial-modes">
  <h3>{_t("30分で、どこまで増やせる？")}</h3>
  <p>{_t("現金＋強化に使った総額で競います。AUTOがONの間は、賭け金不足でも時計が進み、WORKできます。OFFにすると時計・WORK・FLIP・スピンが止まります。ポジション変更と強化購入はいつでもできます。")}</p>
- <p className="setting-note">{_t("画面を離れると一時停止します。背景進行はLABで設定できます。通常モードのセーブは別に残ります。")}</p>
+ <p className="setting-note">{_t("通常モードのセーブは別に残ります。")}</p>
  <div className="menu-grid">
  {s.trial ? <button className="secondary" onClick={() => onSwitch('normal')}>{_t("通常モードに戻る →")}</button> : <button className="primary" onClick={() => onSwitch('trial')}>{_t("30分モードへ →")}</button>}
  <button className="secondary" onClick={() => setConfirm('fixed')}>{_t("新しく30分に挑戦")}</button>
@@ -65,7 +65,7 @@ export function TrialResult({ s, onChange, onRanking, onRetry, onNormal }: {
     const [image, setImage]=useState<Blob|null>(null),[imageUrl,setImageUrl]=useState("");
     useEffect(()=>{let live=true;setImage(null);if(t.nickname)void resultImage(s,t.nickname).then(blob=>{if(live)setImage(blob)}).catch(()=>{});return()=>{live=false}},[s.id,t.nickname,r]);
     useEffect(()=>{if(!image){setImageUrl("");return}const url=URL.createObjectURL(image);setImageUrl(url);return()=>URL.revokeObjectURL(url)},[image]);
-    const share=async()=>{const text=resultShareText(s,t.nickname),url=location.origin+"/",file=image?new File([image],"dontwork.fun-30m.png",{type:"image/png"}):null;try{if(file&&navigator.canShare?.({files:[file]})&&navigator.share)await navigator.share({text,url,files:[file]});else if(navigator.share)await navigator.share({text,url});else window.open("https://twitter.com/intent/tweet?text="+encodeURIComponent(text)+"&url="+encodeURIComponent(url),"_blank","noopener,noreferrer");}catch(e){if(!(e instanceof DOMException&&e.name==="AbortError"))setError(_t("この画面をスクリーンショットで共有できます。"));}};
+    const share=async()=>{const text=resultShareText(s,t.nickname),url=RESULT_POST_URL,file=image?new File([image],"dontwork.fun-30m.png",{type:"image/png"}):null;try{if(file&&navigator.canShare?.({files:[file]})&&navigator.share)await navigator.share({text,url,files:[file]});else if(navigator.share)await navigator.share({text,url});else window.open(resultXIntent(s,t.nickname),"_blank","noopener,noreferrer");}catch(e){if(!(e instanceof DOMException&&e.name==="AbortError"))setError(_t("この画面をスクリーンショットで共有できます。"));}};
     const submit = async () => { setBusy(true); setError(''); try {
         const next = saveTrialName(s, name);
         onChange(run => run.id === s.id ? next : run);
@@ -83,7 +83,7 @@ export function TrialResult({ s, onChange, onRanking, onRetry, onNormal }: {
  <WealthChart s={{ ...s, coinChartHold: null, settings: { ...s.settings, chartAxis: 'spins' } }} summary/>
  <div className="result-numbers"><div><b>{r.spins.toLocaleString()}</b><span>{_t("スピン")}</span></div><div><b>{money(s.spent)}</b><span>{_t("強化への投資")}</span></div><div><b>{s.maxChain}</b><span>{_t("最大連鎖")}</span></div></div>
  <div className="result-numbers"><div><b>{s.work.toLocaleString()}</b><span>{_t("WORK回数")}</span></div><div><b>{money(s.coinWagered)}</b><span>{_t("FLIPの賭け金累計")}</span></div><div><b>{money(s.coinPaid - s.coinWagered)}</b><span>{_t("FLIPの損益")}</span></div></div><footer>{r.ranked ? '30 MIN RECORD' : 'LAB RECORD'} · v{r.appVersion}</footer></section>}
- {t.nickname && <><button className="primary" onClick={()=>void share()}>{_t("記念カードをシェア ↗")}</button><p className="setting-note">{_t("画像を長押しして保存、またはスクリーンショットで共有できます。")}</p></>}
+ {t.nickname && <><a className="primary" href={resultXIntent(s,t.nickname)} target="_blank" rel="noopener noreferrer">{_t("Xで引用して共有 ↗")}</a><button className="primary" onClick={()=>void share()}>{_t("記念カードをシェア ↗")}</button><p className="setting-note">{_t("画像を長押しして保存、またはスクリーンショットで共有できます。")}</p></>}
  {!t.nickname ? <form className="trial-name" onSubmit={e => { e.preventDefault(); void submit(); }}><label>{_t("ランキングの名前")}<input value={name} maxLength={32} onChange={e => setName(e.target.value)} autoComplete="nickname" placeholder={_t("名前")}/></label><button className="primary" disabled={busy || !name.trim()}>{_t("名前を保存")}</button></form> : <p role="status">{!r.ranked ? _t("LABの記録を端末に保存しました。") : t.submitted ? _t("ランキングに登録しました。") : _t("名前を保存しました。通信できるときに自動で再送します。")}</p>}
  {t.nickname && r.ranked && !t.submitted && <button className="secondary" disabled={busy} onClick={() => void submit()}>{busy ? _t("送信中…") : _t("ランキングへ再送")}</button>}
  {error && <p role="alert">{_text(error)}</p>}

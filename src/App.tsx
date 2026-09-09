@@ -1,8 +1,10 @@
+import { useBetNameStyle } from "./betNamePreferences";
+import { MusicSettings } from "./MusicSettings";
 import { useLanguage, setLanguage } from "./i18n";
 import { t as _t, textValue as _text } from "./i18n";
-import { BackgroundSettings } from "./BackgroundSettings";
 import { TrialClock, TrialModes, TrialTimeShop, TrialResult, TrialLeaderboard } from "./TimeTrial";
 import { switchTrialMode } from "./trialSaves";
+import { trialUnlocked, rememberTrialUnlock } from "./trialUnlock";
 import { saveTrialName, flushTrialScores } from "./trialScores";
 import { pauseTrial, trialAssets, trialActive, freshTrial, type TrialRule } from "./game/engine";
 import { settleAccepted } from "./presentation";
@@ -32,7 +34,6 @@ import { flushRankings, saveCompletionName, completionTarget } from "./rankingOu
 import { wealthStage, musicForWealth } from "./ReleaseLab";
 import { InstallWelcome, PwaHelp, usePwa, needsPwa, isMobileDevice } from "./Pwa";
 import { safeToApplyUpdate, saveAndReload, updateDialogSafe } from "./pwaUpdates";
-import { SaveTransfer } from "./SaveTransfer";
 import { UpgradeSpend } from "./UpgradeSpend";
 import { guidance, unlockedSince, type Guidance } from "./game/guidance";
 import { GameOverview, JackpotHelp, INTRO_KEY } from "./Onboarding";
@@ -45,7 +46,7 @@ import { useCallback, useEffect, useMemo, useReducer, useRef, useState, type Rea
 import { betById, catalogById, type Bet } from "./game/catalog";
 import { purchaseProbability, probabilityPrice, probabilityCap, SAVE_KEY, TARGET, availableBets, rollWeights, workCosmeticPrice, purchaseWorkCosmetic, canSpin, configure, duration, firstBet, freshRun, fuelCapacity, interval, isInfinite, mem, money, nextDistribution, payoutOf, purchase, drawUpgrade, upgradeDrawPool, upgradeDrawPrice, readSave, resolve, rollFloor, setCount, spin, stakeOf, totalCost, unlocked, upgradePrice, upgradeUnlocked, VERSION, usedSlots, work, type Run, type PositionIntent, type Upgrade, } from "./game/engine";
 import { Draft, Feedback, Lab, Leaderboard, Presets, SettingsPanel, Stats, } from "./Panels";
-import { sound, uiSound, wakeAudio, installAudioRecovery, setAudioEnabled, setBackgroundAudio, spinCharge, stopSpinCharge, stopSounds, drainAudioHealth, musicPulse, audioEnabled, } from "./audio";
+import { sound, uiSound, wakeAudio, installAudioRecovery, setAudioEnabled, setBackgroundAudio, spinCharge, stopSpinCharge, stopSounds, drainAudioHealth, musicPulse, playingMusicPack, audioEnabled, } from "./audio";
 import { installUISounds } from "./uiSounds";
 import { haptic, stopHaptics } from "./feedback";
 import { impact, stopImpact } from "./impact";
@@ -256,6 +257,7 @@ export default function App({ onOpenDesk, studio }: {
     const saveKey = studio ? CAPTURE_SAVE_KEY : SAVE_KEY;
     const osReduced = useReducedMotion();
     const uiLanguage=useLanguage();
+    const betNameStyle=useBetNameStyle();
     const pwa = usePwa();
     const [updating, setUpdating] = useState(false), [updateError, setUpdateError] = useState("");
     const autoUpdateAllowed = useRef(true), reloadStarted = useRef(false);
@@ -295,7 +297,7 @@ export default function App({ onOpenDesk, studio }: {
     const setS = useCallback((update: (run: Run) => Run) => dispatch({ type: "change", update: studio ? run => recordingRun(update(run)) : update }), [studio]);
     useEffect(() => { if (studio?.controlsOpen)
         setS(run => ({ ...run, running: false })); }, [studio?.controlsOpen, setS]);
-    const [progress, setProgress] = useState(0), [tab, setTab] = useState<DockPanel>("spin"), [frame, setFrame] = useState<SweepFrame | null>(null), [detailBet, setDetailBet] = useState<string | null>(null), [modal, setModal] = useState<"background" | "trial-mode" | "trial-result" | "trial-ranking" | "common-roll" | "versions" | "jackpot-help" | "news-help" | "intro" | "install" | "transfer" | "pwa" | "help" | "lab" | "sound" | "settings" | "feedback" | "rating" | "stats" | "leaderboard" | "clear" | "restart" | "presets" | "draft" | "menu" | "bet" | null>(() => {
+    const [progress, setProgress] = useState(0), [tab, setTab] = useState<DockPanel>("spin"), [frame, setFrame] = useState<SweepFrame | null>(null), [detailBet, setDetailBet] = useState<string | null>(null), [modal, setModal] = useState<"trial-mode" | "trial-result" | "trial-ranking" | "common-roll" | "jackpot-help" | "news-help" | "intro" | "install" | "pwa" | "help" | "lab" | "sound" | "settings" | "feedback" | "rating" | "stats" | "leaderboard" | "clear" | "restart" | "presets" | "draft" | "menu" | "bet" | null>(() => {
         if (studio)
             return null;
         if (needsPwa())
@@ -323,6 +325,17 @@ export default function App({ onOpenDesk, studio }: {
         setModal(null); };
     const closeResult = () => { const id = modal === "clear" ? shown.completion?.id : ratingAfterRanking.current; ratingAfterRanking.current = null; openClearRating(id); };
     const sendRating = (body: Record<string, unknown>) => telemetry.current?.sendRating(state.current, body) ?? request("/api/ratings", { ...body, telemetryEnabled: false });
+    const [trialAccess, setTrialAccess] = useState(() => !studio && trialUnlocked(s));
+    const trialAvailable = trialAccess || (!studio && !!(shown.completion || shown.trial));
+    useEffect(() => {
+        if (!trialAvailable || studio) return;
+        setTrialAccess(true);
+        try { rememberTrialUnlock(); } catch { /* The completed run also retains access. */ }
+    }, [trialAvailable, studio]);
+    const unlockTrialFromLab = () => {
+        try { rememberTrialUnlock(); setTrialAccess(true); setToast(_t("30分チャレンジモード解放！")); }
+        catch { setToast(_t("保存できませんでした。現在の進行はそのままです。")); }
+    };
     const [newsDetail, setNewsDetail] = useState<Guidance | null>(null);
     const coinLayer = useRef<HTMLDivElement>(null), visualLayer = useRef<HTMLDivElement>(null), chartTarget = useRef<HTMLElement>(null);
     const liveModel = useRef(model);
@@ -484,7 +497,7 @@ export default function App({ onOpenDesk, studio }: {
         telemetry.current?.event(state.current, paused ? "trial_resume" : "trial_pause", { reason: state.current.trial?.rule ?? "fixed" });
     };
     const switchMode = (mode: "normal" | "trial", rule?: TrialRule) => {
-        if (studio)
+        if (studio || (mode === "trial" && !trialAvailable))
             return;
         try {
             const current = settleAccepted(liveModel.current).run;
@@ -920,6 +933,9 @@ export default function App({ onOpenDesk, studio }: {
                 ((current.running && canSpin(current)) ||
                     Date.now() - lastInput < 120000)) {
                 active += delta;
+                const musicSettings = musicForWealth(heardState.current), heardPack = playingMusicPack();
+                const musicRequested = musicRush.current && musicSettings.jackpotMusic !== "follow" ? musicSettings.jackpotMusic === "on" : musicSettings.music;
+                telemetry.current?.musicPlayed(current, heardPack ?? musicSettings.musicPack, heardPack !== null, musicRequested && musicSettings.musicVolume > 0, musicRush.current, delta);
                 if (active >= 1000) {
                     const add = active;
                     active = 0;
@@ -1165,7 +1181,7 @@ export default function App({ onOpenDesk, studio }: {
                 clearTimeout(goalTimer.current);
         }
         if (before.id === shown.id && before.at === null && shown.clearAt !== null && !document.hidden && !s.background) {
-            setGoalCelebration({ kind: "goal", title: money(completionTarget(shown)) + " CLEARED", sub: _t("おめでとう！ 記録は保存済み。好きなタイミングで記念カードへ。") });
+            setGoalCelebration({ kind: "goal", title: money(completionTarget(shown)) + " CLEARED", sub: _t("30分チャレンジモード解放！ 記念カードから次の挑戦へ。") });
             sound("infinity", shown.settings);
             resultImpact("infinity", shown.settings);
             haptic("infinity", shown.settings);
@@ -1180,7 +1196,7 @@ export default function App({ onOpenDesk, studio }: {
     // off the tap/scroll path until one of their actual inputs changes.
     const sweepInputs = [shown.portfolio, shown.memory, shown.betLevels, shown.removed, shown.rushLeft, shown.fuel, shown.spins, shown.last, shown.settings];
     const distribution = useMemo(() => nextDistribution(shown), sweepInputs);
-    const sweep = useMemo(() => sweepSnapshot(shown), [...sweepInputs,uiLanguage]);
+    const sweep = useMemo(() => sweepSnapshot(shown), [...sweepInputs,uiLanguage,betNameStyle]);
     // Every result-bearing view reads the same published state.
     const shownSweep = sweep;
     const weights = rollWeights(shown), ev = distribution.reduce<number>((n, v, i) => n + (v ?? 0) * weights[i], 0), chance = distribution.reduce<number>((n, v, i) => n + ((v ?? 0) > 0 ? weights[i] : 0), 0) * 100;
@@ -1385,10 +1401,9 @@ export default function App({ onOpenDesk, studio }: {
           <button className="contact-button trophy-button" aria-label={_t("ランキング")} title={_t("ランキング")} onClick={() => setModal("leaderboard")}>
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M7 3h10v6a5 5 0 0 1-10 0V3ZM7 5H3v2a4 4 0 0 0 4 4m10-6h4v2a4 4 0 0 1-4 4M12 14v5m-4 2h8m-6-2h4"/></svg>
           </button>
-          <button className="contact-button sound-button" aria-label={_t("サウンドパック")} title={_t("サウンドパック")} onClick={() => setModal("sound")}>
+          <button className="contact-button sound-button" aria-label={_t("音楽・サウンド")} title={_t("音楽・サウンド")} onClick={() => setModal("sound")}>
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M9 18V5l12-2v13M9 9l12-2"/><ellipse cx="6" cy="18" rx="3" ry="3"/><ellipse cx="18" cy="16" rx="3" ry="3"/></svg>
           </button>
-          <button className={`contact-button background-button ${shown.settings.backgroundPlay ? "enabled" : ""}`} aria-label={_t("バックグラウンド・通知")} title={_t("バックグラウンド・通知")} onClick={() => setModal("background")}><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4"/></svg></button>
           <button className="contact-button menu-button" onClick={() => setModal("menu")} aria-label={_t("メニューと設定")}>
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
           </button>
@@ -1610,12 +1625,11 @@ export default function App({ onOpenDesk, studio }: {
       {modal === "common-roll" && <Modal title={_t("1つの数字で、全部が動く。")} dismissible={false} onClose={() => { }}>
         <div className="common-roll-help"><div className="common-roll-number">72</div><p>{_t("毎スピン、引く数字は")}<strong>{_t("1つだけ。")}</strong><br />{_t("その同じ数字で、セットしたすべてのギャンブルの当たり・ハズレが決まります。")}</p><p>{_t("当たる範囲が重なれば、同時に当たります。")}</p><button className="primary" onClick={() => { change(run => ({ ...run, commonRollExplained: true })); setModal(null); telemetry.current?.event(state.current, "guidance_resolved", { tutorialStep: "common-roll" }); }}>{_t("わかった →")}</button></div>
       </Modal>}
-      {!studio && modal === "trial-mode" && <Modal title={_t("モードを選ぶ")} onClose={() => setModal(null)}><TrialModes s={shown} onSwitch={switchMode}/></Modal>}
+      {!studio && trialAvailable && modal === "trial-mode" && <Modal title={_t("モードを選ぶ")} onClose={() => setModal(null)}><TrialModes s={shown} onSwitch={switchMode}/></Modal>}
       {!studio && modal === "trial-ranking" && <Modal title="LEADERBOARD" onClose={() => setModal(null)}><div className="button-row"><button className="secondary" onClick={() => setModal("leaderboard")}>{_t("クリア時間")}</button><button className="primary">{_t("30分・総資産")}</button></div><TrialLeaderboard /></Modal>}
       {!studio && modal === "trial-result" && shown.trial?.result && <Modal title="TIME UP" className="clear-modal" dismissible={!!shown.trial.nickname} onClose={() => setModal(null)}>
         <TrialResult s={shown} onChange={change} onRanking={() => setModal("trial-ranking")} onRetry={() => switchMode("trial", shown.trial!.rule)} onNormal={() => switchMode("normal")}/>
       </Modal>}
-      {modal === "background" && <Modal title={_t("バックグラウンド · LAB")} onClose={() => setModal(null)}><BackgroundSettings s={shown} change={change}/></Modal>}
       {modal === "menu" && (<Modal title="dontwork.fun" onClose={() => setModal(null)}>
           <div className="menu-grid">
             <div className="language-switch" role="group" aria-label="Language"><button aria-pressed={uiLanguage==="ja"} onClick={()=>setLanguage("ja")}>JP · 日本語</button><button aria-pressed={uiLanguage==="en"} onClick={()=>setLanguage("en")}>EN · English</button></div>
@@ -1624,13 +1638,11 @@ export default function App({ onOpenDesk, studio }: {
             {!isMobileDevice() && onOpenDesk && <button className="secondary" disabled={!!model.pending} onClick={onOpenDesk}>{_t("縦長ウィンドウで遊ぶ ↗")}</button>}
             {([
                 ["trial-mode", _t("モードを選ぶ · 30分チャレンジ")],
-                ["versions", _t("別のバージョン")],
                 ["help", _t("遊び方")],
-                ["lab", _t("LAB · 体験を比較")],
-                ["transfer", _t("セーブ・合言葉")],
+                ["lab", _t("LAB(開発者用)")],
                 ["stats", _t("プレイ記録")],
                 ["restart", _t("初めからやり直す")],
-            ] as const).filter(([id]) => !studio || id === 'help').map(([id, label]) => (<button className="secondary" key={id} onClick={() => { if (id === "restart")
+            ] as const).filter(([id]) => (!studio || id === 'help') && (id !== 'trial-mode' || trialAvailable)).map(([id, label]) => (<button className="secondary" key={id} onClick={() => { if (id === "restart")
                 setRestartFrom("menu"); setModal(id); }}>
                 {_text(label)} →
               </button>))}
@@ -1639,32 +1651,16 @@ export default function App({ onOpenDesk, studio }: {
         </Modal>)}
       {!studio && modal === "restart" && <Modal title={_t("初めからやり直す")} onClose={() => setModal(restartFrom)}>
         <p>{_t("今の進行をリセットして、$0から始めます。音や表示の設定は引き継ぎます。")}</p>
-        <p className="setting-note">{_t("今の続きを残す場合は、先に「セーブ・合言葉」で保存してください。")}</p>
-        <div className="button-row"><button className="secondary" onClick={() => setModal("transfer")}>{_t("セーブ・合言葉")}</button><button className="secondary" onClick={() => setModal(restartFrom)}>{_t("戻る")}</button><button className="primary" onClick={() => {
+        <div className="button-row"><button className="secondary" onClick={() => setModal(restartFrom)}>{_t("戻る")}</button><button className="primary" onClick={() => {
                 change(run => ({ ...run.trial ? freshTrial(run.settings, run.trial.rule) : freshRun(run.catalog, run.settings), telemetry: run.telemetry }));
                 setTab("spin");
                 setModal(null);
                 setToast(_t("新しい相場を始めました。"));
             }}>{_t("初めから始める")}</button></div>
       </Modal>}
-      {modal === "versions" && <Modal title={_t("バージョンを選ぶ")} onClose={() => setModal(null)}><VersionLinks /></Modal>}
       {modal === "jackpot-help" && <Modal title="JACKPOT" onClose={() => setModal(null)}><JackpotHelp discovered={shown.infinityAt !== null} rule={shown.settings.jackpotRule}/></Modal>}
       {modal === "pwa" && (<Modal title={_t("ホーム画面に追加")} onClose={() => setModal(null)}>
-          <PwaHelp pwa={pwa} onSave={() => setModal("transfer")}/>
-        </Modal>)}
-      {!studio && modal === "transfer" && (<Modal title={_t("セーブ・合言葉")} onClose={() => setModal(needsPwa() ? "install" : null)}>
-          <SaveTransfer current={s} onApply={(run) => {
-                setS(() => run);
-                try {
-                    localStorage.setItem(INTRO_KEY, "1");
-                }
-                catch {
-                    /* Save already persisted. */
-                }
-                setModal(null);
-                setModal(needsPwa() ? "install" : null);
-                setToast(_t("続きを保存しました。ホーム画面版には合言葉で引き継げます。"));
-            }}/>
+          <PwaHelp pwa={pwa}/>
         </Modal>)}
       {modal === "presets" && (<Modal title={_t("編成プリセット")} onClose={() => setModal(null)}>
           <Presets s={shown} change={change} notify={setToast} onLoad={index => requestPosition({ kind: "preset", index })} pending={!!model.positionRequest}/>
@@ -1676,15 +1672,17 @@ export default function App({ onOpenDesk, studio }: {
           <BetCard b={betById(detailBet)} s={shown} change={change} pending={!!model.positionRequest} onPosition={requestPosition} onProbability={upgradeProbability} onBlocked={(id, reason) => { setModal(null); setTab("positions"); blockedPosition(id, reason); }}/>
         </Modal>)}
       {modal === "install" && (<Modal key="startup-install" title={_t("ホーム画面に追加")} onClose={continueFromInstall} dismissible={!needsPwa()}>
-          <InstallWelcome pwa={pwa} onSave={() => setModal("transfer")}/>
+          <InstallWelcome pwa={pwa}/>
         </Modal>)}
       {modal === "intro" && (<Modal title="dontwork.fun" dismissible={false} onClose={dismissIntro}>
           <GameOverview settings={shown.settings} onDone={dismissIntro}/>
         </Modal>)}
       {modal === "help" && <Modal title={_t("遊び方")} onClose={() => setModal(null)}><GameHelp s={shown}/></Modal>}
-      {modal === "news-help" && newsDetail && <Modal title={newsDetail.label} onClose={() => setModal(null)}><NewsHelp s={shown} guide={newsDetail}/>{newsDetail.key==="tip-5"&&<BackgroundSettings s={shown} change={change}/>}</Modal>}
+      {modal === "news-help" && newsDetail && <Modal title={newsDetail.label} onClose={() => setModal(null)}><NewsHelp s={shown} guide={newsDetail}/></Modal>}
       {!studio && modal === "lab" && (<Modal title="THE LAB" wide onClose={() => setModal(null)}>
-          <TrialModes s={shown} onSwitch={switchMode} lab/>
+          <details className="settings-section"><summary>{_t("別のバージョン")}</summary><VersionLinks /></details>
+          <section className="settings-section"><h3>{_t("30分チャレンジ")}</h3><button className="secondary" disabled={trialAvailable} onClick={unlockTrialFromLab}>{trialAvailable ? _t("解放済み") : _t("30分チャレンジモードを解放")}</button></section>
+          {trialAvailable && <TrialModes s={shown} onSwitch={switchMode} lab/>}
           <Lab onWorkMode={(mode, dockToy) => requestPosition({ kind: "work-mode", mode, dockToy })} s={shown} change={change} notify={setToast} preparePreview={() => {
                 change((run) => ({ ...run, running: false }));
                 clock.current = 0;
@@ -1692,7 +1690,7 @@ export default function App({ onOpenDesk, studio }: {
                 return Math.max(0, resultDueAt.current - performance.now()) + 220;
             }}/>
         </Modal>)}
-      {modal === "sound" && <Modal title={_t("サウンドパック")} onClose={() => setModal(null)}>
+      {modal === "sound" && <Modal title={_t("音楽・サウンド")} onClose={() => setModal(null)}>
         <label className="setting-row"><span>{_t("効果音")}</span><NativeSwitch label={_t("効果音")} checked={shown.settings.sound} tactile={shown.settings.haptics} onChange={sound => { change(run => configure(run, { sound })); setAudioEnabled(audioEnabled({ ...shown.settings, sound })); if (sound)
             wakeAudio(true); }}/></label>
         <SoundPackPicker value={shown.settings.soundPack} onChange={soundPack => {
@@ -1700,6 +1698,7 @@ export default function App({ onOpenDesk, studio }: {
                 change(run => configure(run, patch));
                 uiSound("win", { ...shown.settings, ...patch });
             }}/>
+        <MusicSettings s={shown} change={change}/>
         <button className="secondary" onClick={() => setModal("settings")}>{_t("音量・振動の設定 →")}</button>
       </Modal>}
       {!studio && modal === "settings" && (<Modal title="SETTINGS" onClose={() => setModal(null)}>
@@ -1714,10 +1713,12 @@ export default function App({ onOpenDesk, studio }: {
           <Stats s={shown}/>
         </Modal>)}
       {!studio && (modal === "leaderboard" || modal === "clear") && (<Modal title={modal === "clear" ? "GOAL CLEARED" : "LEADERBOARD"} className={modal === "clear" ? "clear-modal" : ""} dismissible={modal !== "clear" || !!shown.completionNickname} onClose={closeResult}>
-          {modal === "leaderboard" && <div className="button-row"><button className="primary">{_t("クリア時間")}</button><button className="secondary" onClick={() => setModal("trial-ranking")}>{_t("30分・総資産")}</button></div>}
+          {modal === "leaderboard" && <div className="button-row"><button className="primary">{_t("クリア時間")}</button>{trialAvailable && <button className="secondary" onClick={() => setModal("trial-ranking")}>{_t("30分・総資産")}</button>}</div>}
           <Leaderboard key={modal} s={shown} change={change} clear={modal === "clear"} saveName={(name) => saveCompletionName(state.current, name)} notify={setToast} onRanking={() => { ratingAfterRanking.current = shown.completion?.id ?? null; setModal("leaderboard"); }}/>
           {modal === "clear" && <>
-            <button className="primary continue-button" disabled={!shown.completionNickname} onClick={closeResult}>{_t("このまま続ける →")}</button>
+            <section className="trial-unlocked" role="status"><strong>{_t("30分チャレンジモード解放！")}</strong><p>{_t("次は30分で、いくらまで増やせる？通常モードの記録はそのまま残ります。")}</p></section>
+            <button className="primary continue-button" disabled={!shown.completionNickname} onClick={() => switchMode("trial")}>{_t("30分チャレンジを始める →")}</button>
+            <button className="secondary continue-button" disabled={!shown.completionNickname} onClick={closeResult}>{_t("このまま続ける →")}</button>
             <button className="secondary continue-button" disabled={!shown.completionNickname} onClick={() => { setRestartFrom("clear"); setModal("restart"); }}>{_t("初めからやり直す")}</button>
           </>}
         </Modal>)}

@@ -1,7 +1,7 @@
 import { servicesEnabled } from "./serviceConfig";
 import { t as _t } from "./i18n";
 import { soundAssignment, soundExperimentProps } from "./soundExperiment";
-import { VERSION, ECONOMY_REVISION, fuelCapacity, rollFloor, status, totalCost, settlePortfolio, stakeOf, isInfinite, interval, UPGRADES, type Run, } from "./game/engine";
+import { VERSION, ECONOMY_REVISION, fuelCapacity, rollFloor, status, totalCost, settlePortfolio, stakeOf, isInfinite, interval, UPGRADES, type Run, type Settings, } from "./game/engine";
 import { betById } from "./game/catalog";
 export const ruleset = (s: Run) => `astra-v${ECONOMY_REVISION}${s.trial ? s.trial.scoring==="assets"?"-30m-assets":"-30m" : ""}:` + s.catalog;
 export const apiMoney = (n: number) => Math.max(-1e15, Math.min(1e15, Number.isFinite(n) ? n : 0));
@@ -112,6 +112,8 @@ export function snapshot(s: Run) {
         chargeVolume: s.settings.chargeVolume,
         payoffStyle: s.settings.payoffStyle,
         sweepMotion: s.settings.sweepMotion,
+        spinAssist: s.settings.spinAssist,
+        spinAssistSequence: s.settings.spinAssistSequence,
         music: s.settings.music,
         jackpotMusic: s.settings.jackpotMusic,
         bassMode: s.settings.bassMode,
@@ -361,6 +363,19 @@ export class Telemetry {
         this.event(s, "snapshot", { ...snapshot(s), ...this.view });
         this.persist();
         void this.flush();
+    }
+    musicPlayed(s: Run, musicPack: Settings["musicPack"], playing: boolean, requested: boolean, rush: boolean, durationMs: number) {
+        if (this.disabled || !s.telemetry || !Number.isFinite(durationMs) || durationMs <= 0 || durationMs > 1000) return;
+        const props = { musicPack, music: playing, requested, phase: rush ? "jackpot" : "normal", source: "foreground", durationMs };
+        const batch = [...this.queue].reverse().find(e => {
+            const p = e.props as typeof props;
+            return e.runId === s.id && e.eventName === "music_play_batch" && !this.sealed.has(e.eventId) && p.musicPack === musicPack && p.music === playing && p.requested === requested && p.phase === props.phase;
+        });
+        if (batch) {
+            const p = batch.props as typeof props;
+            p.durationMs = Math.min(30 * 86400000, p.durationMs + durationMs);
+            batch.activeMs = Math.round(s.activeMs);
+        } else this.event(s, "music_play_batch", props);
     }
     changed(before: Run, after: Run) {
         if (!this.disabled && after.telemetry && before.id === after.id && after.coinRounds > before.coinRounds) {

@@ -8,7 +8,14 @@ export const MIGRATION_BACKUP = 'dontwork-migration-backup-v1';
 export const MIGRATION_PENDING = 'dontwork-migration-pending-v1';
 export const MIGRATION_APPLIED = 'dontwork-migrations-applied-v1';
 export const MIGRATION_CODE = 'dontwork-migration-code-v1';
-export function openDomainMigration(code = '') { location.hash = code ? 'migrate=' + code : 'migration'; location.reload(); }
+export function withoutRetiredMigrationHash(hash: string) {
+    const params = new URLSearchParams(hash.replace(/^#/, ''));
+    if (!params.has('migrate') && !params.has('migration')) return hash;
+    params.delete('migrate');
+    params.delete('migration');
+    const remaining = params.toString();
+    return remaining ? '#' + remaining : '';
+}
 const RUN_KEYS = [SAVE_KEY, NORMAL_SLOT, TRIAL_SLOT];
 const OUTBOX_KEYS = ['bebullish-ranking-outbox-v1', 'bebullish-30m-outbox-v1'];
 const KEYS = [...RUN_KEYS, ...OUTBOX_KEYS, 'bebullish-intro-seen-v2', 'bebullish-sound-default-v1', 'bebullish-install-id', 'bebullish-telemetry-pending'];

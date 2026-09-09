@@ -5,7 +5,7 @@ import { CATALOGS } from "./game/catalog";
 import { VERSION, duration, money, type Run } from "./game/engine";
 import { request } from "./api";
 import { ResultCard, clearCardRun, effortStats } from "./ResultCard";
-import { resultImage, resultShareText } from "./resultShare";
+import { resultImage, resultShareText, resultXIntent, RESULT_POST_URL } from "./resultShare";
 import { rankingPath, rankingVersion, type RankingPage, } from "./rankings";
 import type { Change } from "./App";
 export function Leaderboard({ s, change, clear = false, notify, saveName, onRanking, }: {
@@ -58,7 +58,7 @@ export function Leaderboard({ s, change, clear = false, notify, saveName, onRank
     const share = async () => {
         if (!named)
             return;
-        const text = resultShareText(resultRun, s.completionNickname), url = location.origin+'/';
+        const text = resultShareText(resultRun, s.completionNickname), url = RESULT_POST_URL;
         const file = cardImage ? new File([cardImage], 'dontwork.fun-clear.png', { type: 'image/png' }) : null;
         try {
             if (file && navigator.canShare?.({ files: [file] }) && navigator.share)
@@ -66,7 +66,7 @@ export function Leaderboard({ s, change, clear = false, notify, saveName, onRank
             else if (navigator.share)
                 await navigator.share({ title: 'dontwork.fun', text, url });
             else if (cardImage) {
-                window.open('https://twitter.com/intent/tweet?text=' + encodeURIComponent(text) + '&url=' + encodeURIComponent(url), '_blank', 'noopener,noreferrer');
+                window.open(resultXIntent(resultRun, s.completionNickname), '_blank', 'noopener,noreferrer');
             }
             else if (navigator.clipboard) {
                 await navigator.clipboard.writeText(text + '\n' + url);
@@ -136,7 +136,7 @@ export function Leaderboard({ s, change, clear = false, notify, saveName, onRank
       {postError && (<p className="negative" role="status">
           {_text(postError)}
         </p>)}
-      {clear && named && <><div className="result-actions"><button className="primary" disabled={!cardImage && !imageFailed} onClick={() => void share()}>{imageFailed ? _t("結果をテキストで共有") : cardImage ? _t("記念カードをシェア ↗") : _t("画像を準備中…")}</button></div><p className="setting-note">{_t("画像を長押しして保存、またはスクリーンショットで共有できます。")}</p>{imageFailed && <p className="setting-note">{_t("画像を作成できませんでした。このカードをスクリーンショットで共有できます。")}</p>}<button className="text-button result-ranking" onClick={onRanking}>{_t("ランキングを見る →")}</button></>}
+      {clear && named && <><div className="result-actions"><a className="primary" href={resultXIntent(resultRun, s.completionNickname)} target="_blank" rel="noopener noreferrer">{_t("Xで引用して共有 ↗")}</a><button className="primary" disabled={!cardImage && !imageFailed} onClick={() => void share()}>{imageFailed ? _t("結果をテキストで共有") : cardImage ? _t("記念カードをシェア ↗") : _t("画像を準備中…")}</button></div><p className="setting-note">{_t("画像を長押しして保存、またはスクリーンショットで共有できます。")}</p>{imageFailed && <p className="setting-note">{_t("画像を作成できませんでした。このカードをスクリーンショットで共有できます。")}</p>}<button className="text-button result-ranking" onClick={onRanking}>{_t("ランキングを見る →")}</button></>}
       {!clear && <>
       <div className="ranking-controls">
         <div className="ranking-tabs" role="group" aria-label={_t("ランキングの範囲")}>

@@ -43,6 +43,28 @@ describe("client telemetry and Lab persistence", () => {
     );
   });
   afterEach(() => vi.unstubAllGlobals());
+  it("measures each BGM and silence separately and stops collecting after opt-out", async()=>{
+    const client=new Telemetry(),run={...freshRun(),startedAt:1,activeMs:1000};
+    client.observe(run);await client.flush();
+    client.musicPlayed(run,"pulse",true,true,false,200);
+    client.musicPlayed(run,"pulse",true,true,false,300);
+    client.musicPlayed(run,"night",true,true,false,400);
+    client.musicPlayed(run,"arcade",false,false,false,500);
+    client.musicPlayed(run,"arcade",false,true,false,100);
+    client.checkpoint(run);await client.flush();
+    await vi.waitFor(()=>expect(bodies.flatMap(b=>b.events).filter(e=>e.eventName==="music_play_batch")).toHaveLength(4));
+    const batches=bodies.flatMap(b=>b.events).filter(e=>e.eventName==="music_play_batch");
+    expect(batches.map(e=>e.props)).toEqual(expect.arrayContaining([
+      expect.objectContaining({musicPack:"pulse",music:true,requested:true,durationMs:500,source:"foreground"}),
+      expect.objectContaining({musicPack:"night",music:true,durationMs:400}),
+      expect.objectContaining({musicPack:"arcade",music:false,requested:false,durationMs:500}),
+      expect.objectContaining({musicPack:"arcade",music:false,requested:true,durationMs:100}),
+    ]));
+    const disabled={...run,telemetry:false};client.changed(run,disabled);
+    client.musicPlayed(disabled,"pulse",true,true,false,500);client.musicPlayed(run,"pulse",true,true,false,NaN);
+    client.checkpoint(disabled);await client.flush();
+    expect(bodies.flatMap(b=>b.events).filter(e=>e.eventName==="music_play_batch")).toHaveLength(4);
+  });
   it("keeps foreground and background batches separate without overflowing on Jackpot chains",async()=>{
     const client=new Telemetry();let s={...freshRun(),cash:1e6,peak:1e6,portfolio:[{id:"edge-50",count:1}]};client.observe(s);
     const first=spin(s,75);client.settled(s,first);s=configure(first,{backgroundPlay:true});

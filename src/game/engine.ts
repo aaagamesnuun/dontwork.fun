@@ -110,6 +110,8 @@ export interface Settings {
   workMode: "click" | "gamble";
   workCosmetics: boolean;
   upgradeTutorial: "money" | "scripted";
+  spinAssist: boolean;
+  spinAssistSequence: string;
   presentationRevision: 1;
   spinSound: "rhythm" | "original";
   chartWindowSpins: number;
@@ -120,7 +122,7 @@ export interface Settings {
   jackpotMusic: "follow" | "on" | "off";
   bassMode: boolean;
   jackpotAutoTab: boolean;
-  musicPack: "pulse" | "night" | "arcade" | "bit-quest" | "pixelland" | "cipher" | "envision";
+  musicPack: "pulse" | "night" | "arcade";
   musicVolume: number;
   jackpotSpinIntervalMs: (typeof JACKPOT_INTERVALS)[number];
   chartAxis: "spins" | "time";
@@ -309,6 +311,8 @@ export const defaultSettings: Settings = {
   workMode: "click",
   workCosmetics: false,
   upgradeTutorial: "money",
+  spinAssist: true,
+  spinAssistSequence: "WWLWW",
   presentationRevision: 1,
   spinSound: "rhythm",
   chartWindowSpins: 200,
@@ -348,12 +352,13 @@ export const defaultSettings: Settings = {
   speedPriceMultiplier: 1.2,
   upgradeMode: "direct",
 };
-export const customRules = (settings: Settings) =>
+export const customRules = (settings: Settings, trial = false) =>
   settings.handToys || settings.jackpotRule !== "combined" || settings.probabilityUpgrades || settings.baccarat ||
-  settings.workMode === "gamble" || settings.workCosmetics || settings.upgradeTutorial === "scripted" ||
+  settings.workMode === "gamble" || settings.workCosmetics ||
+  (!trial && (!settings.spinAssist || settings.spinAssistSequence !== "WWLWW")) ||
   JSON.stringify([
     settings.opening,
-    settings.assist,
+    trial ? true : settings.assist,
     settings.assistAfter,
     settings.spinSpeedScale,
     settings.rushBase,
@@ -809,16 +814,20 @@ export function spin(s: Run, forced?: number, elapsed = interval(s)): Run {
   const beforeUnlocked = availableBets(s)
     .filter((b) => unlocked(s, b))
     .map((b) => b.id);
-  const assisted =
-    forced === undefined &&
-    !s.trial && s.settings.assist &&
-    !s.assistUsed &&
-    s.jackpots === 0 &&
+  const baseline = s.portfolio.find(row => row.count > 0 && ["edge-50", "long-edge-50"].includes(row.id));
+  const assistedOpening = forced === undefined && !s.trial && s.settings.spinAssist && s.spins < 5 && s.rushLeft === 0 && baseline;
+  let openingRoll: number | undefined;
+  if (assistedOpening) {
+    const bet = betById(baseline.id), hit = s.settings.spinAssistSequence[s.spins] === "W";
+    const faces = Array.from({length:90},(_,i)=>i+1).filter(face => (resolve(s,bet,face).payout > 0) === hit);
+    openingRoll = faces[Math.floor(faces.length / 2)];
+  }
+  const assisted = forced === undefined && openingRoll === undefined &&
+    !s.trial && s.settings.assist && !s.assistUsed && s.jackpots === 0 &&
     s.spins + 1 >= Math.max(1, s.settings.assistAfter - (s.settings.jackpotRule === "double-high" ? 1 : 0));
-  const scripted = forced === undefined && s.settings.upgradeTutorial === "scripted" && s.spins < 5 && s.portfolio.length === 1 && s.portfolio[0].id === "edge-50";
-  const baseRoll = forced ?? (scripted ? [75,25,75,75,75][s.spins] : assisted ? 100 : sample(rollFloor(s), 100));
+  const baseRoll = forced ?? openingRoll ?? (assisted ? 100 : sample(rollFloor(s), 100));
   if(!Number.isInteger(baseRoll) || baseRoll<rollFloor(s) || baseRoll>100) throw new Error("Roll outside current range");
-  const bonus = forced === undefined ? rollBonus(s) : 0;
+  const bonus = forced === undefined && openingRoll === undefined ? rollBonus(s) : 0;
   const roll = Math.min(100, baseRoll + bonus);
   if (!Number.isInteger(roll) || roll < rollFloor(s) || roll > 100)
     throw new Error("Roll outside current range");
@@ -911,7 +920,7 @@ export function spin(s: Run, forced?: number, elapsed = interval(s)): Run {
     startedAt: s.startedAt ?? Date.now(),
     infinityAt: s.infinityAt ?? (infinity ? Date.now() : null),
     assistUsed: s.assistUsed || (assisted && jackpot),
-    debug: s.debug || customRules(s.settings),
+    debug: s.debug || customRules(s.settings, !!s.trial),
     history: appendHistory(s.history, {
       cash,
       at: s.activeMs + elapsed,
@@ -1208,6 +1217,8 @@ export function playBaccarat(s: Run, wager: number, side: "player" | "banker", t
     history:appendHistory(s.history,{cash,at:s.activeMs,spin:s.spins,kind:"baccarat"})});
 }
 export function configure(s: Run, patch: Partial<Settings>): Run {
+  if (patch.spinAssistSequence !== undefined && !/^[WL]{5}$/.test(patch.spinAssistSequence)) return s;
+  if (s.trial && patch.spinAssist !== undefined) patch = {...patch,spinAssist:false};
   if(s.trial && patch.assist!==undefined)patch={...patch,assist:false};
   if(patch.workMode === "gamble" || (s.settings.workMode === "gamble" && patch.fuelEnabled)) patch={...patch,fuelEnabled:false};
   if (patch.assistAfter !== undefined)
@@ -1233,7 +1244,8 @@ export function configure(s: Run, patch: Partial<Settings>): Run {
         "probabilityUpgrades",
         "workMode",
         "workCosmetics",
-        "upgradeTutorial",
+        "spinAssist",
+        "spinAssistSequence",
         "fuelEnabled",
         "opening",
         "assist",
@@ -1392,6 +1404,12 @@ export function readSave(raw: string | null): Run | null {
       running: false,
       last: null,
     } as Run;
+    if (typeof n.settings.spinAssist !== "boolean" || typeof n.settings.spinAssistSequence !== "string" || !/^[WL]{5}$/.test(n.settings.spinAssistSequence)) return null;
+    if (["bit-quest", "pixelland", "cipher", "envision"].includes(n.settings.musicPack)) {
+      n.settings.musicPack = "pulse";
+      n.settings.music = false;
+      n.settings.jackpotMusic = "follow";
+    }
     if((v.economyRevision??0)<13){
       if(Number.isInteger(n.trim) && n.trim>=1)n.trim-=1;
       if(n.lastUpgradeDraw?.upgrade==="trim")n.lastUpgradeDraw={...n.lastUpgradeDraw,level:Math.max(0,n.lastUpgradeDraw.level-1)};
@@ -1581,7 +1599,7 @@ export function readSave(raw: string | null): Run | null {
       !["follow", "on", "off"].includes(n.settings.jackpotMusic) ||
       typeof n.settings.bassMode !== "boolean" ||
       typeof n.settings.jackpotAutoTab !== "boolean" ||
-      !["pulse", "night", "arcade", "bit-quest", "pixelland", "cipher", "envision"].includes(n.settings.musicPack) ||
+      !["pulse", "night", "arcade"].includes(n.settings.musicPack) ||
       !Number.isFinite(n.settings.musicVolume) ||
       n.settings.musicVolume < 0 ||
       n.settings.musicVolume > 1 ||
@@ -1777,7 +1795,7 @@ export function readSave(raw: string | null): Run | null {
     if (n.entryKind !== "transfer") delete n.entryKind;
     n.fuel = Math.min(fuelCapacity(n), n.fuel);
     n.peak = Math.max(n.peak, n.cash);
-    n.debug = Boolean(n.debug) || customRules(n.trial?{...n.settings,assist:true}:n.settings);
+    n.debug = Boolean(n.debug) || customRules(n.settings, !!n.trial);
     n.telemetry = Boolean(n.telemetry);
     for (const k of [
       "startedAt",
@@ -1796,6 +1814,7 @@ export function readSave(raw: string | null): Run | null {
         (t.anchor!==null && (!Number.isFinite(t.anchor)||t.anchor<0)) || (t.paused && t.anchor!==null) || (!t.paused && t.anchor===null) || (!t.started && !t.paused) || (!t.started && (t.elapsedMs!==0 || t.anchor!==null)) ||
         !Number.isSafeInteger(t.purchases)||t.purchases<0 || !Number.isFinite(t.spent)||t.spent<0 || t.spent>MONEY_CEILING || (t.rule==="fixed" && (t.addedMs!==0 || t.purchases!==0)))return null;
       n.settings.assist=false;
+      n.settings.spinAssist=false;
       if(t.rule!=="fixed")n.debug=true;
       if(t.result){
         const r=t.result;
@@ -1885,10 +1904,10 @@ export const firstBet = (s: Run) =>
 // A separate wall clock; activeMs remains the ordinary play-statistics clock.
 export function freshTrial(settings:Settings=defaultSettings,rule:TrialRule="fixed"):Run {
   const normalized={...settings};
-  for(const key of ["jackpotRule","handToys","baccarat","probabilityUpgrades","workMode","workCosmetics","upgradeTutorial","fuelEnabled","opening","assist","assistAfter","spinSpeedScale","jackpotSpinIntervalMs","rushBase","upgradePrices","economyProfile","upgradeMode","positionPriceBase","positionPriceMultiplier","speedPriceBase","speedPriceMultiplier"] as const)
+  for(const key of ["jackpotRule","handToys","baccarat","probabilityUpgrades","workMode","workCosmetics","upgradeTutorial","spinAssist","spinAssistSequence","fuelEnabled","opening","assist","assistAfter","spinSpeedScale","jackpotSpinIntervalMs","rushBase","upgradePrices","economyProfile","upgradeMode","positionPriceBase","positionPriceMultiplier","speedPriceBase","speedPriceMultiplier"] as const)
     Object.assign(normalized,{[key]:defaultSettings[key]});
   const run=freshRun("classic",normalized);
-  return {...run,debug:rule!=="fixed",settings:{...normalized,assist:false,dockToy:"off"},trial:{scoring:"assets",rule,elapsedMs:0,addedMs:0,anchor:null,started:false,paused:true,result:null,nickname:"",submitted:false,purchases:0,spent:0,lastPurchase:null}};
+  return {...run,debug:rule!=="fixed",settings:{...normalized,assist:false,spinAssist:false,dockToy:"off"},trial:{scoring:"assets",rule,elapsedMs:0,addedMs:0,anchor:null,started:false,paused:true,result:null,nickname:"",submitted:false,purchases:0,spent:0,lastPurchase:null}};
 }
 export function trialDeadline(s:Run):number {
   const t=s.trial;return t && t.anchor!==null && !t.paused && !t.result?t.anchor+trialRemaining(t):Infinity;

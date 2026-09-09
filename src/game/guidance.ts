@@ -72,7 +72,6 @@ export function guidance(s: Run, tick = 0, tab: "spin" | "positions" | "upgrades
         _t("同じギャンブルを重ねると、賭け金と配当もその数だけ増える。"),
         s.settings.jackpotRule === "combined" ? _t("100、または91以上が2回連続でJackpot。カット量を強化すると、連鎖中は低い出目をカット。") : s.settings.jackpotRule === "double-high" ? _t("91以上を2回連続で引くとJackpot。") : _t("100が出るとJackpot。カット量を強化すると、連鎖中の低い出目が減る。"),
         _t("ギャンブルの付け外しは無料。スピン中の変更は次のスピンから反映。"),
-        s.settings.backgroundPlay ? _t("LAB：通知と音をONにして、画面を離れてAUTO。Jackpotで一時停止し、戻ると再開。") : _t("LABでは、通知と音をONにしてバックグラウンドでも遊べます。詳しくはここをタップ。"),
     ];
     const index = (next ? Math.floor(tick / 2) : tick) %
         Math.min(tips.length, s.spins < 10 ? 2 : tips.length);
