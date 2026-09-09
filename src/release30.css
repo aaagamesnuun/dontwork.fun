@@ -65,13 +65,30 @@ html[lang=en] .spin-result small{font-size:9px}html[lang=en] .bet-card h3{letter
 .app.position-lesson,.app.capture-mode.desk-layout.position-lesson {--news-h:76px}
 .app.position-lesson .news-strip>.news-label {display:none}
 .app.position-lesson .news-strip p {white-space:normal;overflow:visible;margin:0;font-size:14px;line-height:1.4}
-.app .balance-header .eyebrow>span {letter-spacing:0}
 .intro-message>strong {color:#d3ff93;font-weight:800}
-/* Full amounts stay readable; exceptionally long values can be scrolled. */
-.app.full-money .balance-money-line {display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:12px}
-.app.full-money .balance-money-line h1 {font-size:clamp(21px,5vw,36px);max-width:100%;min-width:0;overflow-x:auto;white-space:nowrap}
-.app.full-money .balance-result {display:block;width:100%;max-width:100%;min-width:0;margin-left:0;overflow-x:auto;text-align:right}
-.app.full-money .balance-result .pnl {font-size:clamp(17px,4vw,28px);width:max-content;min-width:100%}
+/* One balance row gives the saved space back to the chart in every number mode. */
+.app.desk-layout,.app.tab-layout {--balance-row-h:44px;--balance-h:var(--balance-row-h)}
+.app.capture-mode.desk-layout {--balance-row-h:60px;--balance-h:var(--balance-row-h)}
+.app.desk-layout:has(.has-clear-notice),.app.tab-layout:has(.has-clear-notice),.app.capture-mode.desk-layout:has(.has-clear-notice) {--balance-h:calc(var(--balance-row-h) + 38px)}
+.app .balance-header {box-sizing:border-box;display:flex;align-items:center;min-height:0;padding:0}
+.app .balance-header.has-clear-notice {padding-bottom:38px}
+.app .balance-money-line {display:flex;align-items:baseline;justify-content:flex-start;flex-wrap:nowrap;gap:8px;width:100%;min-width:0}
+.app .balance-money-line h1 {flex:0 1 auto;min-width:0;max-width:42%;margin:0;font-size:clamp(25px,4vw,34px);line-height:1.1;white-space:nowrap;overflow-x:auto;scrollbar-width:none}
+.app .balance-money-line .balance-goal {flex:0 1 auto;min-width:0;max-width:40%;font:500 11px/1.2 var(--mono);color:var(--muted);letter-spacing:0;white-space:nowrap;overflow-x:auto;scrollbar-width:none}
+.app .balance-money-line .balance-result {display:block;flex:0 1 auto;width:auto;min-width:0;max-width:40%;margin-left:auto;padding:0;overflow-x:auto;scrollbar-width:none;text-align:right;align-self:baseline}
+.app .balance-money-line .balance-result .pnl {width:max-content;min-width:0;margin:0;font-size:clamp(20px,3vw,28px);line-height:1.1;white-space:nowrap;animation-name:balance-change-pop}
+@keyframes balance-change-pop {from{opacity:.35}to{opacity:1}}
+.app .balance-money-line.change-inline .balance-result {margin-left:0;text-align:left}
+.app.full-money .balance-money-line h1 {font-size:clamp(20px,3.5vw,30px);letter-spacing:-.7px}
+.app.full-money .balance-money-line .balance-result .pnl {font-size:clamp(17px,3vw,25px)}
+.app.capture-mode .balance-money-line h1 {font-size:clamp(28px,6vw,44px)}
+.app.capture-mode .balance-money-line .balance-result .pnl {font-size:clamp(22px,4vw,34px)}
+.app.desk-layout:not(.capture-mode) .compact-workspace {gap:4px;padding:2px 0 4px}
+@media(max-width:600px),(max-height:650px){
+ .app.desk-layout,.app.tab-layout {--balance-row-h:40px}
+ .app.capture-mode.desk-layout {--balance-row-h:60px}
+}
+/* Other full amounts stay readable; exceptionally long values can be scrolled. */
 .app.full-money .spin-result b,.app.full-money .equation-term strong,.app.full-money .bet-bottom strong {display:block;max-width:100%;overflow-x:auto;white-space:nowrap;scrollbar-width:thin}
 .app.full-money .equation-term {min-width:0}
 .app.full-money .wealth-left-labels>span {max-width:65%;width:max-content;overflow-x:auto;background:#10160fe8;font-size:10px;white-space:nowrap}

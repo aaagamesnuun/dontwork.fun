@@ -143,6 +143,8 @@ flowchart LR
 
 金額表記は [moneyPreferences.ts](../src/moneyPreferences.ts) が管理します。標準の省略表示と、桁区切り付きの全桁表示をLABで切り替え、`dontwork-money-style-v1`へ保存します。`Settings`やセーブJSONには含めず、ゲーム内の数値・計算・ランキング適格性は変更しません。`money()`がこの設定を参照し、常に省略表記が必要な箇所には`compactMoney()`を使えます。
 
+[BalanceReadout.tsx](../src/BalanceReadout.tsx) は公開済みの`Run`と最新の資産変化だけを受け取り、見出しのない1段の資産欄を表示します。`Settings.balanceChangeInline`は標準OFFで、ONにすると資産・変化額・目標の順で隣接表示します。表示だけの設定として保存し、欠落した旧セーブにはOFFを補います。資産欄の高さを数字表記と分離し、浮いた縦幅をチャートへ戻します。
+
 ## 任意のWorker / D1とfork
 
 [serviceConfig.ts](../src/serviceConfig.ts)が接続の境界です。通常のforkはオンラインサービス・新規プレイの計測設定ともにOFFです。自分の同一配信元のAPIを使うビルドでは`VITE_ENABLE_SERVICES=true`、計測の初期値を変更する場合は別に`VITE_ENABLE_TELEMETRY=true`を指定します。保存済みの計測選択は環境変数で上書きしません。localhost / 開発環境からの計測送信は[Telemetry](../src/api.ts)が抑止します。
@@ -182,7 +184,7 @@ DB変更では、新しいSQLを追加し、APIが使う列・制約・インデ
 | --- | --- |
 | 精算・価格・カタログ・旧セーブ | [engine.test.ts](../src/game/engine.test.ts)、[upgradeDraw.test.ts](../src/game/upgradeDraw.test.ts)、[game/内のreleaseテスト](../src/game/) |
 | 入替案内・一度だけの初回当たり・復帰 | [positionTutorial.test.tsx](../src/positionTutorial.test.tsx)、[spinAssist.test.ts](../src/spinAssist.test.ts) |
-| 全桁金額表示と表示設定の独立性 | [moneyPreferences.test.tsx](../src/moneyPreferences.test.tsx) |
+| 全桁金額表示・資産欄の並び・表示設定の独立性 | [moneyPreferences.test.tsx](../src/moneyPreferences.test.tsx)、[BalanceReadout.test.tsx](../src/BalanceReadout.test.tsx) |
 | 未公開結果、WORK・購入・FLIP、古いタイマー | [presentation.test.ts](../src/presentation.test.ts)、[coinFlip.test.tsx](../src/coinFlip.test.tsx)、[release30.test.tsx](../src/release30.test.tsx) |
 | 30分の締切・一時停止・不変結果・モード保存と解放 | [timeTrial.test.ts](../src/timeTrial.test.ts)、[timeTrialUI.test.tsx](../src/timeTrialUI.test.tsx)、[release30.test.tsx](../src/release30.test.tsx)、[playerAccess.test.tsx](../src/playerAccess.test.tsx) |
 | 排他所有・離席中の保存・時計の巻き戻り | [experience.test.tsx](../src/experience.test.tsx)、[backgroundPlay.test.ts](../src/backgroundPlay.test.ts)、[domainMigration.test.ts](../src/domainMigration.test.ts) |

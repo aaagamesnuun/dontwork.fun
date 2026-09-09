@@ -1,3 +1,4 @@
+import { BalanceReadout } from "./BalanceReadout";
 import { useMoneyStyle } from "./moneyPreferences";
 import { secondBetStep } from "./game/positionTutorial";
 import { JackpotNews } from "./JackpotNews";
@@ -10,7 +11,7 @@ import { TrialClock, TrialModes, TrialTimeShop, TrialResult, TrialLeaderboard } 
 import { switchTrialMode } from "./trialSaves";
 import { trialUnlocked, rememberTrialUnlock } from "./trialUnlock";
 import { saveTrialName, flushTrialScores } from "./trialScores";
-import { pauseTrial, trialAssets, trialActive, freshTrial, type TrialRule } from "./game/engine";
+import { pauseTrial, trialActive, freshTrial, type TrialRule } from "./game/engine";
 import { settleAccepted } from "./presentation";
 import { SweepAudio } from "./SweepAudio";
 import { ChartNotices } from "./ChartNotices";
@@ -48,7 +49,7 @@ import { betOdds, hitFacesText, percent } from "./game/odds";
 import { useReducedMotion } from "./useReducedMotion";
 import { useCallback, useEffect, useMemo, useReducer, useRef, useState, type ReactNode } from "react";
 import { betById, catalogById, type Bet } from "./game/catalog";
-import { purchaseProbability, probabilityPrice, probabilityCap, SAVE_KEY, availableBets, rollWeights, workCosmeticPrice, purchaseWorkCosmetic, canSpin, configure, duration, firstBet, freshRun, fuelCapacity, interval, isInfinite, mem, money, nextDistribution, payoutOf, purchase, drawUpgrade, upgradeDrawPool, upgradeDrawPrice, readSave, resolve, rollFloor, setCount, spin, stakeOf, totalCost, unlocked, upgradePrice, upgradeUnlocked, VERSION, usedSlots, work, type Run, type PositionIntent, type Upgrade, } from "./game/engine";
+import { purchaseProbability, probabilityPrice, probabilityCap, SAVE_KEY, availableBets, rollWeights, workCosmeticPrice, purchaseWorkCosmetic, canSpin, configure,  firstBet, freshRun, fuelCapacity, interval, isInfinite, mem, money, nextDistribution, payoutOf, purchase, drawUpgrade, upgradeDrawPool, upgradeDrawPrice, readSave, resolve, rollFloor, setCount, spin, stakeOf, totalCost, unlocked, upgradePrice, upgradeUnlocked, VERSION, usedSlots, work, type Run, type PositionIntent, type Upgrade, } from "./game/engine";
 import { Draft, Feedback, Lab, Leaderboard, Presets, SettingsPanel, Stats, } from "./Panels";
 import { sound, uiSound, wakeAudio, installAudioRecovery, setAudioEnabled, setBackgroundAudio, spinCharge, stopSpinCharge, stopSounds, drainAudioHealth, musicPulse, playingMusicPack, audioEnabled, } from "./audio";
 import { installUISounds } from "./uiSounds";
@@ -1423,24 +1424,7 @@ export default function App({ onOpenDesk, studio }: {
       {shown.settings.newsPosition === "top" && news}
       <div className={`balance-header ${shown.completion && shown.clearAt !== null ? "has-clear-notice" : ""}`}>
         {shown.completion && shown.clearAt !== null && <button className="clear-notice" onClick={() => { setGoalCelebration(null); setModal("clear"); }} aria-label={_t("クリア記録を開く")}><span>{_t("🏆 {0}達成！", money(completionTarget(shown)))}</span><strong>{shown.completionNickname ? _t("記念カードを見る") : _t("名前を登録して記念カードへ")} →</strong></button>}
-        <div className="balance-wallet">
-          <div className="eyebrow">{_t("総資産")}{" "}
-            <span>
-              {shown.trial ? "30 MIN CHALLENGE" : shown.clearAt !== null ? "GOAL CLEARED" : _t("クリア目標:{0}$", numberStyle === "full" ? "1,000,000,000" : "1B")}
-            </span>
-          </div>
-          <div className="balance-money-line"><h1>{money(shown.trial ? trialAssets(shown) : shown.cash)}</h1>        <div className="balance-result">
-        <div className={`pnl ${walletChange.amount < 0 ? "negative" : "positive"}`} key={walletChange.serial}>
-          {(walletChange.amount > 0 ? "+" : "") + money(walletChange.amount)}
-
-        </div>
-        </div>
-    </div>
-        </div>
-        <div className="balance-meta">
-          <span>{duration(shown.activeMs)}</span>
-          <span>{shown.spins.toLocaleString()} SPINS</span>
-        </div>
+        <BalanceReadout s={shown} amount={walletChange.amount} serial={walletChange.serial}/>
       </div>
       <SweepAudio signal={sweepSignal} settings={shown.settings}/>
       <SweepMotionDriver signal={sweepSignal} frame={frame} motion={shown.settings.sweepMotion} reduced={osReduced || shown.settings.motion === "reduced"}/>

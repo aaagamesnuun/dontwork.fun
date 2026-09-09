@@ -97,6 +97,7 @@ export interface Settings {
   workspaceMode: "desk" | "tabs";
   captureMode: boolean;
   sharedChart: boolean;
+  balanceChangeInline: boolean;
   oddsDisplay: "percent" | "fraction";
   probabilityUpgrades: boolean;
   baccarat: boolean;
@@ -300,6 +301,7 @@ export const defaultSettings: Settings = {
   workspaceMode: "desk",
   captureMode: false,
   sharedChart: true,
+  balanceChangeInline: false,
   oddsDisplay: "fraction",
   probabilityUpgrades: false,
   baccarat: false,
@@ -1687,7 +1689,7 @@ export function readSave(raw: string | null): Run | null {
     if(!["click","gamble"].includes(n.settings.workMode) || !["fixed","tiers","drawdown"].includes(n.settings.wealthTheme) || !["money","scripted"].includes(n.settings.upgradeTutorial) || ![n.settings.sharedSpin,n.settings.adaptiveMusic,n.settings.workCosmetics].every(x=>typeof x==="boolean") || !Number.isInteger(n.workFxLevel) || n.workFxLevel<0 || n.workFxLevel>4) return null;
     if(!["hundred","double-high","combined"].includes(n.settings.jackpotRule) || typeof n.settings.showJackpotCounter!=="boolean" || typeof n.jackpotHigh!=="boolean" || (n.spinsSinceJackpot!==null && (!Number.isSafeInteger(n.spinsSinceJackpot) || n.spinsSinceJackpot<0 || n.spinsSinceJackpot>n.spins))) return null;
     if(n.settings.jackpotRule!=="combined") n.debug=true;
-    if(n.settings.layoutRevision!==1 || !["desk","tabs"].includes(n.settings.workspaceMode) || !["percent","fraction"].includes(n.settings.oddsDisplay) || ![n.settings.sharedChart,n.settings.probabilityUpgrades,n.settings.baccarat,n.commonRollExplained].every(v=>typeof v==="boolean")) return null;
+    if(n.settings.layoutRevision!==1 || !["desk","tabs"].includes(n.settings.workspaceMode) || !["percent","fraction"].includes(n.settings.oddsDisplay) || ![n.settings.balanceChangeInline,n.settings.sharedChart,n.settings.probabilityUpgrades,n.settings.baccarat,n.commonRollExplained].every(v=>typeof v==="boolean")) return null;
     if(!["classic","cash","gold","neon","confetti","mix","festival"].includes(n.settings.winVisual) || !["classic","cash","gold","neon","confetti","mix","festival"].includes(n.settings.jackpotVisual) || !["off","aurora","flow","pulse"].includes(n.settings.chartBackdrop)) return null;
     if(typeof n.coinEnabled!=="boolean" || !COIN_STAKES.includes(n.coinStake) || ![n.coinRounds,n.coinWins].every(x=>Number.isSafeInteger(x)&&x>=0&&x<=1e8) || n.coinWins>n.coinRounds || ![n.coinWagered,n.coinPaid].every(x=>Number.isFinite(x)&&x>=0&&x<=MONEY_CEILING)) return null;
     if(!Number.isSafeInteger(n.coinPendingCount) || n.coinPendingCount<0 || n.coinPendingCount>n.coinRounds || !Number.isFinite(n.coinPendingProfit) || Math.abs(n.coinPendingProfit)>MONEY_CEILING || (n.coinPendingCount===0 && n.coinPendingProfit!==0)) return null;
