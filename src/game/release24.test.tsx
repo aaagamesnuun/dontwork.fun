@@ -66,7 +66,7 @@ describe('consecutive Jackpot LAB and hidden outcomes',()=>{
  it('uses remaining spins instead of repeating the rules throughout a jackpot',()=>{
   const s={...playable(),rushLeft:18,chain:4,running:true};
   for(let tick=0;tick<6;tick++)expect(guidance(s,tick).text).toBe('4連鎖 · 残り18スピン');
-  expect(guidance({...s,running:false}).text).toContain('残り18スピン');
+  expect(guidance({...s,running:false})).toMatchObject({key:'jackpot-paused',target:'auto'});
   const help=renderToStaticMarkup(<JackpotHelp rule="double-high"/>);expect(help).toContain('91以上');expect(help).not.toContain('無限');
   const sweep=renderToStaticMarkup(<PayoffSweep values={Array(100).fill(1)} frame={null} reduced={false} jackpotRule="double-high"/>);
   expect(sweep).not.toContain('91+ × 2');expect(sweep).toContain('jackpot-high-band');

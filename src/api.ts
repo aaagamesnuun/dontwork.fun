@@ -427,7 +427,7 @@ export class Telemetry {
         if (!before.running && after.running && after.spins === 0)
             this.event(after, "milestone", { name: "first_agents_on" });
         if (before.spins === after.spins && before.rushLeft > 0 && after.rushLeft === 0)
-            this.event(after, "jackpot", { phase: "end", floor: rollFloor(before), remaining: 0, reason: "position-change" });
+            this.event(after, "jackpot", { phase: "end", floor: rollFloor(before), remaining: 0, reason: after.cash < totalCost(after) ? "funds" : "position-change" });
         if (before.portfolio !== after.portfolio)
             this.event(after, "deck_change", { deck: after.portfolio });
         if (before.spent !== after.spent)
@@ -461,13 +461,14 @@ export class Telemetry {
         if (this.disabled || !after.telemetry)
             return;
         const source = background ? "background" : "foreground";
-        if (!background && before.rushLeft > 0 && after.rushLeft === 0)
+        if (!background && (before.rushLeft > 0 || (after.last?.jackpot && after.last.id !== before.last?.id)) && after.rushLeft === 0)
             this.event(after, "jackpot", {
                 phase: "end",
                 floor: rollFloor(before),
                 remaining: 0,
+                reason: after.cash < totalCost(after) ? "funds" : "spins",
             });
-        if (!background && after.last?.jackpot &&
+        if (!background && after.rushLeft > 0 && after.last?.jackpot &&
             after.last.id !== before.last?.id &&
             !isInfinite(before))
             this.event(after, "jackpot", {

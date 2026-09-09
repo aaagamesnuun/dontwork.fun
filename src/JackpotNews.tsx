@@ -1,9 +1,9 @@
 import { t } from "./i18n";
 import { isInfinite, rollFloor, type Run } from "./game/engine";
-import { jackpotCondition } from "./game/guidance";
+import { guidance, jackpotCondition, type Guidance } from "./game/guidance";
 
-export function JackpotNews({ s, tick }: { s: Run; tick: number }) {
-  const explanation = s.chain <= 1 || tick % 2 === 0
+export function JackpotNews({ s, tick, guide = guidance(s, tick) }: { s: Run; tick: number; guide?: Guidance }) {
+  const explanation = guide.key !== "jackpot" ? guide.text : s.chain <= 1 || tick % 2 === 0
     ? jackpotCondition(s.settings.jackpotRule)
     : t("再発動すると残り回数を最大まで補充。連鎖が続く！");
   return <div className="jackpot-news-body">

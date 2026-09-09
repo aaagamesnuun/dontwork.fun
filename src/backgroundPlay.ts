@@ -48,7 +48,7 @@ export function advanceBackground(run: Run, now: number, returning: boolean, max
     current = spin(current, forced, 0);
     steps++; clock.spinsLeft--;
     transitions.push({before,after:current});
-    if(current.last?.jackpot){
+    if(current.last?.jackpot && current.rushLeft > 0){
       current=holdBackgroundJackpot(current,clock.at);
       transitions[transitions.length-1].after=current;
       return {run:current,transitions,done:true,capped:false,remainingMs:clock.remainingMs};

@@ -32,12 +32,6 @@ export function Lab({ s, change, notify, preparePreview, onWorkMode, }: {
     return (<>
       <label className="setting-row"><span>{_t("ギャンブル名")}</span><select value={nameStyle} onChange={e => setBetNameStyle(e.target.value as BetNameStyle)}><option value="english">{_t("英語 · 標準")}</option><option value="katakana">{_t("日本語 · 金融用語風")}</option></select></label>
       <label className="setting-row"><span>{_t("金額の表示")}</span><select value={numberStyle} onChange={e => setMoneyStyle(e.target.value as MoneyStyle)}><option value="compact">{_t("省略 · $1K / $1M（標準）")}</option><option value="full">{_t("全桁 · $1,000 / $1,000,000")}</option></select></label>
-      <section className="settings-section"><h3>{_t("スピン補助機能")}</h3>
-        <label className="setting-row"><span>{_t("スピン補助機能")}</span><input type="checkbox" disabled={!!s.trial} checked={s.settings.spinAssist} onChange={e => settings({spinAssist:e.target.checked})}/></label>
-        <p className="setting-note">{_t("通常モードの最初の5スピン。BASELINEをセットしているときに適用します。")}</p>
-        <div className="spin-assist-order">{[...s.settings.spinAssistSequence].map((outcome,index)=><label key={index}><span>{_t("{0}回目",index+1)}</span><select disabled={!!s.trial || !s.settings.spinAssist} aria-label={_t("{0}回目",index+1)} value={outcome} onChange={e=>settings({spinAssistSequence:s.settings.spinAssistSequence.slice(0,index)+e.target.value+s.settings.spinAssistSequence.slice(index+1)})}><option value="W">{_t("当たり")}</option><option value="L">{_t("ハズレ")}</option></select></label>)}</div>
-        <label className="setting-row"><span>{_t("2つ目のギャンブルのスピン補助")}</span><input type="checkbox" disabled={!!s.trial} checked={s.settings.secondBetAssist} onChange={e => settings({secondBetAssist:e.target.checked})}/></label>
-      </section>
       <BackgroundSettings s={s} change={change}/>
       <ReleaseLab s={s} change={change} onWorkMode={onWorkMode}/>
       <EffectsLab s={s} change={change} preparePreview={preparePreview}/>
@@ -248,6 +242,12 @@ export function Lab({ s, change, notify, preparePreview, onWorkMode, }: {
             </button>
           </div>
         </div>
+      </section>
+      <section className="settings-section"><h3>{_t("スピン補助機能")}</h3>
+        <label className="setting-row"><span>{_t("スピン補助機能")}</span><input type="checkbox" disabled={!!s.trial} checked={s.settings.spinAssist} onChange={e => settings({spinAssist:e.target.checked})}/></label>
+        <p className="setting-note">{_t("通常モードの最初の5スピン。BASELINEをセットしているときに適用します。")}</p>
+        <div className="spin-assist-order">{[...s.settings.spinAssistSequence].map((outcome,index)=><label key={index}><span>{_t("{0}回目",index+1)}</span><input type="checkbox" disabled={!!s.trial || !s.settings.spinAssist} aria-label={_t("{0}回目",index+1)} checked={outcome === "W"} onChange={e=>settings({spinAssistSequence:s.settings.spinAssistSequence.slice(0,index)+(e.target.checked ? "W" : "L")+s.settings.spinAssistSequence.slice(index+1)})}/></label>)}</div>
+        <label className="setting-row"><span>{_t("2つ目のギャンブルのスピン補助")}</span><input type="checkbox" disabled={!!s.trial} checked={s.settings.secondBetAssist} onChange={e => settings({secondBetAssist:e.target.checked})}/></label>
       </section>
     </>);
 }

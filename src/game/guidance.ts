@@ -59,7 +59,9 @@ export function guidance(s: Run, tick = 0, tab: "spin" | "positions" | "upgrades
     if (!desk && s.spins === 0 && !s.running && tab !== "spin")
         return result("first-spin-tab", _t("セットできた！ 「チャート」タブを押して、資産の動きを見よう。"), "spin");
     if (s.rushLeft > 0)
-        return result("jackpot", _t("{0}連鎖 · 残り{1}スピン{2}", s.chain, isInfinite(s) ? "∞" : s.rushLeft, !s.running ? _t(" · AUTOで再開") : ""), null, "JACKPOT", false);
+        return !s.running
+            ? result("jackpot-paused", _t("AUTOが停止中。ONにするとジャックポットの続きを回せます。"), "auto", "JACKPOT")
+            : result("jackpot", _t("{0}連鎖 · 残り{1}スピン{2}", s.chain, isInfinite(s) ? "∞" : s.rushLeft, ""), null, "JACKPOT", false);
     if (lesson?.action === "spin") {
         if (!desk && tab !== "spin") return result("second-bet-chart", _t("セット完了！ 「チャート」タブでスピンを見よう。"), "spin");
         return result("second-bet-spin", s.running ? _t("{0}をセットできた！ スピンの結果を見てみよう。", lesson.second.name)

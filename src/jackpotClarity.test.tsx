@@ -1,7 +1,7 @@
 import { afterEach, expect, it } from "vitest";
 import { renderToStaticMarkup } from "react-dom/server";
 import { JackpotNews } from "./JackpotNews";
-import { freshRun, setCount, spin } from "./game/engine";
+import { freshRun, setCount, spin, work } from "./game/engine";
 import { guidance, jackpotCondition } from "./game/guidance";
 import { newsTopic } from "./GameHelp";
 import { setLanguage } from "./i18n";
@@ -47,6 +47,29 @@ it("does not publish the primed condition before the current spin settles", () =
 it("supports English jackpot news", () => {
   setLanguage("en");
   expect(jackpotCondition("combined")).toContain("two consecutive 91+");
+});
+it("ends an unfunded Jackpot on the revealed loss and guides ordinary play recovery", () => {
+  const before = { ...playable(), cash: 10, rushLeft: 18, chain: 2, spins: 15 };
+  let model = presentationReducer({ run: before, pending: null }, { type: "change", update: s => spin(s, 1) });
+  expect(renderToStaticMarkup(<JackpotNews s={presentedRun(model)} tick={0}/>)).not.toContain("賭け金が足りず");
+  model = presentationReducer(model, { type: "reveal", runId: before.id, spinId: model.run.last!.id });
+  const shown = presentedRun(model);
+  expect(shown.rushLeft).toBe(0);
+  expect(guidance(shown)).toMatchObject({ target: "work", urgent: true });
+  expect(guidance(shown).text).toContain("$10");
+  let refilled = shown;
+  for (let i=0;i<10;i++) refilled=work(refilled);
+  expect(refilled.rushLeft).toBe(0);
+  expect(spin(refilled, 80).rushLeft).toBe(0);
+});
+it("highlights AUTO when Jackpot is paused and localizes the stopping reason", () => {
+  const paused = { ...playable(), spins: 15, rushLeft: 18, running: false };
+  expect(guidance(paused)).toMatchObject({ key: "jackpot-paused", target: "auto", urgent: true });
+  expect(newsTopic("jackpot-paused")).toBe("spin");
+  const html = renderToStaticMarkup(<JackpotNews s={paused} tick={1}/>);
+  expect(html).toContain("AUTOが停止中"); expect(html).toContain("<strong>18</strong>");
+  setLanguage("en");
+  expect(renderToStaticMarkup(<JackpotNews s={paused} tick={0}/>)).toContain("AUTO is off");
 });
 it("updates only charge subscribers, ignores duplicate ticks, and remembers progress on remount", () => {
   const signal = createProgressSignal(); let updates = 0;

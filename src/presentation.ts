@@ -1,7 +1,7 @@
 import {advanceBackground} from "./backgroundPlay";
 import { activatePositionTutorial } from "./game/positionTutorial";
 import { advanceTrial, trialAssets, trialDeadline, pauseTrial, resumeTrial, buyTrialTime, trialActive } from "./game/engine";
-import { appendHistory, MONEY_CEILING, finiteMoney, finish, fuelCapacity, coinUnlocked, nextDistribution, playCoinFlip, applyPositionIntent, samePositions, endJackpot, type PositionIntent, type Run } from "./game/engine";
+import { appendHistory, MONEY_CEILING, finiteMoney, finish, fuelCapacity, coinUnlocked, nextDistribution, playCoinFlip, applyPositionIntent, samePositions, endJackpot, endUnfundedJackpot, type PositionIntent, type Run } from "./game/engine";
 
 export interface PositionRequest {runId:string;intent:PositionIntent;approved:boolean;confirm:boolean}
 
@@ -28,6 +28,10 @@ export type PresentationAction =
 // is hidden in the very first render, before any animation effect can run.
 export function presentationReducer(state:Presentation,action:PresentationAction):Presentation {
   let next=reducePresentation(state,action);
+  if (!next.pending) {
+    const funded = endUnfundedJackpot(next.run);
+    if (funded !== next.run) next = { ...next, run: funded };
+  }
   const run=next.run===state.run ? next.run : activatePositionTutorial(next.run);
   if(run!==next.run)next={...next,run};
   if(!run.trial || run===state.run || run.trial.result || run.id!==state.run.id)return next;
@@ -228,7 +232,8 @@ function revealAccepted(state:Presentation):Presentation {
         history:appendHistory(run.history.filter(point=>!(point.kind===landing.kind && point.spin===landing.spin && point.at===landing.at)),{cash:run.cash,at:run.activeMs,spin:run.spins,kind:"spin",coinProfit,coinCount,...(run.trial?{trialMs:run.trial.elapsedMs,assets:trialAssets(run)}:{})}) };
       run = finish(run);
     }
-    return finishPositionRequest({ ...state, run, pending:null });
+    const settled = finishPositionRequest({ ...state, run, pending:null });
+    return { ...settled, run: endUnfundedJackpot(settled.run) };
 }
 
 export function settleAccepted(state:Presentation):Presentation {

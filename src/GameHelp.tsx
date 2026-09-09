@@ -5,6 +5,7 @@ import type { Guidance } from "./game/guidance";
 export function newsTopic(key: string) {
     if (key === "trial")
         return "trial";
+    if (key === "jackpot-paused") return "spin";
     if (key === "jackpot" || key.startsWith("jackpot-") || key === "tip-3")
         return "jackpot";
     if (["first-work", "cash", "recover-cheaper", "fuel", "work-gamble"].includes(key))

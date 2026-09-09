@@ -887,7 +887,9 @@ export function spin(s: Run, forced?: number, elapsed = interval(s)): Run {
     );
     chain++;
   }
-  if (rushBefore && rushLeft === 0) {
+  const unfunded = rushLeft > 0 && cash < totalCost({ ...s, memory });
+  if (unfunded) rushLeft = 0;
+  if ((rushBefore || jackpot) && rushLeft === 0) {
     const ratio =
       ["legacy","all-test"].includes(s.catalog)
         ? Math.min(
@@ -899,7 +901,7 @@ export function spin(s: Run, forced?: number, elapsed = interval(s)): Run {
         : 0;
     persistentRemoved = Math.max(
       persistentRemoved,
-      Math.floor(s.removed * ratio),
+      Math.floor(removed * ratio),
     );
     removed = persistentRemoved;
     chain = 0;
@@ -925,7 +927,7 @@ export function spin(s: Run, forced?: number, elapsed = interval(s)): Run {
     coinChartHold: null,
     coinPendingProfit: 0, coinPendingCount: 0,
     jackpots: s.jackpots + (jackpot ? 1 : 0),
-    jackpotHigh: s.settings.jackpotRule !== "hundred" && roll >= 91,
+    jackpotHigh: !unfunded && s.settings.jackpotRule !== "hundred" && roll >= 91,
     spinsSinceJackpot: jackpot ? 0 : s.spinsSinceJackpot === null ? null : s.spinsSinceJackpot + 1,
     maxChain: Math.max(s.maxChain, chain),
     bestWin: Math.max(s.bestWin, profit),
@@ -1021,6 +1023,9 @@ export function endJackpot(s:Run):Run {
   const ratio=["legacy","all-test"].includes(s.catalog)?Math.min(.75,s.portfolio.filter(r=>betById(r.id).pattern==="trim-memory").reduce((n,r)=>n+.25*r.count,0)):0;
   const persistentRemoved=Math.max(s.persistentRemoved,Math.floor(s.removed*ratio));
   return {...s,rushLeft:0,chain:0,removed:persistentRemoved,persistentRemoved,jackpotHigh:false,background:null};
+}
+export function endUnfundedJackpot(s: Run): Run {
+  return s.rushLeft > 0 && s.cash < totalCost(s) ? { ...endJackpot(s), backgroundJackpot: false } : s;
 }
 export type PositionIntent = {kind:"count";id:string;delta:number}|{kind:"preset";index:number}|{kind:"work-mode";mode:Settings["workMode"];dockToy?:Settings["dockToy"]};
 export function applyPositionIntent(s:Run,intent:PositionIntent):Run {

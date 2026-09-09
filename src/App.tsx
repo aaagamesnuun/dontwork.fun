@@ -1,3 +1,4 @@
+import { SpinReveal } from "./spinReveal";
 import { BalanceReadout } from "./BalanceReadout";
 import { useMoneyStyle } from "./moneyPreferences";
 import { secondBetStep } from "./game/positionTutorial";
@@ -16,7 +17,8 @@ import { settleAccepted } from "./presentation";
 import { SweepAudio } from "./SweepAudio";
 import { ChartNotices } from "./ChartNotices";
 import { notificationTransition, notifyJackpot, notifyBigChange } from "./jackpotNotifications";
-import { fundsBecameLow } from "./fundsAlert";
+import { fundsBecameLow, jackpotEndedForFunds } from "./fundsAlert";
+import { endUnfundedJackpot } from "./game/engine";
 import { HandToyButton } from "./HandToy";
 import { payoutMilestone, type WinImpact } from "./ResultVisuals";
 import { coinUnlocked, needsCoinUnlockNotice, acknowledgeCoinUnlock } from "./game/engine";
@@ -280,7 +282,7 @@ export default function App({ onOpenDesk, studio }: {
         catch {
             run = freshRun();
         }
-        return { run, pending: null };
+        return { run: endUnfundedJackpot(run), pending: null };
     });
     const [sweepSignal] = useState(createSweepSignal);
     const s = model.run;
@@ -347,6 +349,7 @@ export default function App({ onOpenDesk, studio }: {
     const [newsDetail, setNewsDetail] = useState<Guidance | null>(null);
     const coinLayer = useRef<HTMLDivElement>(null), visualLayer = useRef<HTMLDivElement>(null), chartTarget = useRef<HTMLElement>(null);
     const liveModel = useRef(model);
+    const [resultReveal] = useState(() => new SpinReveal(() => liveModel.current));
     liveModel.current = model;
     const requestPosition = (intent: PositionIntent) => { wakeAudio(true); dispatch({ type: "position-change", intent }); };
     useEffect(() => {
@@ -415,7 +418,7 @@ export default function App({ onOpenDesk, studio }: {
                 else
                     setUnlockQueue((queue) => queue.filter((id) => !betUnlockBatch?.includes(id)));
             }, coinUnlockPending ? 6500 : 2300);
-        }, Math.max(0, resultDueAt.current - performance.now()) + 150);
+        }, Math.max(0, resultReveal.dueAt - performance.now()) + 150);
         return () => {
             clearTimeout(show);
             if (dismiss)
@@ -460,7 +463,7 @@ export default function App({ onOpenDesk, studio }: {
         if (pwa.standalone && modal === "install")
             continueFromInstall();
     }, [pwa.standalone, modal]);
-    const state = useRef(s), clock = useRef(0), resultDueAt = useRef(0), previousState = useRef(s), musicRush = useRef(s.rushLeft > 0), lastJackpotFx = useRef(0), surface = useRef<HTMLElement | null>(null), pointers = useRef(new Set<number>()), touches = useRef(0), pendingJackpotTab = useRef<string | null>(null), tabTimer = useRef<ReturnType<typeof setTimeout> | null>(null), flash = useRef<HTMLDivElement | null>(null), resultTimer = useRef<ReturnType<typeof setTimeout> | null>(null), fxTimer = useRef<ReturnType<typeof setTimeout> | null>(null), telemetry = useRef<Telemetry | null>(null);
+    const state = useRef(s), clock = useRef(0), previousState = useRef(s), musicRush = useRef(s.rushLeft > 0), lastJackpotFx = useRef(0), surface = useRef<HTMLElement | null>(null), pointers = useRef(new Set<number>()), touches = useRef(0), pendingJackpotTab = useRef<string | null>(null), tabTimer = useRef<ReturnType<typeof setTimeout> | null>(null), flash = useRef<HTMLDivElement | null>(null), fxTimer = useRef<ReturnType<typeof setTimeout> | null>(null), telemetry = useRef<Telemetry | null>(null);
     const heardState = useRef(shown);
     heardState.current = shown;
     state.current = s;
@@ -471,7 +474,7 @@ export default function App({ onOpenDesk, studio }: {
         try {
             const current = liveModel.current;
             const settled = current.pending && current.run.last ? presentationReducer(current, { type: "reveal", runId: current.run.id, spinId: current.run.last.id }).run : state.current;
-            const saved = backgroundAccess(settled) ? backgroundSave(settled, Date.now(), clock.current, Math.max(0, resultDueAt.current - performance.now())) : { ...settled, background: null };
+            const saved = backgroundAccess(settled) ? backgroundSave(settled, Date.now(), clock.current, Math.max(0, resultReveal.dueAt - performance.now())) : { ...settled, background: null };
             localStorage.setItem(saveKey, JSON.stringify(studio ? recordingRun(saved) : saved));
             return true;
         }
@@ -496,9 +499,7 @@ export default function App({ onOpenDesk, studio }: {
             stopVisuals(visualLayer.current);
             stopSpinCharge();
             stopHaptics();
-            if (resultTimer.current)
-                clearTimeout(resultTimer.current);
-            resultDueAt.current = 0;
+            resultReveal.cancel();
             setFrame(f => f ? { ...f, settled: true } : f);
         }
         saveCurrentRun();
@@ -510,8 +511,7 @@ export default function App({ onOpenDesk, studio }: {
         try {
             const current = settleAccepted(liveModel.current).run;
             const next = switchTrialMode(current, mode, rule);
-            if (resultTimer.current)
-                clearTimeout(resultTimer.current);
+            resultReveal.cancel();
             if (fxTimer.current)
                 clearTimeout(fxTimer.current);
             stopSounds();
@@ -519,7 +519,6 @@ export default function App({ onOpenDesk, studio }: {
             stopVisuals(visualLayer.current);
             stopSpinCharge();
             clock.current = 0;
-            resultDueAt.current = 0;
             dispatch({ type: "background", run: next });
             setTab("spin");
             setFrame(null);
@@ -535,9 +534,7 @@ export default function App({ onOpenDesk, studio }: {
         if (!s.trial?.result || trialEndSeen.current === s.id)
             return;
         trialEndSeen.current = s.id;
-        if (resultTimer.current)
-            clearTimeout(resultTimer.current);
-        resultDueAt.current = 0;
+        resultReveal.cancel();
         clock.current = 0;
         stopSpinCharge();
         stopSounds();
@@ -573,12 +570,10 @@ export default function App({ onOpenDesk, studio }: {
             return false;
         const current = liveModel.current;
         const settled = current.pending && current.run.last ? presentationReducer(current, { type: "reveal", runId: current.run.id, spinId: current.run.last.id }).run : state.current;
-        const next = current.pending && settled.last?.jackpot ? holdBackgroundJackpot(settled, Date.now()) : startBackground(settled, Date.now(), clock.current, Math.max(0, resultDueAt.current - performance.now()));
-        if (resultTimer.current)
-            clearTimeout(resultTimer.current);
+        const next = current.pending && settled.last?.jackpot ? holdBackgroundJackpot(settled, Date.now()) : startBackground(settled, Date.now(), clock.current, Math.max(0, resultReveal.dueAt - performance.now()));
+        resultReveal.cancel();
         if (fxTimer.current)
             clearTimeout(fxTimer.current);
-        resultDueAt.current = 0;
         clock.current = 0;
         setCelebration(null);
         setProgress(0);
@@ -772,6 +767,8 @@ export default function App({ onOpenDesk, studio }: {
         fundsBefore.current = shown;
         if (!document.hidden && !before.background && !shown.background && fundsBecameLow(before, shown))
             sound("cash-low", shown.settings);
+        if (!document.hidden && jackpotEndedForFunds(before, shown))
+            setToast(_t("賭け金が足りなくなったため、ジャックポット終了。WORKで資金を補充しよう。"));
     }, [shown]);
     useEffect(() => {
         if (!navigator.serviceWorker)
@@ -934,6 +931,8 @@ export default function App({ onOpenDesk, studio }: {
                     return;
                 }
             }
+            if (readyToPlay.current && !document.hidden && resultReveal.check(now))
+                return;
             musicPulse(musicForWealth(heardState.current), musicRush.current, current.startedAt !== null && (!document.hidden || current.running));
             if (readyToPlay.current &&
                 !document.hidden &&
@@ -961,7 +960,7 @@ export default function App({ onOpenDesk, studio }: {
                 return;
             }
             clock.current += delta;
-            const cycle = autoCycle(current, presentedRun(liveModel.current), clock.current, !!liveModel.current.pending, Math.max(0, resultDueAt.current - now));
+            const cycle = autoCycle(current, presentedRun(liveModel.current), clock.current, !!liveModel.current.pending, Math.max(0, resultReveal.dueAt - now));
             if (liveModel.current.pending) {
                 const visible = presentedRun(liveModel.current), delay = interval(visible);
                 const progress = cycle.progress;
@@ -997,8 +996,7 @@ export default function App({ onOpenDesk, studio }: {
             if (document.hidden) {
                 stopHaptics();
                 flushSync(() => dispatch({type:"trial-pause",now:Date.now()}));
-                if(resultTimer.current)clearTimeout(resultTimer.current);
-                resultDueAt.current=0;
+                resultReveal.cancel();
                 setFrame(f=>f?{...f,settled:true}:f);
                 saveCurrentRun();
             }
@@ -1034,13 +1032,11 @@ export default function App({ onOpenDesk, studio }: {
             musicRush.current = s.rushLeft > 0;
             clock.current = 0;
             stopSpinCharge();
-            resultDueAt.current = 0;
             setCelebration(null);
             setUnlockQueue([]);
             setFrame(null);
             pendingJackpotTab.current = null;
-            if (resultTimer.current)
-                clearTimeout(resultTimer.current);
+            resultReveal.cancel();
             return;
         }
         if (before.settings.jackpotSpinIntervalMs !==
@@ -1069,32 +1065,22 @@ export default function App({ onOpenDesk, studio }: {
         if (before.spins !== s.spins && s.last) {
             const o = s.last;
             const { revealDelay } = spinTiming(before, s, osReduced);
-            resultDueAt.current = performance.now() + revealDelay;
-            if (interval(before) > 250 && s.settings.spinSound === "original")
-                sound("spin", s.settings);
-            setFrame({
-                id: o.id,
-                roll: o.roll,
-                values: nextDistribution(before),
-                snapshot: sweepSnapshot(before),
-                duration: revealDelay,
-                at: Date.now(),
-            });
-            // The AUTO clock keeps charging during reveal; resultDueAt gates settlement.
-            telemetry.current?.settled(before, s);
-            if (resultTimer.current)
-                clearTimeout(resultTimer.current);
-            const showResult = () => {
-                if (state.current.id !== s.id || state.current.last?.id !== o.id || !trialActive(state.current))
-                    return;
-                resultDueAt.current = 0;
+            const playSpinSound = () => {
+                if (interval(before) > 250 && s.settings.spinSound === "original")
+                    sound("spin", s.settings);
+            };
+            const showResult = (recovered: boolean) => {
                 const action = { type: "reveal", runId: s.id, spinId: o.id } as const;
                 const landed = presentationReducer(liveModel.current, action).run;
                 dispatch(action);
                 setFrame((current) => current?.id === o.id ? { ...current, settled: true } : current);
                 musicRush.current = landed.rushLeft > 0;
+                if (recovered)
+                    telemetry.current?.event(landed, "client_error", { code: "spin-reveal-recovered", source: "ticker", totalSpins: landed.spins, remaining: landed.rushLeft, isRunning: landed.running });
                 if (document.hidden)
                     return;
+                if (revealDelay === 0)
+                    playSpinSound();
                 const feedbackSettings = landed.settings;
                 musicPulse(musicForWealth(landed), musicRush.current, s.startedAt !== null);
                 if (shouldFollowJackpot(before, s, landed)) {
@@ -1141,10 +1127,20 @@ export default function App({ onOpenDesk, studio }: {
                 else if (big && !s.rushLeft)
                     reveal("win", "+" + money(o.profit), "THE BIG MOVE", 850);
             };
-            if (revealDelay)
-                resultTimer.current = setTimeout(showResult, revealDelay);
-            else
-                showResult();
+            // Arm the result before optional sound, drawing and analytics work.
+            resultReveal.schedule(s.id, o.id, revealDelay, showResult);
+            setFrame({
+                id: o.id,
+                roll: o.roll,
+                values: nextDistribution(before),
+                snapshot: sweepSnapshot(before),
+                duration: revealDelay,
+                at: Date.now(),
+                settled: revealDelay === 0,
+            });
+            if (revealDelay > 0)
+                playSpinSound();
+            telemetry.current?.settled(before, s);
         }
         else if (s.spent > before.spent &&
             s.upgradeDraws === before.upgradeDraws) {
@@ -1170,8 +1166,7 @@ export default function App({ onOpenDesk, studio }: {
     useEffect(() => () => {
         if (fxTimer.current)
             clearTimeout(fxTimer.current);
-        if (resultTimer.current)
-            clearTimeout(resultTimer.current);
+        resultReveal.cancel();
     }, []);
     useEffect(() => {
         if (!toast)
@@ -1381,9 +1376,9 @@ export default function App({ onOpenDesk, studio }: {
             </section>);
     const news = (<div className={`news-strip ${rush ? "jackpot-news" : ""} ${guide.urgent ? "needs-action" : ""}`} role="status" aria-live={guide.urgent ? "polite" : "off"}>
       <span className="news-label">{_text(rush ? isInfinite(shown) ? "INFINITY JACKPOT" : "JACKPOT" : guide.label)}</span>
-      {rush ? <JackpotNews s={shown} tick={tipTick}/> : <p key={guide.key}>{_text(guide.text)}</p>}
+      {rush ? <JackpotNews s={shown} tick={tipTick} guide={guide}/> : <p key={guide.key}>{_text(guide.text)}</p>}
       {shown.settings.showJackpotCounter && <small className="jackpot-counter">{shown.spinsSinceJackpot === null ? _t("次のJPから計測") : _t("{0} {1}回", shown.jackpots ? _t("前回JPから") : _t("開始から"), shown.spinsSinceJackpot)}</small>}
-      <button aria-label={_t("このニュースの説明")} onClick={() => { if (rush) setModal("jackpot-help"); else { setNewsDetail({ ...guide }); setModal("news-help"); } }}>?</button>
+      <button aria-label={_t("このニュースの説明")} onClick={() => { if (rush && guide.key === "jackpot") setModal("jackpot-help"); else { setNewsDetail({ ...guide }); setModal("news-help"); } }}>?</button>
     </div>);
     if (!releaseCheck.checked || releaseCheck.latest)
         return <ReleaseNotice check={releaseCheck}/>;
@@ -1680,7 +1675,7 @@ export default function App({ onOpenDesk, studio }: {
                 change((run) => ({ ...run, running: false }));
                 clock.current = 0;
                 stopSpinCharge();
-                return Math.max(0, resultDueAt.current - performance.now()) + 220;
+                return Math.max(0, resultReveal.dueAt - performance.now()) + 220;
             }}/>
         </Modal>)}
       {modal === "sound" && <Modal title={_t("音楽・サウンド")} onClose={() => setModal(null)}>

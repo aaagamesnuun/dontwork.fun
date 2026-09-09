@@ -1069,5 +1069,8 @@
   "{0}をセットできた！ スピンの結果を見てみよう。": "{0} is ready! Watch the next spin.",
   "セット完了！ AUTOをONにして{0}を回そう。": "Position ready! Turn AUTO on to spin {0}.",
   "ポジションは{0}個まで。ニュースに沿って入れ替えてみよう。": "You have {0} position slots. Follow the news to try swapping.",
-  "あと{0}で回せる。WORKで賭け金を補充しよう。": "You need {0} more to spin. Tap WORK to cover the wager."
+  "あと{0}で回せる。WORKで賭け金を補充しよう。": "You need {0} more to spin. Tap WORK to cover the wager.",
+  "次の賭け金を払えなくなった場合も、ジャックポットは終了します。": "Your Jackpot also ends if you can no longer afford the next wager.",
+  "賭け金が足りなくなったため、ジャックポット終了。WORKで資金を補充しよう。": "Jackpot ended: not enough for the next wager. Earn more with WORK.",
+  "AUTOが停止中。ONにするとジャックポットの続きを回せます。": "AUTO is off. Turn it on to resume your Jackpot."
 }
