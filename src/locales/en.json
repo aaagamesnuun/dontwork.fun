@@ -259,7 +259,7 @@
   "賭け金が足りません。金額を下げるか、WORKで稼ごう。": "Not enough cash. Lower your stake or earn more with WORK.",
   "1/2 → 2倍": "1/2 → 2×",
   "最高資産": "Peak wealth",
-  "でコインフリップ解禁": " unlocks Coin Flip",
+  "最高資産が{0}を超えるとコインフリップ解禁": "Coin Flip unlocks once your peak wealth exceeds {0}.",
   "世界は、100だけになった。": "Only 100 remains.",
   "残り{0}回{1}": "{0} spins left{1}",
   " / 出目カット +{0}": " / Roll Cut +{0}",
@@ -1109,5 +1109,8 @@
   "OSがアプリを停止した間は音も即時通知も止まります。復帰時に最大1時間・12,000スピンまで反映し、途中のジャックポットで止まります。大きな増減の通知はLABで追加でき、通知音は鳴りません。": "If your OS suspends the app, audio and live notifications stop. On return, up to one hour or 12,000 spins are caught up, stopping at the first Jackpot. LAB can also enable silent notifications for large changes.",
   "音または通知がOFFのため、背景進行は停止中です。": "Background play is paused because sound or notifications are off.",
   "{0} · dontwork.fun 30分チャレンジ\n総資産 {1} / WORK {2}回\n#dontwork": "{0} · dontwork.fun 30-minute challenge\nTotal assets {1} / {2} WORK taps\n#dontwork",
-  "30分チャレンジの記念カード": "30-minute challenge share card"
+  "30分チャレンジの記念カード": "30-minute challenge share card",
+  "コインフリップ解放！": "Coin Flip unlocked!",
+  "「コインフリップ」を開き、WORKをFLIPに切り替えて遊べます。": "Open Coin Flip and switch WORK to FLIP to play.",
+  "最高資産が{0}を超えると解放。一度解放すると、資産が減っても使えます。": "Unlocks after your peak wealth exceeds {0}. Once unlocked, it stays available even if your wealth falls."
 }

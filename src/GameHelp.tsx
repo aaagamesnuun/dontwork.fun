@@ -1,6 +1,6 @@
 import { t as _t, textValue as _text } from "./i18n";
 import { JackpotHelp } from "./Onboarding";
-import type { Run } from "./game/engine";
+import { COIN_UNLOCK_PEAK, money, type Run } from "./game/engine";
 import type { Guidance } from "./game/guidance";
 export function newsTopic(key: string) {
     if (key === "trial")
@@ -39,5 +39,5 @@ export function NewsHelp({ s, guide }: {
 export function GameHelp({ s }: {
     s: Run;
 }) {
-    return <div className="game-help"><h3>{_t("WORK → ポジション → AUTO")}</h3><p>{_t("WORKを連打して資金を貯め、ポジションの＋でギャンブルをセット。AUTOをONにするとスピンが始まります。")}</p><p>{_t("1つの共通の数字で、セットしたすべてのギャンブルが決着。稼いだお金でスピン周期やポジション数を強化し、$1Bを目指そう。")}</p><h3>JACKPOT</h3><JackpotHelp discovered={s.infinityAt !== null} rule={s.settings.jackpotRule}/><h3>{_t("画面を離れて遊ぶ")}</h3>{content.background.map(text => <p key={text}>{_text(text)}</p>)}<h3>{_t("コインフリップ")}</h3><p>{_t("下の切り替えボタンから開き、スイッチをONにするとWORKがFLIPに変わります。1/2で賭け金の2倍を獲得、ハズレは0。スピン中やジャックポット中も投げられます。")}</p><p>{_t("コインの賭け金は10、100、1K…から選択。スピンの賭け金を確保した残りで遊べます。")}</p></div>;
+    return <div className="game-help"><h3>{_t("WORK → ポジション → AUTO")}</h3><p>{_t("WORKを連打して資金を貯め、ポジションの＋でギャンブルをセット。AUTOをONにするとスピンが始まります。")}</p><p>{_t("1つの共通の数字で、セットしたすべてのギャンブルが決着。稼いだお金でスピン周期やポジション数を強化し、$1Bを目指そう。")}</p><h3>JACKPOT</h3><JackpotHelp discovered={s.infinityAt !== null} rule={s.settings.jackpotRule}/><h3>{_t("画面を離れて遊ぶ")}</h3>{content.background.map(text => <p key={text}>{_text(text)}</p>)}<h3>{_t("コインフリップ")}</h3><p>{_t("最高資産が{0}を超えると解放。一度解放すると、資産が減っても使えます。", money(COIN_UNLOCK_PEAK))}</p><p>{_t("下の切り替えボタンから開き、スイッチをONにするとWORKがFLIPに変わります。1/2で賭け金の2倍を獲得、ハズレは0。スピン中やジャックポット中も投げられます。")}</p><p>{_t("コインの賭け金は10、100、1K…から選択。スピンの賭け金を確保した残りで遊べます。")}</p></div>;
 }

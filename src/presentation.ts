@@ -123,7 +123,7 @@ function reducePresentation(
   if(state.run.trial?.result && next.id===state.run.id){
     // A finished record is immutable; sound preferences and naming still work.
     next={...state.run,settings:next.settings,telemetry:next.telemetry,debug:state.run.debug||next.debug,
-      commonRollExplained:next.commonRollExplained,trial:state.run.trial?{...state.run.trial,nickname:next.trial?.nickname??state.run.trial.nickname,submitted:next.trial?.submitted??state.run.trial.submitted}:null};
+      commonRollExplained:next.commonRollExplained,coinUnlockAnnounced:next.coinUnlockAnnounced,trial:state.run.trial?{...state.run.trial,nickname:next.trial?.nickname??state.run.trial.nickname,submitted:next.trial?.submitted??state.run.trial.submitted}:null};
   }
   if (next === state.run) return state;
   if (next.id !== state.run.id) return { run: next, pending: null };

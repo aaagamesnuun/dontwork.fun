@@ -12,7 +12,7 @@ import { notificationTransition, notifyJackpot, notifyBigChange } from "./jackpo
 import { fundsBecameLow } from "./fundsAlert";
 import { HandToyButton } from "./HandToy";
 import { payoutMilestone, type WinImpact } from "./ResultVisuals";
-import { coinUnlocked } from "./game/engine";
+import { coinUnlocked, needsCoinUnlockNotice, acknowledgeCoinUnlock } from "./game/engine";
 import { soundPackSettings } from "./soundPresets";
 import { backgroundAccess, holdBackgroundJackpot, resumeBackgroundJackpot, advanceBackground, backgroundSave, startBackground } from "./backgroundPlay";
 import { resultSound } from "./resultSound";
@@ -365,7 +365,10 @@ export default function App({ onOpenDesk, studio }: {
     const [unlockQueue, setUnlockQueue] = useState<string[]>([]);
     const [unlockVisible, setUnlockVisible] = useState(false);
     const [pageVisible, setPageVisible] = useState(true);
+    const coinUnlockPending = needsCoinUnlockNotice(shown);
+    const betUnlockBatch = coinUnlockPending ? null : unlockQueue;
     const unlockBlocked = !pageVisible ||
+        toast !== "" ||
         goalCelebration !== null ||
         modal !== null ||
         celebration?.kind === "jackpot" ||
@@ -378,7 +381,7 @@ export default function App({ onOpenDesk, studio }: {
     }, []);
     useEffect(() => {
         setUnlockVisible(false);
-        if (!unlockQueue.length || unlockBlocked)
+        if ((!betUnlockBatch?.length && !coinUnlockPending) || unlockBlocked)
             return;
         let dismiss: ReturnType<typeof setTimeout> | undefined;
         const show = setTimeout(() => {
@@ -386,15 +389,18 @@ export default function App({ onOpenDesk, studio }: {
             sound("upgrade", state.current.settings);
             dismiss = setTimeout(() => {
                 setUnlockVisible(false);
-                setUnlockQueue((queue) => queue.filter((id) => !unlockQueue.includes(id)));
-            }, 2300);
+                if (coinUnlockPending)
+                    setS(run => run.id === shown.id ? acknowledgeCoinUnlock(run) : run);
+                else
+                    setUnlockQueue((queue) => queue.filter((id) => !betUnlockBatch?.includes(id)));
+            }, coinUnlockPending ? 6500 : 2300);
         }, Math.max(0, resultDueAt.current - performance.now()) + 150);
         return () => {
             clearTimeout(show);
             if (dismiss)
                 clearTimeout(dismiss);
         };
-    }, [unlockQueue, unlockBlocked]);
+    }, [betUnlockBatch, unlockBlocked, coinUnlockPending, shown.id, setS]);
     useEffect(() => {
         const timer = setInterval(() => {
             if (!document.hidden)
@@ -1220,8 +1226,12 @@ export default function App({ onOpenDesk, studio }: {
             icon.type = "image/svg+xml";
         }
     }, [shown.settings.brandIcon]);
-    const announcement = goalCelebration ?? (unlockVisible && !unlockBlocked && unlockQueue.length
-        ? {
+    const announcement = goalCelebration ?? (unlockVisible && !unlockBlocked && (coinUnlockPending || unlockQueue.length)
+        ? coinUnlockPending ? {
+            kind: "unlock",
+            title: _t("コインフリップ解放！"),
+            sub: _t("「コインフリップ」を開き、WORKをFLIPに切り替えて遊べます。"),
+        } : {
             kind: "unlock",
             title: unlockQueue.length === 1
                 ? betById(unlockQueue[0]).name

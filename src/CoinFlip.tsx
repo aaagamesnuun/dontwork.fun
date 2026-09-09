@@ -12,7 +12,7 @@ export function CoinFlip({ s, budget, onChange, result = s.coinResult }: {
 }) {
     return <section className="coin-panel" aria-label={_t("コインフリップ")}>
     <div className="workspace-heading"><h2>{_t("コインフリップ")}</h2><span>{_t("1/2 → 2倍")}</span></div>
-    {!coinUnlocked(s) ? <p className="coin-locked">{_t("最高資産")}<strong>{money(COIN_UNLOCK_PEAK)}</strong>{_t("でコインフリップ解禁")}</p> : <>
+    {!coinUnlocked(s) ? <p className="coin-locked">{_t("最高資産が{0}を超えるとコインフリップ解禁", money(COIN_UNLOCK_PEAK))}</p> : <>
     <label className="setting-row coin-switch"><span>{_t("WORKをFLIPにする")}</span><NativeSwitch label={_t("FLIPを有効にする")} checked={s.coinEnabled} onChange={coinEnabled => onChange({ coinEnabled })} tactile={s.settings.haptics}/></label>
     <div className="coin-stakes" role="group" aria-label={_t("コインの賭け金")}>{COIN_STAKES.map(wager => <button key={wager} aria-pressed={s.coinStake === wager} className={s.coinStake === wager ? "selected" : ""} onClick={() => onChange({ coinStake: wager })}>{money(wager).replace("$", "")}</button>)}</div>
     <div className="coin-summary"><strong>{money(s.coinStake)}</strong><span>{_t("当たり")}{money(s.coinStake * 2)}<small>{_t("ハズレは0 · 期待倍率1.00倍")}</small></span><output className={result?.won ? "positive" : "negative"} aria-live="polite">{result ? `${result.won ? "+" : ""}${money(result.profit)}` : "—"}</output></div>

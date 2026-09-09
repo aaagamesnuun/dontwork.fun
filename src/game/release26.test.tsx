@@ -36,7 +36,7 @@ describe("v2.6 simultaneous actions",()=>{
   expect(presentedRun(state).fuel).toBe(fuelCapacity(state.run));expect(reveal(state).run.fuel).toBe(fuelCapacity(state.run));
  });
  it("keeps a public WORK unlock and a public clear through immediate spending",()=>{
-  let state=begin({...ready(),cash:999995,peak:999995},1);
+  let state=begin({...ready(),cash:9996,peak:9996},1);
   for(let i=0;i<5;i++)state=reduce(state,{type:"change",update:work});
   expect(coinUnlocked(presentedRun(state))).toBe(true);
   state=reduce(state,{type:"purchase",update:r=>purchase(r,"speed")});expect(coinUnlocked(presentedRun(state))).toBe(true);expect(coinUnlocked(reveal(state).run)).toBe(true);
@@ -45,8 +45,8 @@ describe("v2.6 simultaneous actions",()=>{
   expect(state.run.completion).not.toBeNull();const record=state.run.completion;
   state=reduce(state,{type:"purchase",update:r=>purchase(r,"speed")});expect(reveal(state).run.completion).toEqual(record);
  });
- it("requires a public $1M peak for coins, including old saves and a hidden first win",()=>{
-  const low={...ready(),peak:999999,cash:999999};expect(playCoinFlip(low,10,true)).toBe(low);
+ it("requires a public peak above $10K for coins, including old saves and a hidden first win",()=>{
+  const low={...ready(),peak:9999,cash:9999};expect(playCoinFlip(low,10,true)).toBe(low);
   const state=begin(low,80);expect(reduce(state,{type:"coin-flip",wager:10,forced:true})).toBe(state);
   expect(playCoinFlip({...ready(),cash:10},10,true).coinRounds).toBe(1);
   expect(readSave(JSON.stringify(low))!.coinEnabled).toBe(false);

@@ -19,12 +19,12 @@ it("gives every pack the same effects and keeps the user's volume, mute, vibrati
     expect(readSave(JSON.stringify(changed))!.settings).toEqual(changed.settings);
   }
 });
-it("locks old coin controls below $1M without deleting progress or past coin records",()=>{
-  let s={...freshRun(),peak:COIN_UNLOCK_PEAK,cash:1000,coinEnabled:true};s=playCoinFlip(s,100,true);
-  const old={...s,peak:999999,settings:{...s.settings,handToys:true,dockToy:"tap"}};
+it("locks old coin controls at or below $10K without deleting progress or past coin records",()=>{
+  let s={...freshRun(),peak:COIN_UNLOCK_PEAK+1,cash:1000,coinEnabled:true};s=playCoinFlip(s,100,true);
+  const old={...s,peak:COIN_UNLOCK_PEAK,settings:{...s.settings,handToys:true,dockToy:"tap"}};
   const restored=readSave(JSON.stringify(old))!;
   expect(restored).toMatchObject({id:old.id,cash:1100,coinRounds:1,coinWins:1,coinEnabled:false,settings:{handToys:true,dockToy:"tap"}});
-  expect(coinUnlocked({...restored,peak:COIN_UNLOCK_PEAK,cash:1})).toBe(true);
+  expect(coinUnlocked({...restored,peak:COIN_UNLOCK_PEAK+1,cash:1})).toBe(true);
 });
 it.each(SOUND_PACKS)("updates an existing %s save to interval × .8 without reselecting its pack",soundPack=>{
   for(const [revealPacing,revealRatio,revealDurationMs] of [["adaptive",1.5,120],["adaptive",1.2,700],["full",.4,3500],["ratio",1.5,5000]] as const){

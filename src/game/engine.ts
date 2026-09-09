@@ -190,6 +190,7 @@ export interface Run {
   backgroundMs: number;
   backgroundJackpot: boolean;
   coinEnabled: boolean;
+  coinUnlockAnnounced: boolean;
   coinStake: number;
   coinRounds: number;
   coinWins: number;
@@ -402,7 +403,7 @@ export const freshRun = (
   spinsSinceJackpot: 0,
   commonRollExplained: false,
   betLevels: {},
-  coinEnabled: false, coinStake: 10, coinRounds: 0, coinWins: 0, coinWagered: 0, coinPaid: 0, coinResult: null, coinChartHold: null, coinPendingProfit: 0, coinPendingCount: 0,
+  coinEnabled: false, coinUnlockAnnounced: false, coinStake: 10, coinRounds: 0, coinWins: 0, coinWagered: 0, coinPaid: 0, coinResult: null, coinChartHold: null, coinPendingProfit: 0, coinPendingCount: 0,
   baccaratRounds: 0,
   baccaratResult: null,
   workFxLevel: 0,
@@ -1182,8 +1183,10 @@ export function purchaseProbability(s: Run, id: string): Run {
     history:appendHistory(s.history,{cash,at:s.activeMs,spin:s.spins,kind:"upgrade",spent:price})};
 }
 export const COIN_STAKES = Array.from({length:14},(_,i)=>10**(i+1));
-export const COIN_UNLOCK_PEAK = 1_000_000;
-export const coinUnlocked = (s: Run) => s.peak >= COIN_UNLOCK_PEAK;
+export const COIN_UNLOCK_PEAK = 10_000;
+export const coinUnlocked = (s: Run) => s.peak > COIN_UNLOCK_PEAK;
+export const needsCoinUnlockNotice = (s: Run) => coinUnlocked(s) && !s.coinUnlockAnnounced;
+export const acknowledgeCoinUnlock = (s: Run): Run => needsCoinUnlockNotice(s) ? {...s,coinUnlockAnnounced:true} : s;
 export function playCoinFlip(s: Run, wager: number, forced?: boolean, deferFinish=false): Run {
   if(!trialActive(s))return s;
   if(!coinUnlocked(s) || !s.coinEnabled || !COIN_STAKES.includes(wager) || wager>s.cash || s.coinRounds>=1e8 || (forced!==undefined && typeof forced!=="boolean")) return s;
@@ -1423,6 +1426,7 @@ export function readSave(raw: string | null): Run | null {
       if([undefined,"terminal","retro-arcade"].includes(v.settings?.soundPack))n.settings.soundPack="arcade-coinop";
     }
     if(!coinUnlocked(n))n.coinEnabled=false;
+    n.coinUnlockAnnounced = v.coinUnlockAnnounced === true;
     // Old compressed history cannot reliably reconstruct the latest Jackpot.
     if (v.spinsSinceJackpot === undefined) n.spinsSinceJackpot = n.jackpots === 0 ? n.spins : null;
     // Production's compact desk is a one-time visual migration, without resetting progress.
