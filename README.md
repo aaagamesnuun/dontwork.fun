@@ -6,6 +6,22 @@ WORKで元手を作り、ポジションを組み合わせ、架空の資産を�
 
 [ゲームを遊ぶ](https://dontwork.fun/) · [開発に参加](CONTRIBUTING.md) · [素材とライセンス](ASSETS.md)
 
+友達も、初めて来た人も、Codexなどのコーディングエージェントも開発に参加できます。forkして自由に改造し、本家へ取り込みたい変更はPull Requestで共有してください。
+
+## 開発者向けの読み方
+
+| 知りたいこと | 読むファイル |
+| --- | --- |
+| どんな面白さを目指しているか、変更の判断軸 | [思想と設計方針](docs/PHILOSOPHY.md) |
+| 今のLABで何を試せるか、標準値とランキングへの影響 | [LAB機能ガイド](docs/LAB.md) |
+| コードの分担、精算と演出、保存、API | [アーキテクチャ](docs/ARCHITECTURE.md) |
+| fork、ローカル開発、PRの送り方 | [CONTRIBUTING.md](CONTRIBUTING.md) |
+| Codexなどが作業を始めるときの指示 | [AGENTS.md](AGENTS.md) |
+
+LABと設計ガイドは、2026-09-10に照合したv3.0.0（ゲーム実装 [73203cd](https://github.com/aaagamesnuun/dontwork.fun/commit/73203cd1b299b07ae81a040b8d6747bcd6eae0de)）を説明します。同じアプリバージョンでも仕様が更新されるため、変更するPRでは関連するガイドも一緒に更新してください。
+
+## 現在のゲーム
+
 - ポジションとアップグレードを組み合わせる通常プレイ、時間制チャレンジ、LABの比較ルール。
 - 日本語・英語、モバイル・デスクトップ、PWAに対応。
 - ブラウザ内の自動保存とセーブの書き出し・読み込み。
@@ -23,9 +39,13 @@ WORKで元手を作り、ポジションを組み合わせ、架空の資産を�
 **Node.js 22.13以上とnpm**を使用します。サーバーのテストには組み込みの`node:sqlite`が必要です。
 
 ```sh
+git clone https://github.com/aaagamesnuun/dontwork.fun.git
+cd dontwork.fun
 npm ci
 npm run dev
 ```
+
+変更を本家に提案する場合は、GitHubでforkし、自分のforkのURLをcloneしてください。Codexにはそのフォルダを開かせ、変更したい内容を伝えます。入口となる開発指示はルートの`AGENTS.md`にあります。
 
 表示されたローカルURLを開きます。音は最初の操作後に再生できます。進行はブラウザのlocalStorageに保存されるため、配信元・ブラウザ・端末が変わると別のセーブになります。
 
@@ -131,3 +151,5 @@ npx wrangler deploy
 **dontwork.fun** is an incremental browser game about fictional money, shared random rolls, portfolio combinations, and jackpot chains. Play with local saves, experiment in the LAB, or try a timed challenge. Japanese and English UI, synthesized audio, three optional BGM styles, and PWA support are included.
 
 Use Node.js 22.13+ and run `npm ci`, then `npm run dev`. Validate changes with `npm test` and `npm run build`. Ordinary forks start with online services disabled; opt in with `VITE_ENABLE_SERVICES=true` only when hosting your own same-origin API. Telemetry has a separate setting. Original code and generated artwork use MIT; the four recorded music tracks use CC BY 4.0 with attribution.
+
+Contributor guides: [design philosophy](docs/PHILOSOPHY.md), [LAB reference](docs/LAB.md), [architecture](docs/ARCHITECTURE.md), and [coding-agent instructions](AGENTS.md). Forks and pull requests are welcome.

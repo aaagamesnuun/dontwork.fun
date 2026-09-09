@@ -2,13 +2,17 @@
 
 不具合報告、遊びやすさ、ゲームバランス、翻訳、アクセシビリティ、音と演出の改善を歓迎します。大きなルール変更は、最初にIssueで目的とプレイへの影響を共有してください。
 
+人間だけで開発しても、Codexなどと一緒に開発しても構いません。初めて参加する場合は[思想](docs/PHILOSOPHY.md)を読み、触る部分に応じて[設計](docs/ARCHITECTURE.md)と[LAB](docs/LAB.md)を参照してください。エージェント向けの作業指示は[AGENTS.md](AGENTS.md)にまとめています。
+
 ## 変更を送る
 
-1. forkまたは作業ブランチを作ります。
+1. このリポジトリをforkしてcloneし、作業ブランチを作ります。既に書き込み権限がある場合は、このリポジトリ内の作業ブランチでも構いません。
 2. Node.js 22.13以上で`npm ci`を実行します。
 3. `npm run dev`で変更を確認します。
-4. 変更に関係するテストを追加・更新し、`npm test`と`npm run build`を実行します。
-5. 問題、変更後の動作、確認したことをPRへ記載します。見た目の変更には画面例があると助かります。
+4. 動作を変える場合は、変更に関係するテストを追加・更新し、`npm test`と`npm run build`を実行します。文書だけの変更は、説明と実装の整合、リンクを確認します。
+5. forkの作業ブランチから本家の`main`へPRを送ります。問題、変更後の動作、確認したことを記載してください。遊び方や見た目の変更には、操作手順と期待する結果を短く添えます。未実施の実機確認を、確認済みとは書きません。
+
+LABの設定・既定値・ランキング適格性を変えたら[LABガイド](docs/LAB.md)、保存やデータの流れを変えたら[設計ガイド](docs/ARCHITECTURE.md)も更新してください。自分のforkでの実験と、本家への採用提案はどちらも歓迎します。
 
 特定のテストだけを実行する例:
 
@@ -43,4 +47,4 @@ forkのオンラインサービスは既定でOFFです。有効にする場合�
 
 ## English
 
-Bug reports and focused pull requests are welcome. Include reproduction steps, expected and actual behavior, and relevant validation. Use synthetic saves rather than player data. Run `npm test` and `npm run build`, preserve save compatibility and single settlement of each result, and include source/license details for new assets. Original contributions are accepted under MIT; third-party material keeps its own license.
+Bug reports and focused pull requests are welcome. Include reproduction steps, expected and actual behavior, and relevant validation. Use synthetic saves rather than player data. For behavior changes, run `npm test` and `npm run build`; for documentation-only changes, check source accuracy and links. Preserve save compatibility and single settlement of each result, and include source/license details for new assets. Original contributions are accepted under MIT; third-party material keeps its own license.
