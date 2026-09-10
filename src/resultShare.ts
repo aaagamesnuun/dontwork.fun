@@ -8,7 +8,7 @@ export function resultShareText(s: Run, name: string) {
     if(s.trial?.result)return _t("{0} · dontwork.fun 30分チャレンジ\n総資産 {1} / WORK {2}回\n#dontwork",name,money(s.trial.result.finalBankroll),s.work);
     return _t("{0} · dontwork.funで{1}達成！\n{2} / {3}\n#dontwork", name, money(completionTarget(s)), duration(s.completion?.timeMs ?? s.clearActiveMs ?? s.activeMs), catalogById(s.completion?.catalog ?? s.catalog).name);
 }
-export const RESULT_POST_URL = 'https://x.com/realnuun/status/2096932115355197897';
+export const RESULT_POST_URL = 'https://x.com/realNuun/status/2097988693449662590';
 export function resultXIntent(s: Run, name: string) {
     const url = new URL('https://x.com/intent/tweet');
     url.searchParams.set('text', resultShareText(s, name));
