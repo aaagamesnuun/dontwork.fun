@@ -2484,7 +2484,7 @@ button:active:not(:disabled) {
 .trial-unlocked strong { display: block; color: var(--gold); font-size: 18px; }
 .trial-unlocked p { margin: 8px 0 0; font-size: 13px; line-height: 1.6; }
 
-.spin-assist-order { display: grid; grid-template-columns: repeat(5, minmax(0,1fr)); gap: 8px; }
+.spin-assist-order { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 8px; }
 .spin-assist-order label { display: flex; align-items:center; justify-content:center; flex-wrap:wrap; gap:6px; min-width:0; min-height:44px; font-size:12px; cursor:pointer; }
 .spin-assist-order input[type="checkbox"] { width:22px; height:22px; min-width:22px; margin:0; accent-color:var(--lime); }
 .result-actions a.primary, .clear-modal a.primary { display: flex; align-items: center; justify-content: center; text-decoration: none; min-height: 44px; }

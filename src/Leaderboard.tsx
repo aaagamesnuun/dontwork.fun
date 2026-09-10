@@ -136,7 +136,7 @@ export function Leaderboard({ s, change, clear = false, notify, saveName, onRank
       {postError && (<p className="negative" role="status">
           {_text(postError)}
         </p>)}
-      {clear && named && <><div className="result-actions"><a className="primary" href={resultXIntent(resultRun, s.completionNickname)} target="_blank" rel="noopener noreferrer">{_t("Xで引用して共有 ↗")}</a><button className="primary" disabled={!cardImage && !imageFailed} onClick={() => void share()}>{imageFailed ? _t("結果をテキストで共有") : cardImage ? _t("記念カードをシェア ↗") : _t("画像を準備中…")}</button></div><p className="setting-note">{_t("画像を長押しして保存、またはスクリーンショットで共有できます。")}</p>{imageFailed && <p className="setting-note">{_t("画像を作成できませんでした。このカードをスクリーンショットで共有できます。")}</p>}<button className="text-button result-ranking" onClick={onRanking}>{_t("ランキングを見る →")}</button></>}
+      {clear && named && <><div className="result-actions"><a className="primary" href={resultXIntent(resultRun, s.completionNickname)} target="_blank" rel="noopener noreferrer">{_t("Xで共有 ↗")}</a><button className="primary" disabled={!cardImage && !imageFailed} onClick={() => void share()}>{imageFailed ? _t("結果をテキストで共有") : cardImage ? _t("記念カードをシェア ↗") : _t("画像を準備中…")}</button></div><p className="setting-note">{_t("画像を長押しして保存、またはスクリーンショットで共有できます。")}</p>{imageFailed && <p className="setting-note">{_t("画像を作成できませんでした。このカードをスクリーンショットで共有できます。")}</p>}<button className="text-button result-ranking" onClick={onRanking}>{_t("ランキングを見る →")}</button></>}
       {!clear && <>
       <div className="ranking-controls">
         <div className="ranking-tabs" role="group" aria-label={_t("ランキングの範囲")}>

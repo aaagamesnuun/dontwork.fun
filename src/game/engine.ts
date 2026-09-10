@@ -322,7 +322,7 @@ export const defaultSettings: Settings = {
   spinAssist: true,
   secondBetAssist: true,
   secondBetAssistRevision: 1,
-  spinAssistSequence: "WWLWW",
+  spinAssistSequence: "WLWW",
   presentationRevision: 1,
   spinSound: "rhythm",
   chartWindowSpins: 200,
@@ -365,7 +365,7 @@ export const defaultSettings: Settings = {
 export const customRules = (settings: Settings, trial = false) =>
   settings.handToys || settings.jackpotRule !== "combined" || settings.probabilityUpgrades || settings.baccarat ||
   settings.workMode === "gamble" || settings.workCosmetics ||
-  (!trial && (!settings.secondBetAssist || !settings.spinAssist || settings.spinAssistSequence !== "WWLWW")) ||
+  (!trial && (!settings.secondBetAssist || !settings.spinAssist || settings.spinAssistSequence !== defaultSettings.spinAssistSequence)) ||
   JSON.stringify([
     settings.opening,
     trial ? true : settings.assist,
@@ -833,7 +833,7 @@ export function spin(s: Run, forced?: number, elapsed = interval(s)): Run {
   const second = introductoryBets(s)?.second;
   const firstSecondSpin = s.secondBetTutorial === "active" && second && s.portfolio.some(row => row.id === second.id && row.count > 0);
   const assistedSecond = forced === undefined && firstSecondSpin && s.settings.secondBetAssist;
-  const assistedOpening = !assistedSecond && forced === undefined && !s.trial && s.settings.spinAssist && s.spins < 5 && s.rushLeft === 0 && baseline;
+  const assistedOpening = !assistedSecond && forced === undefined && !s.trial && s.settings.spinAssist && s.spins < 4 && s.rushLeft === 0 && baseline;
   let openingRoll: number | undefined;
   if (assistedSecond) {
     const eligible = Array.from({length:100},(_,i)=>i+1).filter(face => face >= rollFloor(s) && resolve(s,second!,face).payout > 0);
@@ -1245,7 +1245,7 @@ export function playBaccarat(s: Run, wager: number, side: "player" | "banker", t
     history:appendHistory(s.history,{cash,at:s.activeMs,spin:s.spins,kind:"baccarat"})});
 }
 export function configure(s: Run, patch: Partial<Settings>): Run {
-  if (patch.spinAssistSequence !== undefined && !/^[WL]{5}$/.test(patch.spinAssistSequence)) return s;
+  if (patch.spinAssistSequence !== undefined && !/^[WL]{4}$/.test(patch.spinAssistSequence)) return s;
   if (s.trial && patch.secondBetAssist !== undefined) patch = {...patch,secondBetAssist:false};
   if (s.trial && patch.spinAssist !== undefined) patch = {...patch,spinAssist:false};
   if(s.trial && patch.assist!==undefined)patch={...patch,assist:false};
@@ -1435,7 +1435,12 @@ export function readSave(raw: string | null): Run | null {
       running: false,
       last: null,
     } as Run;
-    if (n.settings.secondBetAssistRevision !== 1 || typeof n.settings.secondBetAssist !== "boolean" || typeof n.settings.spinAssist !== "boolean" || typeof n.settings.spinAssistSequence !== "string" || !/^[WL]{5}$/.test(n.settings.spinAssistSequence)) return null;
+    if (n.settings.secondBetAssistRevision !== 1 || typeof n.settings.secondBetAssist !== "boolean" || typeof n.settings.spinAssist !== "boolean" || typeof n.settings.spinAssistSequence !== "string" || !/^[WL]{4,5}$/.test(n.settings.spinAssistSequence)) return null;
+    // Shorten legacy assistance without replaying consumed spins. Preserve the
+    // first four choices of a custom LAB order; adopt WLWW for the old default.
+    if (n.settings.spinAssistSequence.length === 5)
+      n.settings.spinAssistSequence = n.settings.spinAssistSequence === "WWLWW"
+        ? defaultSettings.spinAssistSequence : n.settings.spinAssistSequence.slice(0, 4);
     // Adopt the new standard once for ordinary saves; retain LAB choices and
     // never rewind whether this bet's first spin has already been consumed.
     if (v.settings?.secondBetAssistRevision === undefined && !n.debug && !n.trial)

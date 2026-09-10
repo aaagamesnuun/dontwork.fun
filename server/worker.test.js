@@ -21,6 +21,12 @@ const validEvent = () => ({
 });
 
 describe("telemetry ingestion validation", () => {
+  it("keeps current four-spin and legacy five-spin assistance orders in telemetry", () => {
+    for (const spinAssistSequence of ["WLWW", "LLLL", "WWWW", "WWLWW", "LWLWL"])
+      expect(sanitizeProps({spinAssist:true,spinAssistSequence})).toEqual({spinAssist:true,spinAssistSequence});
+    for (const spinAssistSequence of ["W", "WLWX", "WWWWWW", null])
+      expect(sanitizeProps({spinAssistSequence})).toEqual({});
+  });
   it("keeps upgrade base prices numeric instead of replacing them with validation booleans", () => {
     expect(sanitizeProps({positionPriceBase:120,speedPriceBase:25})).toEqual({positionPriceBase:120,speedPriceBase:25});
     for(const value of [true,0,-1,2.5,Infinity,"120"])

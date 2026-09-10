@@ -245,7 +245,7 @@ export function Lab({ s, change, notify, preparePreview, onWorkMode, }: {
       </section>
       <section className="settings-section"><h3>{_t("スピン補助機能")}</h3>
         <label className="setting-row"><span>{_t("スピン補助機能")}</span><input type="checkbox" disabled={!!s.trial} checked={s.settings.spinAssist} onChange={e => settings({spinAssist:e.target.checked})}/></label>
-        <p className="setting-note">{_t("通常モードの最初の5スピン。BASELINEをセットしているときに適用します。")}</p>
+        <p className="setting-note">{_t("通常モードの最初の4スピン。BASELINEをセットしているときに適用します。")}</p>
         <div className="spin-assist-order">{[...s.settings.spinAssistSequence].map((outcome,index)=><label key={index}><span>{_t("{0}回目",index+1)}</span><input type="checkbox" disabled={!!s.trial || !s.settings.spinAssist} aria-label={_t("{0}回目",index+1)} checked={outcome === "W"} onChange={e=>settings({spinAssistSequence:s.settings.spinAssistSequence.slice(0,index)+(e.target.checked ? "W" : "L")+s.settings.spinAssistSequence.slice(index+1)})}/></label>)}</div>
         <label className="setting-row"><span>{_t("2つ目のギャンブルのスピン補助")}</span><input type="checkbox" disabled={!!s.trial} checked={s.settings.secondBetAssist} onChange={e => settings({secondBetAssist:e.target.checked})}/></label>
       </section>

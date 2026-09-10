@@ -316,7 +316,7 @@ NUMERIC_PROP_KEYS.add("spinsSinceJackpot"); INTEGER_COUNT_PROP_KEYS.add("spinsSi
 for(const key of ["backgroundJackpot","bigChangeNotifications","rollDisplay","language","trialScoring"])PROP_KEYS.add(key);
 SETTING_ENUM_VALUES.set("rollDisplay",new Set(["dice","number"]));SETTING_ENUM_VALUES.set("language",new Set(["ja","en"]));SETTING_ENUM_VALUES.set("trialScoring",new Set(["none","cash","assets"]));
 PROP_KEYS.add("spinAssist"); PROP_KEYS.add("spinAssistSequence");
-SETTING_ENUM_VALUES.set("spinAssistSequence",new Set(Array.from({length:32},(_,n)=>n.toString(2).padStart(5,"0").replaceAll("0","L").replaceAll("1","W"))));
+SETTING_ENUM_VALUES.set("spinAssistSequence",new Set([4,5].flatMap(length=>Array.from({length:2**length},(_,n)=>n.toString(2).padStart(length,"0").replaceAll("0","L").replaceAll("1","W")))));
 PROP_KEYS.add("backgroundPlay"); PROP_KEYS.add("backgroundMs");
 for(const key of ["jackpotNotifications","sweepSound","coinChartMarkers","streakEffects","effectIntensity"])PROP_KEYS.add(key);
 NUMERIC_PROP_KEYS.add("effectIntensity");

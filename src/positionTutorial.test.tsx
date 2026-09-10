@@ -60,6 +60,8 @@ describe("second position tutorial", () => {
     expect(configure(withAid(swapped()),{secondBetAssist:false}).debug).toBe(true);
     const html=renderToStaticMarkup(<Lab s={swapped()} change={()=>{}} notify={()=>{}}/>);
     expect(html).toMatch(/2つ目のギャンブルのスピン補助<\/span><input type="checkbox" checked=""\/>/);
+    const order=html.match(/<div class="spin-assist-order">(.*?)<\/div>/)![1];
+    expect([...order.matchAll(/aria-label="(\d)回目"([^>]*)/g)].map(match=>[match[1],match[2].includes('checked=""')])).toEqual([["1",true],["2",false],["3",true],["4",true]]);
   });
   it("migrates ordinary saves to aid ON without losing the lesson or identity and rejects invalid flags", () => {
     const run=swapped(),old=JSON.parse(JSON.stringify(run));old.settings.secondBetAssist=false;delete old.settings.secondBetAssistRevision;
