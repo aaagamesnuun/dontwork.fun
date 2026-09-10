@@ -1115,5 +1115,12 @@
   "この環境では通知を利用できません。iPhone・iPadはホーム画面に追加したアプリから開いてください。": "Notifications are unavailable here. On iPhone or iPad, open the app from the Home Screen.",
   "通常モードは音をONにすると、通知を許可しなくてもバックグラウンドで進みます。ジャックポットが出たら進行を止め、ゲームに戻ると再開します。": "With sound on, normal mode runs in the background without notification permission. It pauses when a Jackpot starts and resumes when you return.",
   "バックグラウンド進行をONにする": "Turn on background play",
-  "音がOFFのため、背景進行は停止中です。": "Background play is paused because sound is off."
+  "音がOFFのため、背景進行は停止中です。": "Background play is paused because sound is off.",
+  "全体 {0}位 · {1} {2}位": "Overall #{0} · {1} #{2}",
+  "全体 {0}位": "Overall #{0}",
+  "{0} {1}位": "{0} #{1}",
+  "順位を取得中…": "Getting your rank…",
+  "この記録は現在のランキングにありません。": "This record is not on the current leaderboard.",
+  "順位を取得できませんでした。": "Could not retrieve your rank.",
+  "順位を再取得": "Refresh rank"
 }

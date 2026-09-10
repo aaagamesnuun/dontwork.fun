@@ -46,3 +46,5 @@ for (const migration of migrations) {
 await copyFile(resolve('server/bankrollRankings.js'),resolve(serverDirectory,'bankrollRankings.js'));
 
 await copyFile(resolve("server/funnel.js"), resolve(serverDirectory, "funnel.js"));
+
+await copyFile(resolve("server/recordRank.js"), resolve(serverDirectory, "recordRank.js"));

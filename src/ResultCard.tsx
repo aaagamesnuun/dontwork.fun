@@ -3,6 +3,7 @@ import { catalogById } from "./game/catalog";
 import { duration, money, VERSION, type Run } from "./game/engine";
 import { completionTarget } from "./rankingOutbox";
 import { WealthChart } from "./TradingViews";
+import {ResultRank,type ResultRanking} from './resultRanking';
 export function clearCardRun(s: Run): Run {
     const spins = s.clearSpins ?? s.spins, activeMs = s.clearActiveMs ?? s.activeMs;
     if (s.clearSnapshot)
@@ -18,15 +19,17 @@ export function effortStats(s:Run) {
     const known=!!s.trial || s.clearAt===null || !!s.clearSnapshot && s.clearSnapshot.work!==undefined;
     return {work:known?s.work.toLocaleString():"—",wager:known?money(s.coinWagered):"—",profit:known?(s.coinPaid>=s.coinWagered?"+":"")+money(s.coinPaid-s.coinWagered):"—",known};
 }
-export function ResultCard({ s, name }: {
+export function ResultCard({ s, name, rank }: {
     s: Run;
     name: string;
+    rank?:ResultRanking|null;
 }) {
     const effort=effortStats(s);
     return <section className="result-card" aria-label={_t("クリア記念カード")}>
     <div className="result-brand"><img src="/icons/dontwork.svg" alt="" width="34" height="34"/><strong>dontwork.fun</strong><span>GOAL CLEARED</span></div>
     <div className="result-hero"><span>FROM $0 TO</span><h3>{money(completionTarget(s))}<i>↗</i></h3><p>{name || "YOU MADE IT"}</p></div>
     <div className="result-time"><strong>{duration(s.completion?.timeMs ?? s.clearActiveMs ?? s.activeMs)}</strong><span>{_t("クリア時間")}</span></div>
+    <ResultRank s={s} rank={rank}/>
     <WealthChart s={s} summary/>
     <div className="result-numbers"><div><b>{(s.clearSpins ?? s.spins).toLocaleString()}</b><span>{_t("スピン")}</span></div><div><b>{s.maxChain.toLocaleString()}</b><span>{_t("最大連鎖")}</span></div><div><b>{money(s.spent)}</b><span>{_t("強化への投資")}</span></div></div>
     <div className="result-numbers result-effort"><div><b>{effort.work}</b><span>{effort.known?_t("WORK回数 · {0}", money(s.work)):_t("WORK回数")}</span></div>{(s.settings.coinFlip || s.coinRounds > 0) && <><div><b>{effort.wager}</b><span>{_t("FLIPの賭け金累計")}</span></div><div><b>{effort.profit}</b><span>{_t("FLIPの損益")}</span></div></>}</div>

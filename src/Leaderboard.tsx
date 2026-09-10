@@ -5,8 +5,10 @@ import { CATALOGS } from "./game/catalog";
 import { VERSION, duration, money, type Run } from "./game/engine";
 import { request } from "./api";
 import { ResultCard, clearCardRun, effortStats } from "./ResultCard";
-import { resultImage, resultShareText, resultXIntent, RESULT_POST_URL } from "./resultShare";
+import { resultShareText, resultXIntent, RESULT_POST_URL } from "./resultShare";
 import { rankingPath, rankingVersion, type RankingPage, } from "./rankings";
+import {useResultRanking,ResultRankStatus} from './resultRanking';
+import {useResultImage} from './useResultImage';
 import type { Change } from "./App";
 export function Leaderboard({ s, change, clear = false, notify, saveName, onRanking, }: {
     s: Run;
@@ -45,20 +47,12 @@ export function Leaderboard({ s, change, clear = false, notify, saveName, onRank
     }, [clear, view, version, offset, refresh]);
     const completion = s.completion;
     const named = !!s.completionNickname;
-    const [cardImage, setCardImage] = useState<Blob | null>(null), [imageFailed, setImageFailed] = useState(false);
-    useEffect(() => { let live = true; setCardImage(null); setImageFailed(false); if (clear && named)
-        void resultImage(resultRun, s.completionNickname).then(blob => { if (live)
-            setCardImage(blob); }).catch(() => { if (live)
-            setImageFailed(true); }); return () => { live = false; }; }, [clear, named, s.completionNickname, resultRun]);
-    const [imageUrl, setImageUrl] = useState("");
-    useEffect(() => { if (!cardImage) {
-        setImageUrl("");
-        return;
-    } const url = URL.createObjectURL(cardImage); setImageUrl(url); return () => URL.revokeObjectURL(url); }, [cardImage]);
+    const rank=useResultRanking(s,clear&&named);
+    const {blob:cardImage,url:imageUrl,failed:imageFailed}=useResultImage(resultRun,s.completionNickname,rank.ranking,clear&&named&&rank.status!=="loading");
     const share = async () => {
         if (!named)
             return;
-        const text = resultShareText(resultRun, s.completionNickname), url = RESULT_POST_URL;
+        const text = resultShareText(resultRun, s.completionNickname, rank.ranking), url = RESULT_POST_URL;
         const file = cardImage ? new File([cardImage], 'dontwork.fun-clear.png', { type: 'image/png' }) : null;
         try {
             if (file && navigator.canShare?.({ files: [file] }) && navigator.share)
@@ -66,7 +60,7 @@ export function Leaderboard({ s, change, clear = false, notify, saveName, onRank
             else if (navigator.share)
                 await navigator.share({ title: 'dontwork.fun', text, url });
             else if (cardImage) {
-                window.open(resultXIntent(resultRun, s.completionNickname), '_blank', 'noopener,noreferrer');
+                window.open(resultXIntent(resultRun, s.completionNickname, rank.ranking), '_blank', 'noopener,noreferrer');
             }
             else if (navigator.clipboard) {
                 await navigator.clipboard.writeText(text + '\n' + url);
@@ -81,7 +75,7 @@ export function Leaderboard({ s, change, clear = false, notify, saveName, onRank
         }
     };
     return (<>
-      {clear && (named ? imageUrl ? <img className="share-card-image" src={imageUrl} alt={_t(resultRun.settings.coinFlip || resultRun.coinRounds > 0 ? "{0}のクリア記念カード。WORK {1}回、FLIP賭け金 {2}、損益 {3}" : "{0}のクリア記念カード。WORK {1}回。", s.completionNickname, effortStats(resultRun).work, effortStats(resultRun).wager, effortStats(resultRun).profit)}/> : <ResultCard s={resultRun} name={s.completionNickname}/> : <div className="clear-name-intro"><span>GOAL CLEARED</span><h3>{_t("{0}達成！", money(completionTarget(resultRun)))}</h3><strong>{duration(resultRun.completion?.timeMs ?? resultRun.clearActiveMs ?? resultRun.activeMs)}</strong><p>{_t("この記録に、あなたの名前を。")}</p><small>{completion?.ranked ? _t("名前とクリア時間がランキングに公開されます。") : _t("LABの記録です。名前は端末だけに保存します。")}</small></div>)}
+      {clear && (named ? imageUrl ? <img className="share-card-image" src={imageUrl} alt={_t(resultRun.settings.coinFlip || resultRun.coinRounds > 0 ? "{0}のクリア記念カード。WORK {1}回、FLIP賭け金 {2}、損益 {3}" : "{0}のクリア記念カード。WORK {1}回。", s.completionNickname, effortStats(resultRun).work, effortStats(resultRun).wager, effortStats(resultRun).profit)}/> : <ResultCard s={resultRun} name={s.completionNickname} rank={rank.ranking}/> : <div className="clear-name-intro"><span>GOAL CLEARED</span><h3>{_t("{0}達成！", money(completionTarget(resultRun)))}</h3><strong>{duration(resultRun.completion?.timeMs ?? resultRun.clearActiveMs ?? resultRun.activeMs)}</strong><p>{_t("この記録に、あなたの名前を。")}</p><small>{completion?.ranked ? _t("名前とクリア時間がランキングに公開されます。") : _t("LABの記録です。名前は端末だけに保存します。")}</small></div>)}
       {!clear && <>
       <div className="leaderboard-title">
         <h3>{_t("クリア時間ランキング")}</h3>
@@ -136,7 +130,7 @@ export function Leaderboard({ s, change, clear = false, notify, saveName, onRank
       {postError && (<p className="negative" role="status">
           {_text(postError)}
         </p>)}
-      {clear && named && <><div className="result-actions"><a className="primary" href={resultXIntent(resultRun, s.completionNickname)} target="_blank" rel="noopener noreferrer">{_t("Xで共有 ↗")}</a><button className="primary" disabled={!cardImage && !imageFailed} onClick={() => void share()}>{imageFailed ? _t("結果をテキストで共有") : cardImage ? _t("記念カードをシェア ↗") : _t("画像を準備中…")}</button></div><p className="setting-note">{_t("画像を長押しして保存、またはスクリーンショットで共有できます。")}</p>{imageFailed && <p className="setting-note">{_t("画像を作成できませんでした。このカードをスクリーンショットで共有できます。")}</p>}<button className="text-button result-ranking" onClick={onRanking}>{_t("ランキングを見る →")}</button></>}
+      {clear && named && <><ResultRankStatus status={rank.status} retry={rank.retry}/><div className="result-actions"><a className="primary" href={rank.status==="loading"?undefined:resultXIntent(resultRun, s.completionNickname, rank.ranking)} aria-disabled={rank.status==="loading"} target="_blank" rel="noopener noreferrer">{_t("Xで共有 ↗")}</a><button className="primary" disabled={rank.status==="loading" || (!cardImage && !imageFailed)} onClick={() => void share()}>{imageFailed ? _t("結果をテキストで共有") : cardImage ? _t("記念カードをシェア ↗") : _t("画像を準備中…")}</button></div><p className="setting-note">{_t("画像を長押しして保存、またはスクリーンショットで共有できます。")}</p>{imageFailed && <p className="setting-note">{_t("画像を作成できませんでした。このカードをスクリーンショットで共有できます。")}</p>}<button className="text-button result-ranking" onClick={onRanking}>{_t("ランキングを見る →")}</button></>}
       {!clear && <>
       <div className="ranking-controls">
         <div className="ranking-tabs" role="group" aria-label={_t("ランキングの範囲")}>

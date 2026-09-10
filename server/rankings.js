@@ -1,3 +1,4 @@
+import { clearRecordRank } from "./recordRank.js";
 const json = (body, status = 200) =>
   new Response(JSON.stringify(body), {
     status,
@@ -64,6 +65,11 @@ export async function rankingsApi(request, db, url, acceptsScore) {
     );
   try {
     if (request.method === "GET") {
+      if (url.searchParams.has("completionId")) {
+        const id = url.searchParams.get("completionId");
+        if (!uuid(id)) return respond(json({ error: "Invalid completion ID" }, 400));
+        return respond(json({ ranking: await clearRecordRank(db, id) ?? null }));
+      }
       const version = url.searchParams.get("version") ?? "all";
       const offset = Number(url.searchParams.get("offset") ?? 0);
       if (

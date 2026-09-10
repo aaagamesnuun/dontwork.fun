@@ -1,3 +1,4 @@
+import { trialRecordRank } from "./recordRank.js";
 const json = (body, status = 200) =>
   new Response(JSON.stringify(body), {
     status,
@@ -44,6 +45,11 @@ export async function bankrollRankingsApi(request, db, url) {
  if(!db)return respond({error:'ランキングの保存先に接続できません。'},503);
  try {
   if(request.method==='GET'){
+   if(url.searchParams.has('scoreId')){
+    const id=url.searchParams.get('scoreId');
+    if(!uuid(id))return respond({error:'Invalid score ID'},400);
+    return respond({ranking:await trialRecordRank(db,id)??null});
+   }
    const scoring=url.searchParams.get('scoring')??'cash';
    if(!['cash','assets'].includes(scoring))return respond({error:'Invalid scoring'},400);
    const version=url.searchParams.get('version')??'all',offset=Number(url.searchParams.get('offset')??0);

@@ -4,20 +4,22 @@ import { duration, money, type Run } from './game/engine';
 import { completionTarget } from './rankingOutbox';
 import { effortStats } from "./ResultCard";
 import { chartGeometry } from './TradingViews';
-export function resultShareText(s: Run, name: string) {
-    if(s.trial?.result)return _t("{0} · dontwork.fun 30分チャレンジ\n総資産 {1} / WORK {2}回\n#dontwork",name,money(s.trial.result.finalBankroll),s.work);
-    return _t("{0} · dontwork.funで{1}達成！\n{2} / {3}\n#dontwork", name, money(completionTarget(s)), duration(s.completion?.timeMs ?? s.clearActiveMs ?? s.activeMs), catalogById(s.completion?.catalog ?? s.catalog).name);
+import {resultRankingText,type ResultRanking} from './resultRanking';
+export function resultShareText(s: Run, name: string, rank?:ResultRanking|null) {
+    const text=s.trial?.result ? _t("{0} · dontwork.fun 30分チャレンジ\n総資産 {1} / WORK {2}回\n#dontwork",name,money(s.trial.result.finalBankroll),s.work) : _t("{0} · dontwork.funで{1}達成！\n{2} / {3}\n#dontwork", name, money(completionTarget(s)), duration(s.completion?.timeMs ?? s.clearActiveMs ?? s.activeMs), catalogById(s.completion?.catalog ?? s.catalog).name);
+    const position=resultRankingText(s,rank);
+    return position ? text.replace('\n#dontwork',`\n${position}\n#dontwork`) : text;
 }
 export const RESULT_POST_URL = 'https://x.com/realNuun/status/2097988693449662590';
-export function resultXIntent(s: Run, name: string) {
+export function resultXIntent(s: Run, name: string, rank?:ResultRanking|null) {
     const url = new URL('https://x.com/intent/tweet');
-    url.searchParams.set('text', resultShareText(s, name));
+    url.searchParams.set('text', resultShareText(s, name, rank));
     url.searchParams.set('url', RESULT_POST_URL);
     return url.toString();
 }
 // The exported card uses the same frozen completion snapshot and chart geometry
 // as the screen. No live game values or external screenshot service are needed.
-export async function resultImage(s: Run, name: string): Promise<Blob> {
+export async function resultImage(s: Run, name: string, rank?:ResultRanking|null): Promise<Blob> {
     const trial=s.trial?.result, effort=effortStats(s);
     const canvas = document.createElement('canvas');
     canvas.width = 900;
@@ -41,8 +43,10 @@ export async function resultImage(s: Run, name: string): Promise<Blob> {
     text(trial?'FINAL ASSETS':'FROM $0 TO', 450, 200, 23, '#aebb9b', 'center');
     text(money(trial?.finalBankroll??completionTarget(s)), 450, 334, 132, '#d3ff93', 'center');
     text(name, 450, 418, 44, '#ffffff', 'center');
-    text(duration(trial?.durationMs??s.completion?.timeMs ?? s.clearActiveMs ?? s.activeMs), 450, 514, 59, '#ffffff', 'center');
-    text(trial?_t("30分チャレンジ"):_t("クリア時間"), 450, 552, 22, '#b9c8aa', 'center');
+    const position=resultRankingText(s,rank);
+    text(duration(trial?.durationMs??s.completion?.timeMs ?? s.clearActiveMs ?? s.activeMs), 450, position?490:514, 59, '#ffffff', 'center');
+    text(trial?_t("30分チャレンジ"):_t("クリア時間"), 450, position?528:552, 22, '#b9c8aa', 'center');
+    if(position)text(position,450,576,30,'#ffe082','center');
     const plot = chartGeometry(s, 'all'), x = (v: number) => 54 + (v - 6) / 988 * 792, y = (v: number) => 606 + (v - 16) / 162 * 270;
     ctx.strokeStyle = '#35462d';
     ctx.lineWidth = 1;

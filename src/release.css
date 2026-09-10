@@ -189,3 +189,8 @@
 .pwa-update-notice { position:fixed; z-index:12000; top:max(10px,env(safe-area-inset-top)); left:50%; transform:translateX(-50%); width:min(92vw,440px); display:flex; align-items:center; gap:12px; padding:12px 14px; background:#162319; color:#e5f7df; border:1px solid #a3dc72; border-radius:12px; box-shadow:0 6px 28px #0008; font-size:13px; }
 .pwa-update-notice span { flex:1; }
 .pwa-update-notice button { flex-shrink:0; padding:9px 12px; font-size:12px; }
+
+.result-rank {display:flex;align-items:baseline;justify-content:center;gap:14px;flex-wrap:wrap;margin:4px 0 10px;color:#ffe082;font-variant-numeric:tabular-nums}
+.result-rank strong {font-size:22px;line-height:1.1}
+.result-rank span {font-size:12px;color:#d5c58e}
+.result-actions a[aria-disabled="true"],.trial-result~a[aria-disabled="true"] {opacity:.5;cursor:wait}

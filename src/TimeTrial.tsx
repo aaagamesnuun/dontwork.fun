@@ -2,7 +2,9 @@ import { t as _t, textValue as _text } from "./i18n";
 import { useEffect, useState } from 'react';
 import { money, VERSION, trialRemaining, trialTimePrice, type Run, type TrialRule } from './game/engine';
 import { WealthChart } from './TradingViews';
-import { resultImage, resultShareText, resultXIntent, RESULT_POST_URL } from "./resultShare";
+import { resultShareText, resultXIntent, RESULT_POST_URL } from "./resultShare";
+import {useResultRanking,ResultRank,ResultRankStatus} from './resultRanking';
+import {useResultImage} from './useResultImage';
 import { request } from './api';
 import { trialRankingPath, saveTrialName, flushTrialScores } from './trialScores';
 export const trialClock = (ms: number) => { const seconds = Math.ceil(ms / 1000); return `${Math.floor(seconds / 60).toString().padStart(2, '0')}:${(seconds % 60).toString().padStart(2, '0')}`; };
@@ -71,10 +73,9 @@ export function TrialResult({ s, onChange, onRanking, onRetry, onNormal }: {
 }) {
     const t = s.trial!, r = t.result!;
     const [name, setName] = useState(t.nickname), [error, setError] = useState(''), [busy, setBusy] = useState(false);
-    const [image, setImage]=useState<Blob|null>(null),[imageUrl,setImageUrl]=useState("");
-    useEffect(()=>{let live=true;setImage(null);if(t.nickname)void resultImage(s,t.nickname).then(blob=>{if(live)setImage(blob)}).catch(()=>{});return()=>{live=false}},[s.id,t.nickname,r]);
-    useEffect(()=>{if(!image){setImageUrl("");return}const url=URL.createObjectURL(image);setImageUrl(url);return()=>URL.revokeObjectURL(url)},[image]);
-    const share=async()=>{const text=resultShareText(s,t.nickname),url=RESULT_POST_URL,file=image?new File([image],"dontwork.fun-30m.png",{type:"image/png"}):null;try{if(file&&navigator.canShare?.({files:[file]})&&navigator.share)await navigator.share({text,url,files:[file]});else if(navigator.share)await navigator.share({text,url});else window.open(resultXIntent(s,t.nickname),"_blank","noopener,noreferrer");}catch(e){if(!(e instanceof DOMException&&e.name==="AbortError"))setError(_t("この画面をスクリーンショットで共有できます。"));}};
+    const rank=useResultRanking(s,!!t.nickname);
+    const {blob:image,url:imageUrl,failed:imageFailed}=useResultImage(s,t.nickname,rank.ranking,!!t.nickname&&rank.status!=="loading");
+    const share=async()=>{const text=resultShareText(s,t.nickname,rank.ranking),url=RESULT_POST_URL,file=image?new File([image],"dontwork.fun-30m.png",{type:"image/png"}):null;try{if(file&&navigator.canShare?.({files:[file]})&&navigator.share)await navigator.share({text,url,files:[file]});else if(navigator.share)await navigator.share({text,url});else window.open(resultXIntent(s,t.nickname,rank.ranking),"_blank","noopener,noreferrer");}catch(e){if(!(e instanceof DOMException&&e.name==="AbortError"))setError(_t("この画面をスクリーンショットで共有できます。"));}};
     const submit = async () => { setBusy(true); setError(''); try {
         const next = saveTrialName(s, name);
         onChange(run => run.id === s.id ? next : run);
@@ -89,10 +90,10 @@ export function TrialResult({ s, onChange, onRanking, onRetry, onNormal }: {
     } };
     return <>{imageUrl?<img className="share-card-image" src={imageUrl} alt={_t("30分チャレンジの記念カード")}/>:<section className="result-card trial-result"><div className="result-brand"><img src="/icons/dontwork.svg" alt="" width="34"/><strong>dontwork.fun</strong><span>TIME UP</span></div>
  <div className="result-hero"><span>{trialClock(r.durationMs)} · FINAL ASSETS</span><h3>{money(r.finalBankroll)}</h3><p>{t.nickname || _t("30分、おつかれさま！")}</p></div>
- <WealthChart s={{ ...s, coinChartHold: null, settings: { ...s.settings, chartAxis: 'spins' } }} summary/>
+ <ResultRank s={s} rank={rank.ranking}/><WealthChart s={{ ...s, coinChartHold: null, settings: { ...s.settings, chartAxis: 'spins' } }} summary/>
  <div className="result-numbers"><div><b>{r.spins.toLocaleString()}</b><span>{_t("スピン")}</span></div><div><b>{money(s.spent)}</b><span>{_t("強化への投資")}</span></div><div><b>{s.maxChain}</b><span>{_t("最大連鎖")}</span></div></div>
  <div className="result-numbers"><div><b>{s.work.toLocaleString()}</b><span>{_t("WORK回数")}</span></div>{(s.settings.coinFlip || s.coinRounds > 0) && <><div><b>{money(s.coinWagered)}</b><span>{_t("FLIPの賭け金累計")}</span></div><div><b>{money(s.coinPaid - s.coinWagered)}</b><span>{_t("FLIPの損益")}</span></div></>}</div><footer>{r.ranked ? '30 MIN RECORD' : 'LAB RECORD'} · v{r.appVersion}</footer></section>}
- {t.nickname && <><a className="primary" href={resultXIntent(s,t.nickname)} target="_blank" rel="noopener noreferrer">{_t("Xで共有 ↗")}</a><button className="primary" onClick={()=>void share()}>{_t("記念カードをシェア ↗")}</button><p className="setting-note">{_t("画像を長押しして保存、またはスクリーンショットで共有できます。")}</p></>}
+ {t.nickname && <><ResultRankStatus status={rank.status} retry={rank.retry}/><a className="primary" href={rank.status==="loading"?undefined:resultXIntent(s,t.nickname,rank.ranking)} aria-disabled={rank.status==="loading"} target="_blank" rel="noopener noreferrer">{_t("Xで共有 ↗")}</a><button className="primary" disabled={rank.status==="loading"||(!image&&!imageFailed)} onClick={()=>void share()}>{_t("記念カードをシェア ↗")}</button><p className="setting-note">{_t("画像を長押しして保存、またはスクリーンショットで共有できます。")}</p></>}
  {!t.nickname ? <form className="trial-name" onSubmit={e => { e.preventDefault(); void submit(); }}><label>{_t("ランキングの名前")}<input value={name} maxLength={32} onChange={e => setName(e.target.value)} autoComplete="nickname" placeholder={_t("名前")}/></label><button className="primary" disabled={busy || !name.trim()}>{_t("名前を保存")}</button></form> : <p role="status">{!r.ranked ? _t("LABの記録を端末に保存しました。") : t.submitted ? _t("ランキングに登録しました。") : _t("名前を保存しました。通信できるときに自動で再送します。")}</p>}
  {t.nickname && r.ranked && !t.submitted && <button className="secondary" disabled={busy} onClick={() => void submit()}>{busy ? _t("送信中…") : _t("ランキングへ再送")}</button>}
  {error && <p role="alert">{_text(error)}</p>}
