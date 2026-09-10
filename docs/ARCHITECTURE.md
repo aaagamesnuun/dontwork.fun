@@ -231,3 +231,9 @@ Workerのテストは`node:sqlite`のメモリ内DBにマイグレーション�
 標準deskのギャンブル・アップグレード・LABコインフリップは、同じ196pxの編集用トラックを使います。ギャンブルカードは中身の高さだけを使い、数量操作を左へ置きます。＋／−は44pxの操作領域を維持します。余った高さはスピンとチャートの両方へ配分し、タブ切替でこれらの高さを変えません。長いカードや強化一覧は枠内でスクロールできます。強化累計は全強化項目の後ろです。撮影モードとLABの旧タブ式は別のレイアウトを維持します。[release30.css](../src/release30.css)
 
 コインフリップの入口には `settings.coinFlip`（既定OFF）を追加しています。`coinUnlocked` がこの設定と公開済みの最高資産 `$10K超` を判定するため、通常画面の切替・解放通知・FLIP操作を一括で制御します。`coinEnabled` はWORKをFLIPへ切り替えたかどうかの別状態です。OFFにするとWORKへ戻りますが、過去のコイン収支、未合流のチャート情報、クリア記録は維持します。旧セーブの設定欠落もOFFで補完し、30分の新規開始ではOFFへ標準化します。公平なコインの配当や既存のランキング適格性は変更していません。[coinFlip.test.tsx](../src/coinFlip.test.tsx)
+
+## 通常WORKの受付
+
+[src/workInput.ts](../src/workInput.ts)がUI入力の直近1秒を`performance.now()`で管理します。通常WORKとLABの手遊びが同じ受付を使い、設定変更やタブ切替では枠を補充しません。許可した入力だけ既存の`work`をdispatchし、結果待ちのスピンとは従来のpresentation合流を使います。設定は`workClicksPerSecond`（既定15、1〜60）で保存・統計へ反映します。30分モードにはこの速度制限を適用せず、エンジンの計算用`work`にもUI時計を持たせません。[テスト](../src/workInput.test.tsx)。
+
+問い合わせ管理APIの`/api/analytics/inquiries`は既存funnelと同じ`ANALYTICS_READ_TOKEN`で保護されたGETです。公開クライアントに問い合わせ本文や連絡先は含めず、認証済み管理ツールだけが最新一覧を取得します。DB変更はありません。

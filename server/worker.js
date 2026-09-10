@@ -1,4 +1,4 @@
-import { sanitizeJourney, funnelProjection, funnelApi, funnelReady } from "./funnel.js";
+import { sanitizeJourney, funnelProjection, funnelApi, inquiriesApi, funnelReady } from "./funnel.js";
 import {bankrollRankingsApi} from "./bankrollRankings.js";
 import { refreshSoundExperimentReport } from "./soundExperiment.js";
 import { rankingsApi } from "./rankings.js";
@@ -318,6 +318,7 @@ for(const key of ["backgroundJackpot","bigChangeNotifications","rollDisplay","la
 SETTING_ENUM_VALUES.set("rollDisplay",new Set(["dice","number"]));SETTING_ENUM_VALUES.set("language",new Set(["ja","en"]));SETTING_ENUM_VALUES.set("trialScoring",new Set(["none","cash","assets"]));
 PROP_KEYS.add("spinAssist"); PROP_KEYS.add("spinAssistSequence");
 PROP_KEYS.add("autoAlwaysOn");
+PROP_KEYS.add("workClicksPerSecond"); NUMERIC_PROP_KEYS.add("workClicksPerSecond"); INTEGER_COUNT_PROP_KEYS.add("workClicksPerSecond");
 SETTING_ENUM_VALUES.set("spinAssistSequence",new Set([4,5].flatMap(length=>Array.from({length:2**length},(_,n)=>n.toString(2).padStart(length,"0").replaceAll("0","L").replaceAll("1","W")))));
 PROP_KEYS.add("backgroundPlay"); PROP_KEYS.add("backgroundMs");
 for(const key of ["jackpotNotifications","sweepSound","coinChartMarkers","streakEffects","effectIntensity"])PROP_KEYS.add(key);
@@ -1536,6 +1537,7 @@ export const ratingsApi=async(request,env,url)=>{
 const worker = {
   async fetch(request, env) {
     const url = new URL(request.url);
+    if (url.pathname === "/api/analytics/inquiries") return inquiriesApi(request, env);
     if (url.pathname === "/api/analytics/funnel") return funnelApi(request, env, url);
     if (["/api/save-codes", "/api/save-codes/restore"].includes(url.pathname)) return json({ error: "This feature is no longer available." }, 410);
     if (url.pathname === "/api/bankroll-rankings") return bankrollRankingsApi(request,env.DB,url);

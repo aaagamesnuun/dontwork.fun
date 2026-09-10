@@ -37,6 +37,7 @@ import { launchCoin, playResultVisual, stopVisuals, setRainBanknote } from "./Re
 import { GameHelp, NewsHelp } from "./GameHelp";
 import { flushSync } from "react-dom";
 import { useWorkBurst } from "./WorkBurst";
+import { WorkInput } from "./workInput";
 import { preloadCashImages } from "./cashSprites";
 import { initializeSoundExperiment } from "./soundExperiment";
 import { useReleaseCheck, ReleaseNotice, VersionLinks } from "./ReleaseNotice";
@@ -358,6 +359,7 @@ export default function App({ onOpenDesk, studio }: {
     const coinLayer = useRef<HTMLDivElement>(null), visualLayer = useRef<HTMLDivElement>(null), chartTarget = useRef<HTMLElement>(null);
     const liveModel = useRef(model);
     const [resultReveal] = useState(() => new SpinReveal(() => liveModel.current));
+    const [workInput] = useState(() => new WorkInput());
     liveModel.current = model;
     const requestPosition = (intent: PositionIntent) => { wakeAudio(true); dispatch({ type: "position-change", intent }); };
     useEffect(() => {
@@ -803,6 +805,12 @@ export default function App({ onOpenDesk, studio }: {
             return;
         wakeAudio(true);
         setS((old) => fn(old));
+    };
+    const earnWork = () => {
+        if (!readyToPlay.current || document.hidden || (!studio && needsPwa()) || !workInput.accept(state.current)) return false;
+        const before = state.current;
+        flushSync(() => change(work));
+        return state.current.id === before.id && state.current.work > before.work;
     };
     const flipCoin = (button: HTMLButtonElement) => {
         if ((!studio && needsPwa()) || !readyToPlay.current || !trialActive(state.current))
@@ -1604,9 +1612,8 @@ export default function App({ onOpenDesk, studio }: {
       {shown.settings.newsPosition === "bottom" && news}
       <div className={`play-dock ${shown.settings.autoAlwaysOn && !shown.trial ? "without-auto" : ""}`}>
         <TrialTimeShop s={shown} budget={coinBudget(model)} onBuy={() => { flushSync(() => dispatch({ type: "trial-time", now: Date.now() })); telemetry.current?.event(state.current, "trial_time", { amount: state.current.trial?.lastPurchase?.cost ?? 0, durationMs: state.current.trial?.lastPurchase?.addedMs ?? 0 }); }}/>
-        {shown.settings.handToys && shown.settings.dockToy !== "off" ? <HandToyButton key={shown.id + shown.settings.dockToy} runId={shown.id} mode={shown.settings.dockToy} settings={shown.settings} onEarn={() => { if (!trialActive(state.current))
-            return; change(work); impact(surface.current, "work", shown.settings, flash.current); }}/> : coinUnlocked(shown) && shown.coinEnabled ? <button id="work-button" className="work-button flip-button" disabled={!trialActive(shown)} data-ui-cue="handled" onClick={event => flipCoin(event.currentTarget)} aria-label={_t("コインを投げる 賭け金{0}", money(shown.coinStake))}><span>FLIP <img src="/flip-bull-coin.png" alt=""/></span><small>{_t("{0} / 1枚", money(shown.coinStake))}</small></button> : shown.settings.workMode === "gamble" ? <button className="work-button" disabled={rush} onClick={() => setTab("positions")}>{_t("WORKギャンブル")}<small>{_t("毎スピン +$5 · 賭け金$0")}</small></button> : <button id="work-button" className={`work-button ${guide.target === "work" ? "guide-target" : ""}`} disabled={!trialActive(shown)} data-ui-cue="work" onClick={(event) => { if (!trialActive(state.current))
-            return; change(work); workBurst.burst(event); if (shown.settings.workCosmetics && shown.workFxLevel > 0) {
+        {shown.settings.handToys && shown.settings.dockToy !== "off" ? <HandToyButton key={shown.id + shown.settings.dockToy} runId={shown.id} mode={shown.settings.dockToy} settings={shown.settings} onEarn={() => { if (!earnWork()) return false; impact(surface.current, "work", shown.settings, flash.current); return true; }}/> : coinUnlocked(shown) && shown.coinEnabled ? <button id="work-button" className="work-button flip-button" disabled={!trialActive(shown)} data-ui-cue="handled" onClick={event => flipCoin(event.currentTarget)} aria-label={_t("コインを投げる 賭け金{0}", money(shown.coinStake))}><span>FLIP <img src="/flip-bull-coin.png" alt=""/></span><small>{_t("{0} / 1枚", money(shown.coinStake))}</small></button> : shown.settings.workMode === "gamble" ? <button className="work-button" disabled={rush} onClick={() => setTab("positions")}>{_t("WORKギャンブル")}<small>{_t("毎スピン +$5 · 賭け金$0")}</small></button> : <button id="work-button" className={`work-button ${guide.target === "work" ? "guide-target" : ""}`} disabled={!trialActive(shown)} data-ui-cue="handled" onClick={(event) => { if (!earnWork())
+            return; uiSound("work", state.current.settings); workBurst.burst(event); if (shown.settings.workCosmetics && shown.workFxLevel > 0) {
             sound(shown.workFxLevel === 4 ? "streak" : "work", { ...shown.settings, soundPack: (["terminal", "crystal", "retro-arcade", "impact", "arcade"] as const)[shown.workFxLevel] }, shown.workFxLevel);
         } }}>
           <span>

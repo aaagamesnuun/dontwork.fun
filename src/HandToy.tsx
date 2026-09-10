@@ -12,7 +12,7 @@ export const HAND_TOYS = [
 export function HandToyButton({ mode, settings, onEarn, runId }: {
     mode: HandToy;
     settings: Settings;
-    onEarn: () => void;
+    onEarn: () => boolean;
     runId: string;
 }) {
     const [feedback, setFeedback] = useState("+$1"), [pressed, setPressed] = useState(false);
@@ -24,6 +24,7 @@ export function HandToyButton({ mode, settings, onEarn, runId }: {
         reset(); }; document.addEventListener("visibilitychange", hide); return () => { if (timer.current)
         clearTimeout(timer.current); document.removeEventListener("visibilitychange", hide); }; }, [mode, runId]);
     const tap = () => {
+        if (!onEarn()) return;
         const now = performance.now(), gap = now - last.current;
         if (mode === "beat") {
             const perfect = last.current > 0 && Math.abs(gap - 600) <= 130;
@@ -38,16 +39,14 @@ export function HandToyButton({ mode, settings, onEarn, runId }: {
         }
         last.current = now;
         haptic("work", settings);
-        onEarn();
     };
     const start = () => { if (started.current !== null)
         return; started.current = performance.now(); setPressed(true); setFeedback("CHARGING"); uiSound("work", settings); timer.current = setTimeout(() => { setFeedback("RELEASE!"); uiSound("equip", settings); }, 600); };
     const release = () => { const at = started.current; if (at === null)
-        return; const held = performance.now() - at; reset(); if (held >= 600) {
+        return; const held = performance.now() - at; reset(); if (held >= 600 && onEarn()) {
         setFeedback("+$1 · RELEASE!");
         uiSound("win", settings);
         haptic("win", settings);
-        onEarn();
     }
     else
         setFeedback(_t("長押し → 放す")); };

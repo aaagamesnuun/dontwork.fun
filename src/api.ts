@@ -46,7 +46,7 @@ export function snapshot(s: Run) {
         backgroundPlay: s.settings.backgroundPlay, backgroundMs: s.backgroundMs, backgroundJackpot:s.backgroundJackpot, bigChangeNotifications:s.settings.bigChangeNotifications, rollDisplay:s.settings.rollDisplay, language:s.settings.language, trialScoring:s.trial?.scoring??"none",
         jackpotNotifications: s.settings.jackpotNotifications, sweepSound: s.settings.sweepSound, coinChartMarkers: s.settings.coinChartMarkers, streakEffects: s.settings.streakEffects, effectIntensity: s.settings.effectIntensity,
         sharedSpin: s.settings.sharedSpin, spinSize: s.settings.spinSize, brandIcon: s.settings.brandIcon, wealthTheme: s.settings.wealthTheme, adaptiveMusic: s.settings.adaptiveMusic,
-        workMode: s.settings.workMode, workCosmetics: s.settings.workCosmetics, upgradeTutorial: s.settings.upgradeTutorial, workFxLevel: s.workFxLevel,
+        workClicksPerSecond: s.settings.workClicksPerSecond, workMode: s.settings.workMode, workCosmetics: s.settings.workCosmetics, upgradeTutorial: s.settings.upgradeTutorial, workFxLevel: s.workFxLevel,
         pwaInstalled: typeof navigator !== "undefined" && ((navigator as Navigator & {
             standalone?: boolean;
         }).standalone === true || (typeof matchMedia !== "undefined" && matchMedia("(display-mode: standalone)").matches)),

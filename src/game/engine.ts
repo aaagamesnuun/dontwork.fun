@@ -114,6 +114,7 @@ export interface Settings {
   wealthTheme: "fixed" | "tiers" | "drawdown";
   adaptiveMusic: boolean;
   workMode: "click" | "gamble";
+  workClicksPerSecond: number;
   workCosmetics: boolean;
   upgradeTutorial: "money" | "scripted";
   spinAssist: boolean;
@@ -321,6 +322,7 @@ export const defaultSettings: Settings = {
   wealthTheme: "fixed",
   adaptiveMusic: false,
   workMode: "click",
+  workClicksPerSecond: 15,
   workCosmetics: false,
   upgradeTutorial: "money",
   spinAssist: true,
@@ -369,7 +371,7 @@ export const defaultSettings: Settings = {
 export const customRules = (settings: Settings, trial = false) =>
   settings.handToys || settings.jackpotRule !== "combined" || settings.probabilityUpgrades || settings.baccarat ||
   settings.workMode === "gamble" || settings.workCosmetics ||
-  (!trial && (settings.autoAlwaysOn !== defaultSettings.autoAlwaysOn || !settings.secondBetAssist || !settings.spinAssist || settings.spinAssistSequence !== defaultSettings.spinAssistSequence)) ||
+  (!trial && (settings.workClicksPerSecond !== defaultSettings.workClicksPerSecond || settings.autoAlwaysOn !== defaultSettings.autoAlwaysOn || !settings.secondBetAssist || !settings.spinAssist || settings.spinAssistSequence !== defaultSettings.spinAssistSequence)) ||
   JSON.stringify([
     settings.opening,
     trial ? true : settings.assist,
@@ -1249,6 +1251,8 @@ export function playBaccarat(s: Run, wager: number, side: "player" | "banker", t
     history:appendHistory(s.history,{cash,at:s.activeMs,spin:s.spins,kind:"baccarat"})});
 }
 export function configure(s: Run, patch: Partial<Settings>): Run {
+  if (patch.workClicksPerSecond !== undefined && (!Number.isInteger(patch.workClicksPerSecond) || patch.workClicksPerSecond < 1 || patch.workClicksPerSecond > 60)) return s;
+  if (s.trial && patch.workClicksPerSecond !== undefined) patch = {...patch,workClicksPerSecond:s.settings.workClicksPerSecond};
   if (s.trial) patch = {...patch,autoAlwaysOn:false,backgroundPlay:false};
   if (patch.spinAssistSequence !== undefined && !/^[WL]{4}$/.test(patch.spinAssistSequence)) return s;
   if (s.trial && patch.secondBetAssist !== undefined) patch = {...patch,secondBetAssist:false};
@@ -1277,6 +1281,7 @@ export function configure(s: Run, patch: Partial<Settings>): Run {
         "baccarat",
         "probabilityUpgrades",
         "workMode",
+        "workClicksPerSecond",
         "workCosmetics",
         "spinAssist",
         "autoAlwaysOn",
@@ -1475,6 +1480,7 @@ export function readSave(raw: string | null): Run | null {
     if (!["rain", "burst"].includes(n.settings.cashMotion)) n.settings.cashMotion = "burst";
     if(typeof n.settings.coinFlip!=="boolean" || typeof n.settings.handToys!=="boolean" || !["off","tap","beat","charge"].includes(n.settings.dockToy))return null;
     if(!n.settings.handToys || n.settings.workMode==="gamble")n.settings.dockToy="off";
+    if (!Number.isInteger(n.settings.workClicksPerSecond) || n.settings.workClicksPerSecond < 1 || n.settings.workClicksPerSecond > 60) return null;
     if(v.settings?.backgroundRevision!==3){n.settings.backgroundRevision=3;n.settings.backgroundPlay=true;n.background=null;}
     if(typeof n.backgroundJackpot!=="boolean")n.backgroundJackpot=false;
     if(typeof n.settings.bigChangeNotifications!=="boolean")n.settings.bigChangeNotifications=false;

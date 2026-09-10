@@ -38,6 +38,13 @@ export function Lab({ s, change, notify, preparePreview, onWorkMode, }: {
       <section className="settings-section">
         <h3>{_t("プレイ体験の比較")}</h3>
         <label className="setting-row">
+          <span>{_t("WORKの上限（回/秒）")}<small>{_t("通常モードのみ。1〜60回、標準は15回。")}</small></span>
+          <input type="number" min="1" max="60" step="1" disabled={!!s.trial} value={s.settings.workClicksPerSecond} onChange={e => {
+            const n = Number(e.target.value);
+            if (Number.isInteger(n) && n >= 1 && n <= 60) settings({workClicksPerSecond:n});
+          }}/>
+        </label>
+        <label className="setting-row">
           <span>{_t("スピン容量を使う")}<small>{_t("OFFなら回数制限なし。ONで容量とその強化を復活。")}</small>
           </span>
           <input type="checkbox" checked={s.settings.fuelEnabled} onChange={(e) => settings({ fuelEnabled: e.target.checked })}/>

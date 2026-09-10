@@ -1,4 +1,6 @@
 {
+  "WORKの上限（回/秒）": "WORK limit (clicks/sec)",
+  "通常モードのみ。1〜60回、標準は15回。": "Normal mode only. 1–60 clicks; default: 15.",
   "最新の資産変化": "Latest asset change",
   "最新の資産変化を総資産のすぐ右に表示": "Place the latest change next to total assets",
   "全2ページ中{0}ページ": "Page {0} of 2",

@@ -169,7 +169,7 @@ export async function buildFunnelReport(db, search, now = Date.now()) {
     insights:funnelNarrative(summary,stages,horizon), definitions:{ visitGapMinutes:30,retentionDays:180,unit:'計測ブラウザ',cohort:'計測開始後、最初に観測した訪問。セーブ削除前・別端末でのプレイ歴は不明。',duration:'前面でゲームが動作中、または直近2分に入力があった時間。バックグラウンド進行を除く。' } };
 }
 const reply=(body,status=200)=>Response.json(body,{status,headers:{'Cache-Control':'private, no-store','X-Content-Type-Options':'nosniff','Vary':'Authorization'}});
-export async function funnelApi(request,env,url) {
+async function analyticsApi(request,env,load) {
   if (!env.ANALYTICS_READ_TOKEN || env.ANALYTICS_READ_TOKEN.length<32) return reply({error:'analytics_not_configured'},503);
   // Hash both strings before comparing to avoid prefix-dependent comparisons.
   const digest=async s=>new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(s)));
@@ -177,6 +177,21 @@ export async function funnelApi(request,env,url) {
   if(provided.reduce((diff,b,i)=>diff|(b^expected[i]),0)!==0) return reply({error:'unauthorized'},401);
   if(request.method!=='GET')return reply({error:'method_not_allowed'},405);
   if(!env.DB)return reply({error:'database_unavailable'},503);
-  try{return reply(await buildFunnelReport(env.DB,url.searchParams));}
+  try{return reply(await load());}
   catch {return reply({error:'analytics_unavailable'},503);}
+}
+
+export function funnelApi(request,env,url) {
+  return analyticsApi(request,env,()=>buildFunnelReport(env.DB,url.searchParams));
+}
+export function inquiriesApi(request,env) {
+  return analyticsApi(request,env,async()=>{
+    const {results}=await env.DB.prepare(`SELECT feedback_id,category,status,display_name,reply_contact,message,app_version,created_at,active_ms,total_spins,total_draws,bankroll FROM feedback_messages ORDER BY created_at DESC,id DESC`).all();
+    return {capturedAt:new Date().toISOString(),inquiries:results.map(r=>({
+      id:'production:'+r.feedback_id,source:'production',version:r.app_version,
+      category:r.category,status:r.status,name:r.display_name,contact:r.reply_contact,
+      message:r.message,created:r.created_at,activeMs:r.active_ms,
+      spins:r.total_spins,draws:r.total_draws,bankroll:r.bankroll,runId:null
+    }))};
+  });
 }
