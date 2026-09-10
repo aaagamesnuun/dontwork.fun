@@ -102,6 +102,8 @@ AUTOを停止しただけなら、ニュースは残り回数を保持して再�
 
 3.0.0のスコアは`trialAssets = cash + spent`、つまり終了時の現金と強化への累計投資です。最高残高ではありません。過去の2.8 / 2.9の現金スコアは`-30m`、現在は`-30m-assets`というrulesetで分け、[trialScores.ts](../src/trialScores.ts)と[bankrollRankings.js](../server/bankrollRankings.js)の検索条件にも反映します。古い未完了チャレンジを現在の採点へ移す場合は比較用とし、古い確定結果の採点方式を維持します。
 
+30分の左上は使える現金 `cash` を大きく表示し、その右、`30 MIN CHALLENGE` の左に「総資産」と `finiteMoney(cash + spent)` を表示します。強化購入は現金を減らして投資額へ移すため、現在の採点では総資産を減らしません。どちらも [BalanceReadout.tsx](../src/BalanceReadout.tsx) に渡す公開済みRunから計算し、未公開スピンの利益は両方から隠します。チャート・最終スコアの計算は同じままです。
+
 ### 不変のクリア記録とoutbox
 
 通常モードの`finish`は、初めて目標残高に到達した時にだけ`completion`と`clearSnapshot`を作ります。その後のWORK・FLIP・継続プレイや設定変更で、当時の時間・回転数・資産・カード用統計を作り直しません。30分も締切で`trial.result`を一度作り、presentation層は終了後の進行変更を拒否しつつ、名前・送信状態・音などの設定変更を許可します。

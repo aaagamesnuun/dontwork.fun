@@ -85,6 +85,10 @@ html[lang=en] .spin-result small{font-size:9px}html[lang=en] .bet-card h3{letter
 .app .balance-money-line .balance-result .pnl {width:max-content;min-width:0;margin:0;font-size:clamp(20px,3vw,28px);line-height:1.1;white-space:nowrap;animation-name:balance-change-pop}
 @keyframes balance-change-pop {from{opacity:.35}to{opacity:1}}
 .app .balance-money-line.change-inline .balance-result {margin-left:0;text-align:left}
+.app .balance-money-line .balance-trial-assets {display:flex;flex-direction:column;align-self:center;flex:0 1 auto;min-width:0;max-width:30%;gap:1px;font-family:var(--mono);white-space:nowrap}
+.app .balance-trial-assets small {font-size:9px;line-height:1.1;color:var(--muted);overflow:hidden;text-overflow:ellipsis}
+.app .balance-trial-assets strong {display:block;min-width:0;font-size:14px;line-height:1.15;font-weight:600;overflow-x:auto;scrollbar-width:none}
+.app .trial-balance .balance-goal {max-width:24%;font-size:9px;white-space:normal;overflow:visible}
 .app.full-money .balance-money-line h1 {font-size:clamp(20px,3.5vw,30px);letter-spacing:-.7px}
 .app.full-money .balance-money-line .balance-result .pnl {font-size:clamp(17px,3vw,25px)}
 .app.capture-mode .balance-money-line h1 {font-size:clamp(28px,6vw,44px)}
