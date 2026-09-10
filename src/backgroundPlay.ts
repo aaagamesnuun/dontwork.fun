@@ -4,7 +4,7 @@ import { remainingSpinMs, spinTiming } from "./spinTiming";
 export const BACKGROUND_MS = 60 * 60 * 1000;
 export const BACKGROUND_SPINS = 12000;
 export const backgroundSupported = () => typeof navigator !== "undefined" && !!navigator.locks;
-export const backgroundAccess = (run:Run) => !run.trial && backgroundSupported() && run.settings.sound && run.settings.soundVolume>0 && run.settings.jackpotNotifications && typeof Notification!=="undefined" && Notification.permission==="granted";
+export const backgroundAccess = (run:Run) => !run.trial && backgroundSupported() && run.settings.sound && run.settings.soundVolume>0;
 export function holdBackgroundJackpot(run:Run,at:number):Run {
   const stopped=pauseTrial({...run,background:null},at);
   return {...stopped,running:false,background:null,backgroundJackpot:true};

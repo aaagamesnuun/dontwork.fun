@@ -172,7 +172,7 @@
   "次へ": "Next",
   "時間ショップ · LAB": "Time Shop · LAB",
   "時間ガチャ · LAB": "Time Draw · LAB",
-  "ジャックポット通知をONにしました。": "Jackpot notifications enabled.",
+  "ジャックポット通知をONにしました。": "Jackpot notifications are on.",
   "通知は許可されていません。端末やブラウザの通知設定から変更できます。": "Notifications aren't allowed. You can change this in your device or browser settings.",
   "通知をONにするには許可してください。": "Allow notifications to enable them.",
   "この環境では通知を有効にできませんでした。ホーム画面から開いてお試しください。": "Couldn't enable notifications here. Try opening the app from your Home Screen.",
@@ -1106,5 +1106,14 @@
   "ギャンブルをセットして賭け金を貯めると、自動でスピン。": "Equip a bet and save enough cash to start automatic spins.",
   "砂時計 → WORK → ギャンブル": "Hourglass → WORK → Bets",
   "WORK → ギャンブル": "WORK → Bets",
-  "WORKを連打して資金を貯め、ギャンブルの＋でギャンブルをセット。賭け金があれば自動でスピンが始まります。": "Tap WORK to earn cash, then use + to equip a bet. Spins start automatically when you can afford the stake."
+  "WORKを連打して資金を貯め、ギャンブルの＋でギャンブルをセット。賭け金があれば自動でスピンが始まります。": "Tap WORK to earn cash, then use + to equip a bet. Spins start automatically when you can afford the stake.",
+  "ジャックポットを通知で受け取りますか？": "Get notified when a Jackpot starts?",
+  "画面を離れている間にジャックポットが出たら、進行を止めてお知らせします。ゲームに戻ると再開します。": "If a Jackpot starts while you are away, the game pauses and notifies you. Return to the game to resume.",
+  "通知は任意です。OFFでも、音をONにしていれば通常モードはバックグラウンドで進み、ジャックポットで止まります。": "Notifications are optional. With sound on, normal mode keeps playing in the background and pauses at a Jackpot, even with notifications off.",
+  "ジャックポット通知をOFFにする": "Turn off Jackpot notifications",
+  "ジャックポット通知をONにする": "Turn on Jackpot notifications",
+  "この環境では通知を利用できません。iPhone・iPadはホーム画面に追加したアプリから開いてください。": "Notifications are unavailable here. On iPhone or iPad, open the app from the Home Screen.",
+  "通常モードは音をONにすると、通知を許可しなくてもバックグラウンドで進みます。ジャックポットが出たら進行を止め、ゲームに戻ると再開します。": "With sound on, normal mode runs in the background without notification permission. It pauses when a Jackpot starts and resumes when you return.",
+  "バックグラウンド進行をONにする": "Turn on background play",
+  "音がOFFのため、背景進行は停止中です。": "Background play is paused because sound is off."
 }

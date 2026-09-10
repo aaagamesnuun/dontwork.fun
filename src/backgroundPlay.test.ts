@@ -1,15 +1,27 @@
 import { describe, it, expect } from "vitest";
-import { advanceBackground, backgroundSave, startBackground, BACKGROUND_MS } from "./backgroundPlay";
+import { advanceBackground, backgroundSave, startBackground, resumeBackgroundJackpot, BACKGROUND_MS } from "./backgroundPlay";
 import { configure, freshRun, interval, readSave, spin, type Run } from "./game/engine";
 import { presentationReducer } from "./presentation";
 
 const playable=():Run=>({...configure(freshRun(),{backgroundPlay:true}),cash:1e6,peak:1e6,running:true,portfolio:[{id:"edge-50",count:1}],startedAt:1000});
 describe("owned background progression",()=>{
-  it("defaults off, migrates older saves once, and preserves explicit new OFF",()=>{
+  it("defaults on, migrates older saves once, and preserves explicit new OFF",()=>{
     const old=JSON.parse(JSON.stringify(freshRun()));delete old.background;delete old.backgroundMs;delete old.settings.backgroundPlay;delete old.settings.backgroundRevision;
-    expect(readSave(JSON.stringify(old))).toMatchObject({background:null,backgroundMs:0,settings:{backgroundPlay:false},debug:false});
+    expect(readSave(JSON.stringify(old))).toMatchObject({background:null,backgroundMs:0,settings:{backgroundPlay:true,backgroundRevision:3},debug:false});
     const off=configure(freshRun(),{backgroundPlay:false});expect(readSave(JSON.stringify(off))!.settings.backgroundPlay).toBe(false);expect(off.debug).toBe(false);
     expect(startBackground({...freshRun(),running:true},1000).background).toBeNull();
+  });
+  it("holds the first background jackpot without notifications, until returning",()=>{
+    const before={...playable(),settings:{...playable().settings,jackpotNotifications:false}};
+    const stopped=advanceBackground(startBackground(before,1000),100000,false,100,100).run;
+    expect(stopped).toMatchObject({spins:1,running:false,backgroundJackpot:true,background:null});
+    const later=advanceBackground(stopped,10000000,false).run;
+    expect(later).toBe(stopped);
+    const legacy={...stopped,settings:{...stopped.settings,backgroundRevision:2}};
+    const saved=readSave(JSON.stringify(legacy))!;
+    expect(saved).toMatchObject({spins:1,cash:stopped.cash,activeMs:stopped.activeMs,backgroundJackpot:true,running:false});
+    const resumed=resumeBackgroundJackpot(saved,10000000);
+    expect(resumed).toMatchObject({running:true,backgroundJackpot:false,cash:stopped.cash,activeMs:stopped.activeMs,spins:1});
   });
   it("resumes the remaining cycle and never credits the same interval twice",()=>{
     const start=startBackground(playable(),1000,2000);

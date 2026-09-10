@@ -83,7 +83,7 @@ export interface Settings {
   dockToy: "off" | "tap" | "beat" | "charge";
   backgroundPlay: boolean;
   autoAlwaysOn: boolean;
-  backgroundRevision: 2;
+  backgroundRevision: 3;
   bigChangeNotifications: boolean;
   jackpotNotifications: boolean;
   sweepSound: boolean;
@@ -289,9 +289,9 @@ export interface Run {
 export const defaultSettings: Settings = {
   rollDisplay: "number",
   spectacleRevision: 1, handToys: false, coinFlip: false, dockToy: "off",
-  backgroundPlay: false,
+  backgroundPlay: true,
   autoAlwaysOn: false,
-  backgroundRevision: 2,
+  backgroundRevision: 3,
   bigChangeNotifications: false,
   jackpotNotifications: false,
   sweepSound: false,
@@ -1473,7 +1473,7 @@ export function readSave(raw: string | null): Run | null {
     if (!["rain", "burst"].includes(n.settings.cashMotion)) n.settings.cashMotion = "burst";
     if(typeof n.settings.coinFlip!=="boolean" || typeof n.settings.handToys!=="boolean" || !["off","tap","beat","charge"].includes(n.settings.dockToy))return null;
     if(!n.settings.handToys || n.settings.workMode==="gamble")n.settings.dockToy="off";
-    if(v.settings?.backgroundRevision!==2){n.settings.backgroundRevision=2;n.settings.backgroundPlay=false;n.background=null;}
+    if(v.settings?.backgroundRevision!==3){n.settings.backgroundRevision=3;n.settings.backgroundPlay=true;n.background=null;}
     if(typeof n.backgroundJackpot!=="boolean")n.backgroundJackpot=false;
     if(typeof n.settings.bigChangeNotifications!=="boolean")n.settings.bigChangeNotifications=false;
     if([n.settings.jackpotNotifications,n.settings.sweepSound,n.settings.coinChartMarkers,n.settings.streakEffects].some(v=>typeof v!=="boolean") || !Number.isFinite(n.settings.effectIntensity) || n.settings.effectIntensity<.25 || n.settings.effectIntensity>2)return null;

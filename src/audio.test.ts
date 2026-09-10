@@ -497,7 +497,24 @@ describe("audio recovery", () => {
 });
 
 
-describe("background audio LAB",()=>{
+describe("background audio",()=>{
+  it("plays hidden results without notification support and preserves the jackpot cue while time is held",async()=>{
+    const a=await import('./audio');
+    const {backgroundAccess,holdBackgroundJackpot}=await import('./backgroundPlay');
+    const {freshRun}=await import('./game/engine');
+    const audioSession={type:'auto'};
+    vi.stubGlobal('navigator',{locks:{},audioSession});vi.stubGlobal('Notification',undefined);
+    a.wakeAudio(true);await vi.advanceTimersByTimeAsync(10);
+    vi.stubGlobal('document',{hidden:true});
+    const run=freshRun();a.setBackgroundAudio(run.settings.backgroundPlay && backgroundAccess(run));
+    a.sound('jackpot',defaultSettings);expect(a.drainAudioHealth().scheduled).toBe(1);
+    const voices=FakeAudioContext.instances[0].createOscillator.mock.results.map(r=>r.value);
+    expect(voices.length).toBeGreaterThan(0);
+    const held=holdBackgroundJackpot(run,Date.now());
+    a.setBackgroundAudio(held.settings.backgroundPlay && backgroundAccess(held));
+    for(const voice of voices)expect(voice.disconnect).not.toHaveBeenCalled();
+    expect(audioSession.type).toBe('playback');
+  });
   it("allows real hidden results only when enabled and suppresses hidden UI sounds",async()=>{
     const a=await import("./audio");const audioSession={type:"auto"};vi.stubGlobal("navigator",{audioSession});
     a.wakeAudio(true);await vi.advanceTimersByTimeAsync(10);

@@ -84,7 +84,7 @@ describe('v3 player-facing defaults and records',()=>{
   vi.stubGlobal('localStorage',{getItem:()=> 'ja'});expect(defaultLanguage()).toBe('ja');
  });
  it('uses the numeric readout and migrates existing dice saves without losing progress',()=>{
-  expect(freshRun().settings).toMatchObject({rollDisplay:'number',backgroundPlay:false,music:false});
+  expect(freshRun().settings).toMatchObject({rollDisplay:'number',backgroundPlay:true,music:false});
   const numeric=renderToStaticMarkup(<SweepReadout cursor={47} moving/>);
   expect(numeric).toContain('>47<');expect(numeric).not.toMatch(/<svg|D100|d100/);
   const run={...freshRun(),cash:12345,peak:12345,work:42,portfolio:[{id:'edge-50',count:1}]};
@@ -93,9 +93,9 @@ describe('v3 player-facing defaults and records',()=>{
    expect(restored).toMatchObject({id:run.id,cash:12345,work:42,portfolio:run.portfolio,settings:{rollDisplay:'number'}});
   }
  });
- it('requires sound and granted notifications, but always allows an already-enabled setting to be turned off',()=>{
+ it('requires sound but keeps background available when notifications are denied',()=>{
   const run={...freshRun(),settings:{...freshRun().settings,backgroundPlay:true,jackpotNotifications:true}};
-  vi.stubGlobal('navigator',{locks:{},serviceWorker:{}});vi.stubGlobal('Notification',{permission:'denied'});expect(backgroundAccess(run)).toBe(false);
+  vi.stubGlobal('navigator',{locks:{},serviceWorker:{}});vi.stubGlobal('Notification',{permission:'denied'});expect(backgroundAccess(run)).toBe(true);
   const html=renderToStaticMarkup(<BackgroundSettings s={run} change={()=>{}}/>);expect(html).toContain('バックグラウンド進行をOFFにする');expect(html).not.toContain('disabled=""');
   vi.stubGlobal('Notification',{permission:'granted'});expect(backgroundAccess(run)).toBe(true);expect(backgroundAccess({...run,settings:{...run.settings,sound:false}})).toBe(false);
  });

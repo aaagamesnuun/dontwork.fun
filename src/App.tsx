@@ -1,6 +1,6 @@
 import { SpinReveal } from "./spinReveal";
 import { BalanceReadout } from "./BalanceReadout";
-import { BackgroundSettings } from "./BackgroundSettings";
+import { NotificationSettings } from "./BackgroundSettings";
 import { resumeAutomaticPlay } from "./automaticPlay";
 import { TrialControl } from "./TimeTrial";
 import { useMoneyStyle } from "./moneyPreferences";
@@ -596,6 +596,7 @@ export default function App({ onOpenDesk, studio }: {
         if (!saveCurrentRun())
             publishBackground({ ...next, running: false, background: null });
         else if (current.pending) {
+            if (next.backgroundJackpot && document.hidden) sound("jackpot", next.settings);
             const notification = notificationTransition([{ before: current.pending.before, after: settled }], Date.now(), Date.now(), false);
             if (notification)
                 void notifyJackpot(notification);
@@ -831,7 +832,7 @@ export default function App({ onOpenDesk, studio }: {
     const requestUpgrade = (kind: Upgrade | "gacha") => purchaseChange(current => kind === "gacha" ? drawUpgrade(current) : purchase(current, kind));
     useEffect(() => installAudioRecovery(() => state.current.settings), []);
     useEffect(() => {
-        setBackgroundAudio(s.settings.backgroundPlay && backgroundAccess(s) && !s.backgroundJackpot);
+        setBackgroundAudio(s.settings.backgroundPlay && backgroundAccess(s));
         const media = typeof navigator !== "undefined" ? navigator.mediaSession : undefined;
         if (!media || !s.settings.backgroundPlay)
             return;
@@ -857,7 +858,7 @@ export default function App({ onOpenDesk, studio }: {
             media.playbackState = "none";
         }
         catch { /* Browser may not implement handlers. */ } };
-    }, [s.settings.backgroundPlay, s.settings.sound, s.settings.soundVolume, s.settings.jackpotNotifications, s.backgroundJackpot]);
+    }, [s.settings.backgroundPlay, s.settings.sound, s.settings.soundVolume, !!s.trial]);
     useEffect(() => { if (s.settings.backgroundPlay && navigator.mediaSession)
         try {
             navigator.mediaSession.playbackState = s.running ? "playing" : "paused";
@@ -1448,8 +1449,8 @@ export default function App({ onOpenDesk, studio }: {
           <button className="contact-button sound-button" aria-label={_t("音楽・サウンド")} title={_t("音楽・サウンド")} onClick={() => setModal("sound")}>
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M9 18V5l12-2v13M9 9l12-2"/><ellipse cx="6" cy="18" rx="3" ry="3"/><ellipse cx="18" cy="16" rx="3" ry="3"/></svg>
           </button>
-          {!studio && <button className={`contact-button background-button ${shown.settings.backgroundPlay && backgroundAccess(shown) ? "enabled" : ""}`} onClick={() => setModal("background")} aria-label={_t("バックグラウンドで遊ぶ")} title={_t("バックグラウンドで遊ぶ")}>
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" aria-hidden="true"><rect x="6" y="2" width="12" height="20" rx="3"/><path d="M10 5h4m-3 14h2"/><path d="m10 9 5 3-5 3Z"/></svg>
+          {!studio && <button className={`contact-button background-button ${shown.settings.jackpotNotifications && typeof Notification !== "undefined" && Notification.permission === "granted" ? "enabled" : ""}`} onClick={() => setModal("background")} aria-label={_t("ジャックポット通知")} title={_t("ジャックポット通知")}>
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4"/></svg>
           </button>}
           <button className="contact-button menu-button" onClick={() => setModal("menu")} aria-label={_t("メニューと設定")}>
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
@@ -1710,7 +1711,7 @@ export default function App({ onOpenDesk, studio }: {
                 return Math.max(0, resultReveal.dueAt - performance.now()) + 220;
             }}/>
         </Modal>)}
-      {!studio && modal === "background" && <Modal title={_t("バックグラウンドで遊ぶ")} onClose={() => setModal(null)}><BackgroundSettings s={shown} change={change}/></Modal>}
+      {!studio && modal === "background" && <Modal title={_t("ジャックポット通知")} onClose={() => setModal(null)}><NotificationSettings s={shown} change={change}/></Modal>}
       {modal === "sound" && <Modal title={_t("音楽・サウンド")} onClose={() => setModal(null)}>
         <label className="setting-row"><span>{_t("効果音")}</span><NativeSwitch label={_t("効果音")} checked={shown.settings.sound} tactile={shown.settings.haptics} onChange={sound => { change(run => configure(run, { sound })); setAudioEnabled(audioEnabled({ ...shown.settings, sound })); if (sound)
             wakeAudio(true); }}/></label>

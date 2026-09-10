@@ -3,7 +3,7 @@ import {renderToStaticMarkup} from 'react-dom/server';
 import {resumeAutomaticPlay} from './automaticPlay';
 import {freshRun,freshTrial,resumeTrial,readSave,configure,setCount,work,advanceTrial,TRIAL_MS,type Run} from './game/engine';
 import {startBackground,advanceBackground,backgroundAccess,backgroundSave} from './backgroundPlay';
-import {BackgroundSettings} from './BackgroundSettings';
+import {BackgroundSettings,NotificationSettings} from './BackgroundSettings';
 import {ReleaseLab} from './ReleaseLab';
 import {guidance} from './game/guidance';
 import {GameHelp,NewsHelp} from './GameHelp';
@@ -46,13 +46,18 @@ describe('foreground-only timed challenge',()=>{
   const saved=readSave(JSON.stringify(legacy))!;expect(saved).toMatchObject({id:trial.id,cash:100,spins:0,background:null,backgroundJackpot:false,settings:{backgroundPlay:false},trial:{elapsedMs:0,paused:true}});
   expect(advanceTrial(saved,TRIAL_MS*2).trial?.result).toBeNull();
  });
- it('allows the normal permission and sound flow but explains why challenge background is unavailable',()=>{
+ it('keeps notifications optional for background sound, and keeps challenges foreground-only',()=>{
   vi.stubGlobal('navigator',{locks:{},serviceWorker:{}});vi.stubGlobal('Notification',{permission:'granted'});
   const run={...freshRun(),settings:{...freshRun().settings,backgroundPlay:true,jackpotNotifications:true}};
   expect(backgroundAccess(run)).toBe(true);expect(backgroundAccess({...run,trial:freshTrial().trial})).toBe(false);
   const normal=renderToStaticMarkup(<BackgroundSettings s={run} change={()=>{}}/>);
   expect(normal).toContain('効果音をONにする');expect(normal).toContain('音を試す');expect(normal).not.toContain('大きな資産変動も通知');
-  const off=renderToStaticMarkup(<BackgroundSettings s={freshRun()} change={()=>{}}/>);expect(off).toContain('通知をONにしてバックグラウンドで遊ぶ');
+  const off=renderToStaticMarkup(<NotificationSettings s={freshRun()} change={()=>{}}/>);expect(off).toContain('ジャックポット通知をONにする');expect(off).toContain('通知は任意です');expect(off).not.toContain('音を試す');
+  for(const permission of ['default','denied','granted']) {
+   vi.stubGlobal('Notification',{permission});expect(backgroundAccess({...run,settings:{...run.settings,jackpotNotifications:false}})).toBe(true);
+  }
+  vi.stubGlobal('Notification',undefined);expect(backgroundAccess(run)).toBe(true);
+  expect(backgroundAccess({...run,settings:{...run.settings,sound:false}})).toBe(false);
   const trial=renderToStaticMarkup(<BackgroundSettings s={freshTrial()} change={()=>{}}/>);
   expect(renderToStaticMarkup(<GameHelp s={freshTrial()}/>)).not.toContain('AUTO');
   expect(renderToStaticMarkup(<NewsHelp s={freshTrial()} guide={guidance(freshTrial(),0,'spin')}/>)).toContain('砂時計');
