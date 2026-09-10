@@ -68,7 +68,7 @@ const UPGRADE_INFO: Record<Upgrade, [
     string
 ]> = {
     speed: ["CLOCK SPEED", "スピン周期", "抽選の間隔を短くする。"],
-    slots: ["POSITIONS", "ポジション数", "同じギャンブルも、重ねて装備できる。"],
+    slots: ["GAMBLES", "ギャンブル数", "同じギャンブルも、重ねて装備できる。"],
     capacity: [
         "COMPUTE",
         "スピン容量",
@@ -170,7 +170,7 @@ export function BetCard({ b, s, change, onDetails, guided = false, highlightRemo
           {s.settings.probabilityUpgrades && (s.betLevels[b.id] ?? 0) > 0 ? _t("基本 {0} ＋{1}出目", condition(b), s.betLevels[b.id]) : condition(b)}
         </span>
         {count > 0 ? (<span className="position-tag">
-            {count} POSITION{count > 1 ? "S" : ""}
+            {count} GAMBLE{count > 1 ? "S" : ""}
           </span>) : !open ? (<span className="muted">{_t("{0}で解放", money(b.unlock))}</span>) : (<span className="muted">{b.legacy ? "SPECIAL" : "AVAILABLE"}</span>)}
       </div>}
       <div className="card-title">
@@ -180,7 +180,7 @@ export function BetCard({ b, s, change, onDetails, guided = false, highlightRemo
           </button>)}
       </div>
       {!concise && <p className="bet-description">{_text(s.settings.jackpotRule !== "hundred" && ["trim", "rush-extend"].includes(b.pattern) ? b.description.replace(/100/g, _t("ジャックポット")) : b.description)}</p>}
-      {formula ? <div className="expected-equation" aria-label={_t("1ポジション、次の1スピンの期待純利益")}>
+      {formula ? <div className="expected-equation" aria-label={_t("1ギャンブル、次の1スピンの期待純利益")}>
         <span className="equation-term expected-term"><small>{["support", "roll-shift"].includes(b.pattern) ? _t("自己期待値") : _t("期待値")}</small><strong className={odds.expectedNet < 0 ? "negative" : "positive"}>{money(odds.expectedNet)}</strong></span>
         <span className="equation-sign">=</span>
         <span className="equation-term"><small>{odds.variable ? _t("平均配当") : _t("配当")}</small><strong>{money(odds.averagePayout)}</strong></span>
@@ -219,18 +219,6 @@ export function BetCard({ b, s, change, onDetails, guided = false, highlightRemo
                 : _t("{0} で次の抽選にチャンス", b.first?.join("–"))}
         </div>)}
       <div className="bet-bottom">
-        {!formula && <><div className="wager-term">
-          <span className="micro">{_t("賭け金")}</span>
-          <strong>{money(stakeOf(b, s))}</strong>
-        </div>
-        <span className="bet-arrow">→</span>
-        <div className="pay-column">
-          <span className="micro">
-            {b.pattern === "rising" ? "MAX PAYOUT" : "PAYOUT"}
-          </span>
-          <strong>{b.pattern === "support" ? _t("他の当たり ×{0}", b.multiplier) : b.pattern === "roll-shift" ? _t("出目 +{0}", b.effect) : money(next)}</strong>
-        </div>
-        </>}
         <div className="counter" data-ui-cue="equip">
           <button className={highlightRemove && count ? "guide-target" : ""} onClick={() => onPosition ? onPosition({ kind: "count", id: b.id, delta: -1 }) : change((s) => setCount(s, b.id, -1))} disabled={pending || !count} aria-label={_t("{0}を1つ外す", b.name)}>
             −
@@ -253,6 +241,18 @@ export function BetCard({ b, s, change, onDetails, guided = false, highlightRemo
             +
           </button>
         </div>
+        {!formula && <><div className="wager-term">
+          <span className="micro">{_t("賭け金")}</span>
+          <strong>{money(stakeOf(b, s))}</strong>
+        </div>
+        <span className="bet-arrow">→</span>
+        <div className="pay-column">
+          <span className="micro">
+            {b.pattern === "rising" ? "MAX PAYOUT" : "PAYOUT"}
+          </span>
+          <strong>{b.pattern === "support" ? _t("他の当たり ×{0}", b.multiplier) : b.pattern === "roll-shift" ? _t("出目 +{0}", b.effect) : money(next)}</strong>
+        </div>
+        </>}
       </div>
     </article>);
 }
@@ -1260,7 +1260,7 @@ export default function App({ onOpenDesk, studio }: {
             title: unlockQueue.length === 1
                 ? betById(unlockQueue[0]).name
                 : _t("{0}種のギャンブルを解放", unlockQueue.length),
-            sub: secondBetStep(shown) ? _t("ポジションは{0}個まで。ニュースに沿って入れ替えてみよう。", shown.slots) : _t("新しく解放！ ポジションの＋でセットできます。"),
+            sub: secondBetStep(shown) ? _t("ギャンブルは{0}個まで。ニュースに沿って入れ替えてみよう。", shown.slots) : _t("新しく解放！ ギャンブルの＋でセットできます。"),
         }
         : celebration);
     const chartNotices = !modal && (announcement || toast) && <ChartNotices anchor={chartTarget} plotOnly={captureMode} reduced={osReduced || shown.settings.motion === "reduced"}>
@@ -1294,7 +1294,7 @@ export default function App({ onOpenDesk, studio }: {
     }, [guide.key, guide.target, guideTab, guide.urgent, s.id]);
     const blockedPosition = (id: string, reason: string) => {
         setRemoveHint(id);
-        setToast(reason === "positions-full" ? _t("ポジション上限です。光る−で外して、入れ替えよう。") : _t("このギャンブルは持っている数までセットできます。"));
+        setToast(reason === "positions-full" ? _t("ギャンブル上限です。光る−で外して、入れ替えよう。") : _t("このギャンブルは持っている数までセットできます。"));
         telemetry.current?.event(state.current, "blocked_action", { action: "equip", reason, cardId: id, slotCount: shown.slots, tab });
         if (reason === "positions-full")
             document.querySelector<HTMLElement>('.bet-card.equipped .counter button')?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
@@ -1448,7 +1448,7 @@ export default function App({ onOpenDesk, studio }: {
         {(tab === "positions" || (desk && !captureMode && tab === "spin")) && (<section className="positions-page">
             <div className="workspace-heading">
               <div>
-                <h2>{_t("ポジション")}<small>{usedSlots(shown)}/{shown.slots}</small></h2>
+                <h2>{_t("ギャンブル")}<small>{usedSlots(shown)}/{shown.slots}</small></h2>
                 <p>{_t("装備は無料。同じ数字で、すべてが動く。")}</p>
               </div>
             </div>
@@ -1461,17 +1461,7 @@ export default function App({ onOpenDesk, studio }: {
             </div>
           </section>)}
         {tab === "coin" && canOpenCoin && <CoinFlip s={shown} result={landedCoin.runId === shown.id ? landedCoin.result : null} budget={coinBudget(model)} onChange={patch => change(run => ({ ...configure(run, "coinEnabled" in patch ? { dockToy: "off" } : {}), ...patch }))}/>}
-        {tab === "upgrades" && (<section className={`upgrades-page ${gacha ? "gacha-mode" : ""}`}>
-            <div className="workspace-heading">
-              <div>
-                <h2>{_t("アップグレード")}</h2>
-                <p>
-                  {gacha
-                ? _t("引くたび価格が上昇。1回で必ず1つ強化。") : _t("強化はずっと残る。次のスピンを育てよう。")}
-                </p>
-              </div>
-              <UpgradeSpend spent={shown.spent}/>
-            </div>
+        {tab === "upgrades" && (<section className={`upgrades-page ${gacha ? "gacha-mode" : ""}`} aria-label={_t("アップグレード")}>
             {shown.catalog === "curated" && <p className="setting-note">{_t("この相場はジャックポット中も1秒固定。周期の強化は不要です。")}</p>}
             {shown.settings.workCosmetics && <article className="work-cosmetic upgrade-card"><div><h3>WORK STYLE · Lv {shown.workFxLevel}</h3><p>{_t("クリック音を変えるコスメ強化。収入は+$1のまま。全4段階。")}</p></div><button className="primary" disabled={workCosmeticPrice(shown) === null || coinBudget(model) < (workCosmeticPrice(shown) ?? 0)} onClick={() => purchaseChange(purchaseWorkCosmetic)}>{workCosmeticPrice(shown) === null ? _t("全スタイル解放") : money(workCosmeticPrice(shown) ?? 0)}</button></article>}
             {gacha && (<section className="upgrade-draw">
@@ -1519,7 +1509,7 @@ export default function App({ onOpenDesk, studio }: {
                         {price === null
                         ? "MAX LEVEL"
                         : u === "slots"
-                            ? _t("{0} → {1}ポジション", shown.slots, Math.min(12, shown.slots + 1)) : u === "speed"
+                            ? _t("{0} → {1}ギャンブル", shown.slots, Math.min(12, shown.slots + 1)) : u === "speed"
                             ? `${(interval({ ...shown, rushLeft: 0 }) / 1000).toFixed(2)}s → ${(interval({ ...shown, rushLeft: 0, speed: shown.speed + 1 }) / 1000).toFixed(2)}s`
                             : u === "capacity"
                                 ? `${fuelCapacity(shown)} → ${fuelCapacity({ ...shown, capacity: shown.capacity + 1 })}`
@@ -1547,13 +1537,14 @@ export default function App({ onOpenDesk, studio }: {
                   </article>);
             })}
             </div>
+            <UpgradeSpend spent={shown.spent}/>
           </section>)}
         </div>
       </main>
       {!desk && <nav className="main-tabs" aria-label={_t("ゲーム画面")}>
         {([
                 ["spin", _t("チャート")],
-                ["positions", _t("ポジション")],
+                ["positions", _t("ギャンブル")],
                 ["upgrades", _t("アップグレード")],
                 ["coin", _t("コインフリップ")],
             ] as const).filter(([id]) => id !== "coin" || canOpenCoin).map(([id, label]) => (<button key={id} aria-current={tab === id ? "page" : undefined} className={`${tab === id ? "selected" : ""} ${guide.target === id ? "guide-target" : ""}`} onClick={() => setTab(id)}>
@@ -1568,7 +1559,7 @@ export default function App({ onOpenDesk, studio }: {
       <div className="play-dock">
         <TrialTimeShop s={shown} budget={coinBudget(model)} onBuy={() => { flushSync(() => dispatch({ type: "trial-time", now: Date.now() })); telemetry.current?.event(state.current, "trial_time", { amount: state.current.trial?.lastPurchase?.cost ?? 0, durationMs: state.current.trial?.lastPurchase?.addedMs ?? 0 }); }}/>
         {shown.settings.handToys && shown.settings.dockToy !== "off" ? <HandToyButton key={shown.id + shown.settings.dockToy} runId={shown.id} mode={shown.settings.dockToy} settings={shown.settings} onEarn={() => { if (!trialActive(state.current))
-            return; change(work); impact(surface.current, "work", shown.settings, flash.current); }}/> : coinUnlocked(shown) && shown.coinEnabled ? <button id="work-button" className="work-button flip-button" disabled={!trialActive(shown)} data-ui-cue="handled" onClick={event => flipCoin(event.currentTarget)} aria-label={_t("コインを投げる 賭け金{0}", money(shown.coinStake))}><span>FLIP <img src="/flip-bull-coin.png" alt=""/></span><small>{_t("{0} / 1枚", money(shown.coinStake))}</small></button> : shown.settings.workMode === "gamble" ? <button className="work-button" disabled={rush} onClick={() => setTab("positions")}>{_t("WORKポジション")}<small>{_t("毎スピン +$5 · 賭け金$0")}</small></button> : <button id="work-button" className={`work-button ${guide.target === "work" ? "guide-target" : ""}`} disabled={!trialActive(shown)} data-ui-cue="work" onClick={(event) => { if (!trialActive(state.current))
+            return; change(work); impact(surface.current, "work", shown.settings, flash.current); }}/> : coinUnlocked(shown) && shown.coinEnabled ? <button id="work-button" className="work-button flip-button" disabled={!trialActive(shown)} data-ui-cue="handled" onClick={event => flipCoin(event.currentTarget)} aria-label={_t("コインを投げる 賭け金{0}", money(shown.coinStake))}><span>FLIP <img src="/flip-bull-coin.png" alt=""/></span><small>{_t("{0} / 1枚", money(shown.coinStake))}</small></button> : shown.settings.workMode === "gamble" ? <button className="work-button" disabled={rush} onClick={() => setTab("positions")}>{_t("WORKギャンブル")}<small>{_t("毎スピン +$5 · 賭け金$0")}</small></button> : <button id="work-button" className={`work-button ${guide.target === "work" ? "guide-target" : ""}`} disabled={!trialActive(shown)} data-ui-cue="work" onClick={(event) => { if (!trialActive(state.current))
             return; change(work); workBurst.burst(event); if (shown.settings.workCosmetics && shown.workFxLevel > 0) {
             sound(shown.workFxLevel === 4 ? "streak" : "work", { ...shown.settings, soundPack: (["terminal", "crystal", "retro-arcade", "impact", "arcade"] as const)[shown.workFxLevel] }, shown.workFxLevel);
         } }}>
@@ -1608,7 +1599,7 @@ export default function App({ onOpenDesk, studio }: {
           {shown.trial && <TrialClock s={shown} onResult={() => setModal("trial-result")}/>}
         </label>
       </div>
-      {model.positionRequest?.confirm && <Modal title={_t("ジャックポットを終了しますか？")} onClose={() => dispatch({ type: "position-decision", request: model.positionRequest!, accept: false })}><p>{_t("ポジションを変更すると、このジャックポットと出目カットが終了します。")}</p><div className="button-row"><button className="secondary" onClick={() => dispatch({ type: "position-decision", request: model.positionRequest!, accept: false })}>{_t("変更せず続ける")}</button><button className="primary" onClick={() => dispatch({ type: "position-decision", request: model.positionRequest!, accept: true })}>{_t("終了して変更する")}</button></div></Modal>}
+      {model.positionRequest?.confirm && <Modal title={_t("ジャックポットを終了しますか？")} onClose={() => dispatch({ type: "position-decision", request: model.positionRequest!, accept: false })}><p>{_t("ギャンブルを変更すると、このジャックポットと出目カットが終了します。")}</p><div className="button-row"><button className="secondary" onClick={() => dispatch({ type: "position-decision", request: model.positionRequest!, accept: false })}>{_t("変更せず続ける")}</button><button className="primary" onClick={() => dispatch({ type: "position-decision", request: model.positionRequest!, accept: true })}>{_t("終了して変更する")}</button></div></Modal>}
       {s.background && pageVisible && <Modal title={_t("離れていた間の進行を反映中")} dismissible={false} onClose={() => { }}><p role="status">{_t("スピンとセーブを更新しています…")}</p></Modal>}
       {modal === "common-roll" && <Modal title={_t("1つの数字で、全部が動く。")} dismissible={false} onClose={() => { }}>
         <div className="common-roll-help"><div className="common-roll-number">72</div><p>{_t("毎スピン、引く数字は")}<strong>{_t("1つだけ。")}</strong><br />{_t("その同じ数字で、セットしたすべてのギャンブルの当たり・ハズレが決まります。")}</p><p>{_t("当たる範囲が重なれば、同時に当たります。")}</p><button className="primary" onClick={() => { change(run => ({ ...run, commonRollExplained: true })); setModal(null); telemetry.current?.event(state.current, "guidance_resolved", { tutorialStep: "common-roll" }); }}>{_t("わかった →")}</button></div>

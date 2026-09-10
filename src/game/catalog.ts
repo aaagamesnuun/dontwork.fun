@@ -225,7 +225,7 @@ export const EXPERIMENT_BETS: Bet[] = [
     bet("skyline", "SKYLINE", "雲を抜ける", 250000, 40000000, 10000000, "step", { first: [81, 100], second: [96, 100], description: "81以上の次に96以上で$40M。予告の次の一手に賭ける。" }),
     bet("break-the-sky", "BREAK THE SKY", "空の向こう", 1000000, 300000000, 50000000, "step", { first: [91, 100], second: [96, 100], description: "91以上の次に96以上で$300M。条件付きの一撃でビリオンを目指す。" }),
     bet("afterburner", "AFTERBURNER", "最後の点火", 5000000, 800000000, 150000000, "threshold", { start: 100, width: 1, description: "100で$800M。ジャックポットとともに、目標へ加速する。" }),
-    bet("work-income", "WORK", "働くポジション", 0, 5, 0, "work-income", { start: 1, width: 100, description: "賭け金$0。毎スピン必ず$5を稼ぐ。連打なしでも、ここから何度でも再開できる。" }),
+    bet("work-income", "WORK", "働くギャンブル", 0, 5, 0, "work-income", { start: 1, width: 100, description: "賭け金$0。毎スピン必ず$5を稼ぐ。連打なしでも、ここから何度でも再開できる。" }),
     bet("roll-shift-1", "UPDRAFT", "5回ごとの追い風", 10, 0, 0, "roll-shift", { target: 5, effect: 10, description: "全体の5の倍数スピンで、共通の出目を+10（上限100）。補正後の数字で全て決着。100ならJackpot。" }),
 ];
 export const ALL_BETS = [

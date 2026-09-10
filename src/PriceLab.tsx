@@ -3,8 +3,8 @@ import { useEffect, useState } from "react";
 import { configure, defaultSettings, money, priceProfile, upgradePrice, type Run, type Settings, } from "./game/engine";
 import type { Change } from "./App";
 const fields = [
-    ["positionPriceBase", "ポジション数の初期価格", 1, 1e9, 1],
-    ["positionPriceMultiplier", "ポジション数の上昇倍率", 1, 30, 0.1],
+    ["positionPriceBase", "ギャンブル数の初期価格", 1, 1e9, 1],
+    ["positionPriceMultiplier", "ギャンブル数の上昇倍率", 1, 30, 0.1],
     ["speedPriceBase", "スピン周期の初期価格", 1, 1e6, 1],
     ["speedPriceMultiplier", "スピン周期の上昇倍率", 1.01, 2, 0.01],
 ] as const;
@@ -69,11 +69,11 @@ export function PriceLab({ s, change }: {
             setError("");
         }}>
         <label className="setting-row">
-          <span>{_t("ポジション数の価格方式")}</span>
+          <span>{_t("ギャンブル数の価格方式")}</span>
           <select value={mode} disabled={disabled} onChange={(e) => setMode(e.target.value as Settings["upgradePrices"])}>
             <option value="steep">{_t("段階式 · 標準")}</option>
             <option value="exponential">{_t("一定倍率 · 調整用")}</option>
-            <option value="legacy">{_t("PE旧価格 · ポジションのみ")}</option>
+            <option value="legacy">{_t("PE旧価格 · ギャンブルのみ")}</option>
           </select>
         </label>
         {fields.map(([key, label, min, max, step]) => (<label className="setting-row" key={key}>
@@ -90,10 +90,10 @@ export function PriceLab({ s, change }: {
                 (key === "positionPriceBase" && mode === "legacy")} onChange={(e) => setDraft({ ...draft, [key]: e.target.value })}/>
           </label>))}
         {valid && (<div className="price-preview">
-            <p>{_t("ポジション数： {0}", Array.from({ length: 5 }, (_, i) => money(upgradePrice({ ...preview, slots: i + 1 }, "slots")!)).join(" → "))}</p>
+            <p>{_t("ギャンブル数： {0}", Array.from({ length: 5 }, (_, i) => money(upgradePrice({ ...preview, slots: i + 1 }, "slots")!)).join(" → "))}</p>
             <p>{_t("スピン周期： {0}", s.catalog === "curated" ? _t("1秒固定 · 周期の強化なし") : Array.from({ length: 5 }, (_, i) => money(upgradePrice({ ...preview, speed: i }, "speed")!)).join(" → "))}</p>
           </div>)}
-        {s.catalog === "longgame" && (<p className="setting-note">{_t("このセットのポジション価格には80倍の補正がかかります。")}</p>)}
+        {s.catalog === "longgame" && (<p className="setting-note">{_t("このセットのギャンブル価格には80倍の補正がかかります。")}</p>)}
         {disabled && (<p className="setting-note">{_t("ガチャだけの設定中です。この調整は直接購入にのみ適用されます。")}</p>)}
         {error && <p role="status">{_text(error)}</p>}
         <div className="button-row">

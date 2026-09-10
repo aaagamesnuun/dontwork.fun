@@ -6,11 +6,11 @@ import {nextDockPanel} from "./CoinFlip";
 import {chartPulse,ChartBackdrop} from "./ChartBackdrop";
 import {CASH_RAIN_SETTINGS,soundPackSettings} from "./soundPresets";
 import {resultTones} from "./audioPalette";
-const ready=():Run=>({...freshRun(),cash:9999,peak:9999,portfolio:[{id:"edge-50",count:1}]});
+const ready=():Run=>({...freshRun(),settings:{...freshRun().settings,coinFlip:true},cash:9999,peak:9999,portfolio:[{id:"edge-50",count:1}]});
 const outcome=(amount:number,jackpot=false)=>{const s=spin(ready(),80);return {...s,last:{...s.last!,profit:amount,jackpot}};};
 describe("coin visibility and cash-driven pulses",()=>{
  it.each([[9999,false],[10000,false],[10000.01,true],[10001,true]] as const)("requires a peak strictly above $10K: %s",(peak,expected)=>{
-  const run={...freshRun(),peak,cash:1};
+  const run={...freshRun(),settings:{...freshRun().settings,coinFlip:true},peak,cash:1};
   expect(coinUnlocked(run)).toBe(expected);expect(needsCoinUnlockNotice(run)).toBe(expected);
  });
  it("hides the coin destination until the public peak exceeds $10K and keeps it unlocked",()=>{
@@ -24,8 +24,8 @@ describe("coin visibility and cash-driven pulses",()=>{
   expect(nextDockPanel("positions",coinUnlocked({...revealed.run,cash:1}))).toBe("coin");
   expect(nextDockPanel("coin",false)).toBe("upgrades");
  });
- it("keeps an old eligible save's announcement pending until acknowledged, then preserves it across reloads",()=>{
-  const old={...freshRun(),cash:12000,peak:12000,coinUnlockAnnounced:undefined};
+ it("keeps an enabled LAB save's announcement pending until acknowledged, then preserves it across reloads",()=>{
+  const old={...freshRun(),settings:{...freshRun().settings,coinFlip:true},cash:12000,peak:12000,coinUnlockAnnounced:undefined};
   const restored=readSave(JSON.stringify(old))!;expect(needsCoinUnlockNotice(restored)).toBe(true);
   expect(needsCoinUnlockNotice(readSave(JSON.stringify(restored))!)).toBe(true);
   const announced=acknowledgeCoinUnlock(restored);
@@ -35,7 +35,7 @@ describe("coin visibility and cash-driven pulses",()=>{
   const fresh=freshRun();expect(acknowledgeCoinUnlock(fresh)).toBe(fresh);expect(fresh.coinUnlockAnnounced).toBe(false);
  });
  it("can acknowledge an unlock after a timed challenge without changing its final record",()=>{
-  const trial=resumeTrial({...freshTrial(),cash:12000,peak:12000},1000);
+  const trial=resumeTrial({...freshTrial(),settings:{...freshTrial().settings,coinFlip:true},cash:12000,peak:12000},1000);
   const done=advanceTrial(trial,TRIAL_MS+1000),record=done.trial!.result;
   expect(record).not.toBeNull();expect(needsCoinUnlockNotice(done)).toBe(true);
   const model=presentationReducer({run:done,pending:null},{type:"change",update:acknowledgeCoinUnlock});

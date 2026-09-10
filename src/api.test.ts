@@ -94,7 +94,7 @@ describe("client telemetry and Lab persistence", () => {
     expect(all.some(e=>e.eventName==="spin_batch")).toBe(false);
   });
   it("aggregates rapid coins separately from main spins without dropping totals", async()=>{
-    const client=new Telemetry();let s={...freshRun(),coinEnabled:true,cash:1000,peak:1e6};client.observe(s);
+    const client=new Telemetry();let s={...freshRun(),settings:{...freshRun().settings,coinFlip:true},coinEnabled:true,cash:1000,peak:1e6};client.observe(s);
     for(let i=0;i<20;i++){const next=playCoinFlip(s,10,i%2===0);client.changed(s,next);s=next;}
     await client.flush();await vi.waitFor(()=>expect(bodies.flatMap(b=>b.events).filter(e=>e.eventName==="coin_batch")).toHaveLength(1));const events=bodies.flatMap(b=>b.events).filter(e=>e.eventName==="coin_batch");
     expect(events).toHaveLength(1);expect(events[0].props).toMatchObject({rounds:20,wins:10,wager:200,payout:200,coinRounds:20,coinWins:10});

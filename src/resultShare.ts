@@ -69,7 +69,9 @@ export async function resultImage(s: Run, name: string): Promise<Blob> {
     text('0', 54, 910, 20, '#adbd9d');
     text(trial?duration(trial.durationMs):`${s.clearSpins ?? s.spins} SPINS`, 846, 910, 20, '#adbd9d', 'right');
     for (const [i, value, label] of [[0, (s.clearSpins ?? s.spins).toLocaleString(), _t("スピン")], [1, s.maxChain.toLocaleString(), _t("最大連鎖")], [2, money(s.spent), _t("強化への投資")], [3, effort.work, _t("WORK回数")], [4, effort.wager, _t("FLIPの賭け金累計")], [5, effort.profit, _t("FLIPの損益")]] as const) {
-        const xx = 170 + (i % 3) * 280, yy = i < 3 ? 972 : 1052;
+        const includeCoins = s.settings.coinFlip || s.coinRounds > 0;
+        if (i >= 4 && !includeCoins) continue;
+        const xx = i === 3 && !includeCoins ? 450 : 170 + (i % 3) * 280, yy = i < 3 ? 972 : 1052;
         text(value, xx, yy, 29, '#edf6e8', 'center', 248);
         text(label, xx, yy + 29, 18, '#adbd9d', 'center');
     }

@@ -12,7 +12,7 @@ import {SweepReadout} from './SweepReadout';
 import {BackgroundSettings} from './BackgroundSettings';
 import {betById,CATALOGS} from './game/catalog';
 import {defaultLanguage,setLanguage,t} from './i18n';
-const ready=():Run=>({...resumeTrial(freshTrial(),1000),cash:1e6,peak:1e6,portfolio:[{id:'edge-50',count:1}],coinEnabled:true});
+const ready=():Run=>({...resumeTrial(freshTrial(),1000),settings:{...freshTrial().settings,coinFlip:true},cash:1e6,peak:1e6,portfolio:[{id:'edge-50',count:1}],coinEnabled:true});
 beforeEach(()=>{vi.useFakeTimers();vi.setSystemTime(1000);setLanguage('ja')});
 afterEach(()=>{vi.unstubAllGlobals();setLanguage('ja');setBetNameStyle('english');vi.useRealTimers()});
 describe('v3 trial rules and exit safety',()=>{

@@ -1,14 +1,14 @@
 import {describe,it,expect,vi,afterEach} from "vitest";
 import {renderToStaticMarkup} from "react-dom/server";
-import {freshRun,spin,playCoinFlip,purchase,readSave,COIN_STAKES,TARGET,defaultSettings,type Run} from "./game/engine";
+import {freshRun,freshTrial,configure,coinUnlocked,needsCoinUnlockNotice,spin,playCoinFlip,purchase,readSave,COIN_STAKES,TARGET,defaultSettings,type Run} from "./game/engine";
 import {presentationReducer,presentedRun,coinBudget,type Presentation} from "./presentation";
 import {chartGeometry,WealthChart} from "./TradingViews";
 import {CoinFlip,nextDockPanel,dockLabel} from "./CoinFlip";
 import {GameHelp,NewsHelp,newsTopic} from "./GameHelp";
 import {guidance} from "./game/guidance";
 import {cueTones,resultTones} from "./audioPalette";
-import {clearCardRun} from "./ResultCard";
-const ready=():Run=>({...freshRun(),cash:1000,peak:1e6,coinEnabled:true,portfolio:[{id:"edge-50",count:1}],history:[{cash:1000,at:0,spin:0,kind:"start"}]});
+import {ResultCard,clearCardRun} from "./ResultCard";
+const ready=():Run=>({...freshRun(),settings:{...defaultSettings,coinFlip:true},cash:1000,peak:1e6,coinEnabled:true,portfolio:[{id:"edge-50",count:1}],history:[{cash:1000,at:0,spin:0,kind:"start"}]});
 const start=(run:Run,roll:number)=>presentationReducer({run,pending:null},{type:"change",update:r=>spin(r,roll)});
 const flip=(state:Presentation,won:boolean,wager=100)=>presentationReducer(state,{type:"coin-flip",wager,forced:won});
 const reveal=(state:Presentation)=>presentationReducer(state,{type:"reveal",runId:state.run.id,spinId:state.run.last!.id});
@@ -62,7 +62,7 @@ describe("coins independent of the main spin",()=>{
    expect(readSave(JSON.stringify({...played,...patch}))).toBeNull();
  });
  it.each(["spins","time"] as const)("anchors coin markers to the same %s geometry at both chart ranges",chartAxis=>{
-  const s={...ready(),spins:300,settings:{...defaultSettings,chartAxis,coinChartMarkers:true},history:[
+  const s={...ready(),spins:300,settings:{...defaultSettings,coinFlip:true,chartAxis,coinChartMarkers:true},history:[
    {cash:10000,at:0,spin:0,kind:"start"},
    {cash:500,at:1500,spin:150,kind:"win",coinCount:3,coinProfit:-30},
    {cash:900,at:3000,spin:300,kind:"win"},
@@ -81,7 +81,7 @@ describe("coins independent of the main spin",()=>{
   }
  });
  it.each(["spins","time"] as const)("freezes the %s chart through coins, purchases and reload until the next spin",chartAxis=>{
-  let run={...ready(),settings:{...defaultSettings,chartAxis}};
+  let run={...ready(),settings:{...defaultSettings,coinFlip:true,chartAxis}};
   const original=chartGeometry(run);run=playCoinFlip(run,100,true);run=purchase(run,"speed");
   expect(chartGeometry(run)).toEqual(original);
   run=readSave(JSON.stringify(run))!;expect(chartGeometry(run)).toEqual(original);
@@ -114,7 +114,7 @@ describe("coins independent of the main spin",()=>{
 });
 describe("coin navigation, contextual help and effect recipes",()=>{
  it("cycles the three named destinations and keeps stake controls usable while a main spin is pending",()=>{
-  expect([nextDockPanel("spin",true),nextDockPanel("upgrades",true),nextDockPanel("positions",true),nextDockPanel("coin",true)].map(dockLabel)).toEqual(["アップグレード","ポジション","コインフリップ","アップグレード"]);
+  expect([nextDockPanel("spin",true),nextDockPanel("upgrades",true),nextDockPanel("positions",true),nextDockPanel("coin",true)].map(dockLabel)).toEqual(["アップグレード","ギャンブル","コインフリップ","アップグレード"]);
   const html=renderToStaticMarkup(<CoinFlip s={ready()} budget={990} onChange={()=>{}}/>);expect(html).toContain("WORKをFLIPにする");expect(html).toContain("1K");expect(html).not.toContain("バカラ");
  });
  it("explains current news and game rules without spoiling infinity",()=>{
@@ -138,5 +138,53 @@ describe("coin navigation, contextual help and effect recipes",()=>{
  it("omits chart backdrops and holds from a shareable summary",()=>{
   const s={...ready(),coinChartHold:[{cash:10,at:0,spin:0,kind:"start"}],settings:{...defaultSettings,chartBackdrop:"flow" as const}};
   const html=renderToStaticMarkup(<WealthChart s={s} summary/>);expect(html).not.toContain("chart-backdrop");expect(html).toContain("最新の記録$1K");
+ });
+});
+
+
+describe("LAB-only coin availability",()=>{
+ it("keeps ordinary players on WORK at any wealth, even with an old FLIP selection",()=>{
+  const run={...freshRun(),cash:1e8,peak:1e8,coinEnabled:true};
+  expect(coinUnlocked(run)).toBe(false);
+  expect(needsCoinUnlockNotice(run)).toBe(false);
+  expect(playCoinFlip(run,100,true)).toBe(run);
+  const model={run,pending:null};expect(flip(model,true)).toBe(model);
+  expect(nextDockPanel("positions",coinUnlocked(run))).toBe("upgrades");
+  expect(renderToStaticMarkup(<CoinFlip s={run} budget={run.cash} onChange={()=>{}}/>)).toBe("");
+  expect(renderToStaticMarkup(<GameHelp s={run}/>)).not.toContain("コインフリップ");
+  expect(renderToStaticMarkup(<ResultCard s={run} name="PLAYER"/>)).not.toContain("FLIP");
+ });
+ it("requires both LAB opt-in and a public peak above $10K without turning WORK into FLIP",()=>{
+  const run=configure({...freshRun(),cash:10001,peak:10001},{coinFlip:true});
+  expect(coinUnlocked(run)).toBe(true);expect(run.coinEnabled).toBe(false);
+  expect(coinUnlocked({...run,peak:10000})).toBe(false);
+  expect(needsCoinUnlockNotice(run)).toBe(true);
+  expect(renderToStaticMarkup(<GameHelp s={run}/>)).toContain("コインフリップ");
+  expect(run.debug).toBe(false); // Availability moved to LAB; the existing fair-coin rule is unchanged.
+ });
+ it("turns FLIP off without losing money or its next-spin chart settlement",()=>{
+  const played=playCoinFlip(ready(),100,true),disabled=configure(played,{coinFlip:false});
+  expect(disabled.coinEnabled).toBe(false);expect(coinUnlocked(disabled)).toBe(false);
+  for(const key of ["id","cash","coinRounds","coinWagered","coinPaid","coinChartHold","coinPendingProfit","coinPendingCount","completion"] as const)
+   expect(disabled[key]).toEqual(played[key]);
+  const loaded=readSave(JSON.stringify(disabled))!;
+  expect(loaded.settings.coinFlip).toBe(false);
+  expect(reveal(start(loaded,80)).run.cash).toBe(loaded.cash+20);
+  expect(chartGeometry(reveal(start(loaded,80)).run).coins[0]).toMatchObject({profit:100,count:1});
+  expect(renderToStaticMarkup(<ResultCard s={loaded} name="PLAYER"/>)).toContain("FLIPの賭け金累計");
+ });
+ it("migrates old saves to OFF and preserves their completed records and coin accounting",()=>{
+  const played=playCoinFlip({...ready(),cash:TARGET-50},100,true);
+  const {coinFlip:legacyMissing,...settings}=played.settings;
+  const loaded=readSave(JSON.stringify({...played,settings}))!;
+  expect(loaded).toMatchObject({id:played.id,cash:played.cash,coinEnabled:false,coinRounds:played.coinRounds,coinPaid:played.coinPaid,settings:{coinFlip:false}});
+  expect(loaded.completion).toEqual(played.completion);
+  expect(loaded.coinPendingProfit).toBe(played.coinPendingProfit);
+  expect(loaded.debug).toBe(played.debug);
+  for(const coinFlip of [null,1,"true",{}]) expect(readSave(JSON.stringify({...played,settings:{...played.settings,coinFlip}}))).toBeNull();
+ });
+ it("starts each new challenge with the coin experiment disabled",()=>{
+  const trial=freshTrial({...defaultSettings,coinFlip:true});
+  expect(trial.settings.coinFlip).toBe(false);expect(trial.coinEnabled).toBe(false);expect(trial.debug).toBe(false);
  });
 });

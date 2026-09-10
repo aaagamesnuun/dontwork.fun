@@ -26,30 +26,30 @@ export function unlockedSince(before: Run, after: Run) {
 export function guidance(s: Run, tick = 0, tab: "spin" | "positions" | "upgrades" = "spin"): Guidance {
     const result = (key: string, text: string, target: GuideTarget = null, label = "NEXT MOVE", urgent = target !== null): Guidance => ({ key, text, target, label, urgent });
     if (s.trial?.paused)
-        return result("trial", s.trial.result ? _t("30分終了。上の「結果を見る」から記録とランキングへ。") : !s.trial.started ? _t("AUTOをONにして30分スタート。まずはWORKで資金を作ろう。") : _t("ポーズ中。ポジションの入れ替え・強化はできます。AUTOをONにすると時計もスピンも再開。"), null, "30 MIN", false);
+        return result("trial", s.trial.result ? _t("30分終了。上の「結果を見る」から記録とランキングへ。") : !s.trial.started ? _t("AUTOをONにして30分スタート。まずはWORKで資金を作ろう。") : _t("ポーズ中。ギャンブルの入れ替え・強化はできます。AUTOをONにすると時計もスピンも再開。"), null, "30 MIN", false);
     const desk = s.settings.workspaceMode === "desk";
     if (desk && tab === "spin")
         tab = "positions";
     const opening = stakeOf(betById(firstBet(s)), s), current = status(s);
     if (s.settings.workMode === "gamble" && (current === "empty" || current === "cash"))
-        return result("work-gamble", tab === "positions" ? _t("賭け金が足りないときは、他を外してWORKをセット。コスト$0で毎スピン$5増える。") : _t("「ポジション」でWORKをセットしよう。コスト$0で毎スピン$5稼げる。"), tab === "positions" ? "equip" : "positions");
+        return result("work-gamble", tab === "positions" ? _t("賭け金が足りないときは、他を外してWORKをセット。コスト$0で毎スピン$5増える。") : _t("「ギャンブル」でWORKをセットしよう。コスト$0で毎スピン$5稼げる。"), tab === "positions" ? "equip" : "positions");
     if (s.spins === 0 && s.cash < opening)
         return result("first-work", _t("まずWORKを連打して{0}貯めよう。1回で$1増える。", money(opening)), "work");
     const lesson = secondBetStep(s);
     if (lesson && lesson.action !== "spin") {
-        if (tab !== "positions") return { ...result("second-bet-open", _t("{0}解放！ 「ポジション」を開いて入れ替えよう。", lesson.second.name), "positions"), betId: lesson.id };
+        if (tab !== "positions") return { ...result("second-bet-open", _t("{0}解放！ 「ギャンブル」を開いて入れ替えよう。", lesson.second.name), "positions"), betId: lesson.id };
         return { ...result(`second-bet-${lesson.action}`, lesson.action === "remove"
-            ? _t("ポジションは{0}個まで。{1}の−で枠を空けよう。", s.slots, betById(lesson.id).name)
+            ? _t("ギャンブルは{0}個まで。{1}の−で枠を空けよう。", s.slots, betById(lesson.id).name)
             : _t("枠が空いた！ {0}の＋を押してセットしよう。", lesson.second.name), lesson.action), betId: lesson.id };
     }
     if (current === "empty")
-        return result("equip", s.spins === 0 ? (tab === "positions" ? _t("{0}の＋を押して、最初のポジションをセットしよう。",betById(firstBet(s)).name) : _t("「ポジション」タブを開いて、最初のギャンブルを選ぼう。")) : _t("ポジションをセットしよう。"), tab === "positions" ? "equip" : "positions");
+        return result("equip", s.spins === 0 ? (tab === "positions" ? _t("{0}の＋を押して、最初のギャンブルをセットしよう。",betById(firstBet(s)).name) : _t("「ギャンブル」タブを開いて、最初のギャンブルを選ぼう。")) : _t("ギャンブルをセットしよう。"), tab === "positions" ? "equip" : "positions");
     if (current === "cash") {
         if (lesson?.action === "spin") return result("second-bet-funds", _t("あと{0}で回せる。WORKで賭け金を補充しよう。", money(Math.max(0,totalCost(s)-s.cash))), "work");
         const minimum = Math.min(...visibleBets(s).map((b) => stakeOf(b, s)));
         const cheaper = visibleBets(s).some((b) => stakeOf(b, s) <= s.cash && stakeOf(b, s) < totalCost(s));
         return cheaper
-            ? result("cheaper", _t("賭け金が足りない。「ポジション」で安いギャンブルに替えるか、セットする数を減らそう。"), "positions")
+            ? result("cheaper", _t("賭け金が足りない。「ギャンブル」で安いギャンブルに替えるか、セットする数を減らそう。"), "positions")
             : minimum < totalCost(s)
                 ? result("recover-cheaper", _t("WORKであと{0}貯めると、安いギャンブルに替えて再開できる。", money(Math.max(0, minimum - s.cash))), "work")
                 : result("cash", _t("賭け金が足りない。WORKで補充しよう。あと{0}で回せる。", money(Math.max(0, totalCost(s) - s.cash))), "work");

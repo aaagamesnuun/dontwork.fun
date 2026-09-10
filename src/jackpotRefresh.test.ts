@@ -3,7 +3,7 @@ import { freshRun, spin, setCount, loadPreset, readSave, upgradePrice, work, pur
 import { presentationReducer as reduce, presentedRun, coinBudget, type Presentation } from "./presentation";
 
 const ready = (): Run => ({...freshRun(),cash:1e6,peak:1e6,slots:2,running:true,
-  coinEnabled:true,portfolio:[{id:"edge-50",count:1}],settings:{...freshRun().settings,assist:false}});
+  coinEnabled:true,portfolio:[{id:"edge-50",count:1}],settings:{...freshRun().settings,coinFlip:true,assist:false}});
 const begin = (s:Run,roll:number) => reduce({run:s,pending:null},{type:"change",update:r=>spin(r,roll)});
 const remove = (s:Presentation) => reduce(s,{type:"position-change",intent:{kind:"count",id:"edge-50",delta:-1}});
 const reveal = (s:Presentation) => reduce(s,{type:"reveal",runId:s.run.id,spinId:s.run.last!.id});

@@ -79,6 +79,7 @@ export interface Settings {
   rollDisplay: "number";
   spectacleRevision: 1;
   handToys: boolean;
+  coinFlip: boolean;
   dockToy: "off" | "tap" | "beat" | "charge";
   backgroundPlay: boolean;
   backgroundRevision: 2;
@@ -285,7 +286,7 @@ export interface Run {
 }
 export const defaultSettings: Settings = {
   rollDisplay: "number",
-  spectacleRevision: 1, handToys: false, dockToy: "off",
+  spectacleRevision: 1, handToys: false, coinFlip: false, dockToy: "off",
   backgroundPlay: false,
   backgroundRevision: 2,
   bigChangeNotifications: false,
@@ -1218,7 +1219,7 @@ export function purchaseProbability(s: Run, id: string): Run {
 }
 export const COIN_STAKES = Array.from({length:14},(_,i)=>10**(i+1));
 export const COIN_UNLOCK_PEAK = 10_000;
-export const coinUnlocked = (s: Run) => s.peak > COIN_UNLOCK_PEAK;
+export const coinUnlocked = (s: Run) => s.settings.coinFlip && s.peak > COIN_UNLOCK_PEAK;
 export const needsCoinUnlockNotice = (s: Run) => coinUnlocked(s) && !s.coinUnlockAnnounced;
 export const acknowledgeCoinUnlock = (s: Run): Run => needsCoinUnlockNotice(s) ? {...s,coinUnlockAnnounced:true} : s;
 export function playCoinFlip(s: Run, wager: number, forced?: boolean, deferFinish=false): Run {
@@ -1294,6 +1295,7 @@ export function configure(s: Run, patch: Partial<Settings>): Run {
     ...s,
     settings: { ...s.settings, ...patch },
     background: patch.backgroundPlay === false ? null : s.background,
+    coinEnabled: patch.coinFlip === false ? false : s.coinEnabled,
     jackpotHigh: patch.jackpotRule !== undefined && patch.jackpotRule !== s.settings.jackpotRule ? false : s.jackpotHigh,
     debug: s.debug || rules,
   };
@@ -1454,7 +1456,7 @@ export function readSave(raw: string | null): Run | null {
     }
     if (!isBanknoteStyle(n.settings.banknoteStyle)) n.settings.banknoteStyle = "random";
     if (!["rain", "burst"].includes(n.settings.cashMotion)) n.settings.cashMotion = "burst";
-    if(typeof n.settings.handToys!=="boolean" || !["off","tap","beat","charge"].includes(n.settings.dockToy))return null;
+    if(typeof n.settings.coinFlip!=="boolean" || typeof n.settings.handToys!=="boolean" || !["off","tap","beat","charge"].includes(n.settings.dockToy))return null;
     if(!n.settings.handToys || n.settings.workMode==="gamble")n.settings.dockToy="off";
     if(v.settings?.backgroundRevision!==2){n.settings.backgroundRevision=2;n.settings.backgroundPlay=false;n.background=null;}
     if(typeof n.backgroundJackpot!=="boolean")n.backgroundJackpot=false;
@@ -1938,7 +1940,7 @@ export const firstBet = (s: Run) =>
 // A separate wall clock; activeMs remains the ordinary play-statistics clock.
 export function freshTrial(settings:Settings=defaultSettings,rule:TrialRule="fixed"):Run {
   const normalized={...settings};
-  for(const key of ["jackpotRule","handToys","baccarat","probabilityUpgrades","workMode","workCosmetics","upgradeTutorial","spinAssist","secondBetAssist","spinAssistSequence","fuelEnabled","opening","assist","assistAfter","spinSpeedScale","jackpotSpinIntervalMs","rushBase","upgradePrices","economyProfile","upgradeMode","positionPriceBase","positionPriceMultiplier","speedPriceBase","speedPriceMultiplier"] as const)
+  for(const key of ["jackpotRule","handToys","coinFlip","baccarat","probabilityUpgrades","workMode","workCosmetics","upgradeTutorial","spinAssist","secondBetAssist","spinAssistSequence","fuelEnabled","opening","assist","assistAfter","spinSpeedScale","jackpotSpinIntervalMs","rushBase","upgradePrices","economyProfile","upgradeMode","positionPriceBase","positionPriceMultiplier","speedPriceBase","speedPriceMultiplier"] as const)
     Object.assign(normalized,{[key]:defaultSettings[key]});
   const run=freshRun("classic",normalized);
   return {...run,debug:rule!=="fixed",settings:{...normalized,assist:false,spinAssist:false,dockToy:"off"},trial:{scoring:"assets",rule,elapsedMs:0,addedMs:0,anchor:null,started:false,paused:true,result:null,nickname:"",submitted:false,purchases:0,spent:0,lastPurchase:null}};

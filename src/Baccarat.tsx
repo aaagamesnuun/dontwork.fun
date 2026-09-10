@@ -11,7 +11,7 @@ export function Baccarat({ s, pending, onPlay, onClose }: {
     const wager = Number(amount), valid = Number.isSafeInteger(wager) && wager >= 10 && wager % 10 === 0 && wager <= s.cash;
     const result = s.baccaratResult;
     return <section className="baccarat-panel" aria-label={_t("LAB バカラ")}>
- <div className="workspace-heading"><h2>{_t("バカラ")}<small>LAB</small></h2><button onClick={onClose}>{_t("ポジションに戻る")}</button></div>
+ <div className="workspace-heading"><h2>{_t("バカラ")}<small>LAB</small></h2><button onClick={onClose}>{_t("ギャンブルに戻る")}</button></div>
  <p>{_t("大きい数字の側が勝ち。勝ちで2倍、引き分けは返却。")}</p>
  <div className="baccarat-cards" key={s.baccaratRounds}><div><span>PLAYER</span><strong>{result?.player ?? '?'}</strong></div><b>VS</b><div><span>BANKER</span><strong>{result?.banker ?? '?'}</strong></div></div>
  <div className="baccarat-bet"><label>{_t("賭け金 $")}<input type="number" min="10" step="10" inputMode="numeric" value={amount} onChange={e => setAmount(e.target.value)}/></label><button onClick={() => setAmount(String(Math.max(10, (Number.isFinite(wager) ? Math.floor(wager / 10) * 10 : 10) - 10)))}>−10</button><button onClick={() => setAmount(String(Math.min(Number.MAX_SAFE_INTEGER - 20, (Number.isFinite(wager) ? Math.floor(wager / 10) * 10 : 0) + 10)))}>+10</button></div>

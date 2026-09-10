@@ -201,7 +201,7 @@ export const WealthChart = memo(function WealthChart({ s, summary = false }: {
             <button aria-pressed={range === "recent"} onClick={() => setRange("recent")}>{_t("直近{0}", s.settings.chartWindowSpins)}</button>
             <button aria-pressed={range === "all"} onClick={() => setRange("all")}>{_t("全体")}</button>
           </div>)}
-        <svg viewBox="0 0 1000 194" preserveAspectRatio="none" role="img" aria-label={_t("総資産の推移。最新の記録{0}。横軸は{1}。黄色の中抜き丸は強化購入、金色の塗り丸はコインフリップの増減。", money(recordedCash), time ? _t("時間") : _t("スピン数"))}>
+        <svg viewBox="0 0 1000 194" preserveAspectRatio="none" role="img" aria-label={_t(s.settings.coinChartMarkers && (s.settings.coinFlip || s.coinRounds > 0) ? "総資産の推移。最新の記録{0}。横軸は{1}。黄色の中抜き丸は強化購入、金色の塗り丸はコインフリップの増減。" : "総資産の推移。最新の記録{0}。横軸は{1}。黄色の中抜き丸は強化購入。", money(recordedCash), time ? _t("時間") : _t("スピン数"))}>
           <defs>
             <linearGradient id={fillId} x1="0" y1="0" x2="0" y2="1">
               <stop stopColor="#74f2a5" stopOpacity=".14"/>

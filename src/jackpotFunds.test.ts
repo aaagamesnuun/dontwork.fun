@@ -54,7 +54,7 @@ describe("a Jackpot needs enough money for the next wager", () => {
     expect(reveal(model).run).toMatchObject({cash:0,rushLeft:0,removed:0});
   });
   it("ends after a FLIP loss without losing coin accounting", () => {
-    const before={...rush(10),coinEnabled:true};
+    const before={...rush(10),settings:{...rush(10).settings,coinFlip:true},coinEnabled:true};
     const after=presentationReducer({run:before,pending:null},{type:"coin-flip",wager:10,forced:false});
     expect(after.run).toMatchObject({cash:0,rushLeft:0,coinRounds:1,coinWagered:10,coinPaid:0});
   });

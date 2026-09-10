@@ -43,7 +43,7 @@ export function captureScenes(): Record<CaptureSceneId, CaptureScene> {
             checkpoint('early', _t("当たりと外れ"), _t("資産が減る場面と、増える場面を続けて撮れます。"), [...early.slice(i)]);
         run = spin(run, early[i]);
     }
-    checkpoint('upgrade', _t("アップグレード"), _t("ポジション数を1から2へ。購入すると資産もチャートも下がります。"), []);
+    checkpoint('upgrade', _t("アップグレード"), _t("ギャンブル数を1から2へ。購入すると資産もチャートも下がります。"), []);
     run = purchase(run, 'slots');
     checkpoint('choose', _t("ギャンブルを追加"), _t("空いた枠にQUARTER EDGEを追加します。"), []);
     run = setCount(run, 'edge-25', 1);

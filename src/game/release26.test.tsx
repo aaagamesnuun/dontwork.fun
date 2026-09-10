@@ -6,7 +6,7 @@ import { PayoffSweep } from "../TradingViews";
 import { CoinFlip } from "../CoinFlip";
 import { particleCount,payoutMilestone } from "../ResultVisuals";
 import { impactScale } from "../impact";
-const ready=():Run=>({...freshRun(),cash:1000,peak:1e6,portfolio:[{id:"edge-50",count:1}],coinEnabled:true,settings:{...defaultSettings,assist:false}});
+const ready=():Run=>({...freshRun(),cash:1000,peak:1e6,portfolio:[{id:"edge-50",count:1}],coinEnabled:true,settings:{...defaultSettings,coinFlip:true,assist:false}});
 const begin=(s:Run,roll:number)=>reduce({run:s,pending:null},{type:"change",update:r=>spin(r,roll)});
 const reveal=(s:Presentation)=>reduce(s,{type:"reveal",runId:s.run.id,spinId:s.run.last!.id});
 describe("v2.6 simultaneous actions",()=>{

@@ -81,7 +81,7 @@ export function Leaderboard({ s, change, clear = false, notify, saveName, onRank
         }
     };
     return (<>
-      {clear && (named ? imageUrl ? <img className="share-card-image" src={imageUrl} alt={_t("{0}のクリア記念カード。WORK {1}回、FLIP賭け金 {2}、損益 {3}", s.completionNickname, effortStats(resultRun).work, effortStats(resultRun).wager, effortStats(resultRun).profit)}/> : <ResultCard s={resultRun} name={s.completionNickname}/> : <div className="clear-name-intro"><span>GOAL CLEARED</span><h3>{_t("{0}達成！", money(completionTarget(resultRun)))}</h3><strong>{duration(resultRun.completion?.timeMs ?? resultRun.clearActiveMs ?? resultRun.activeMs)}</strong><p>{_t("この記録に、あなたの名前を。")}</p><small>{completion?.ranked ? _t("名前とクリア時間がランキングに公開されます。") : _t("LABの記録です。名前は端末だけに保存します。")}</small></div>)}
+      {clear && (named ? imageUrl ? <img className="share-card-image" src={imageUrl} alt={_t(resultRun.settings.coinFlip || resultRun.coinRounds > 0 ? "{0}のクリア記念カード。WORK {1}回、FLIP賭け金 {2}、損益 {3}" : "{0}のクリア記念カード。WORK {1}回。", s.completionNickname, effortStats(resultRun).work, effortStats(resultRun).wager, effortStats(resultRun).profit)}/> : <ResultCard s={resultRun} name={s.completionNickname}/> : <div className="clear-name-intro"><span>GOAL CLEARED</span><h3>{_t("{0}達成！", money(completionTarget(resultRun)))}</h3><strong>{duration(resultRun.completion?.timeMs ?? resultRun.clearActiveMs ?? resultRun.activeMs)}</strong><p>{_t("この記録に、あなたの名前を。")}</p><small>{completion?.ranked ? _t("名前とクリア時間がランキングに公開されます。") : _t("LABの記録です。名前は端末だけに保存します。")}</small></div>)}
       {!clear && <>
       <div className="leaderboard-title">
         <h3>{_t("クリア時間ランキング")}</h3>

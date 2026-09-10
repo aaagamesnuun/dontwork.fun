@@ -6,7 +6,7 @@ import {decodeTransfer} from './transferProtocol';
 import {switchTrialMode,NORMAL_SLOT,TRIAL_SLOT} from './trialSaves';
 import {saveTrialName,flushTrialScores,readTrialOutbox} from './trialScores';
 const start=()=>resumeTrial(freshTrial(),1000);
-const rich=():Run=>({...start(),settings:{...start().settings,backgroundPlay:true},cash:1000000,peak:1000000,portfolio:[{id:'edge-50',count:1}],coinEnabled:true,running:true});
+const rich=():Run=>({...start(),settings:{...start().settings,coinFlip:true,backgroundPlay:true},cash:1000000,peak:1000000,portfolio:[{id:'edge-50',count:1}],coinEnabled:true,running:true});
 const model=(s=rich()):Presentation=>({run:s,pending:null});
 const change=(m:Presentation,update:(s:Run)=>Run)=>presentationReducer(m,{type:'change',update});
 beforeEach(()=>{vi.useFakeTimers();vi.setSystemTime(1000);const memory=new Map<string,string>();vi.stubGlobal('localStorage',{getItem:(k:string)=>memory.get(k)??null,setItem:(k:string,v:string)=>memory.set(k,v),removeItem:(k:string)=>memory.delete(k)});});

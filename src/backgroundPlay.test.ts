@@ -74,7 +74,7 @@ describe("owned background progression",()=>{
     expect(result.run.spins).toBe(2);
   });
   it("reveals a reserved spin and concurrent coin before bulk settlement",()=>{
-    let s={...playable(),coinEnabled:true};
+    let s={...playable(),settings:{...playable().settings,coinFlip:true},coinEnabled:true};
     let model=presentationReducer({run:s,pending:null},{type:"change",update:r=>spin(r,75,0)});
     model=presentationReducer(model,{type:"coin-flip",wager:10,forced:true});
     const settled=presentationReducer(model,{type:"reveal",runId:s.id,spinId:model.run.last!.id}).run;

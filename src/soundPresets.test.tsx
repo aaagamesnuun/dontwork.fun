@@ -20,7 +20,7 @@ it("gives every pack the same effects and keeps the user's volume, mute, vibrati
   }
 });
 it("locks old coin controls at or below $10K without deleting progress or past coin records",()=>{
-  let s={...freshRun(),peak:COIN_UNLOCK_PEAK+1,cash:1000,coinEnabled:true};s=playCoinFlip(s,100,true);
+  let s={...freshRun(),settings:{...freshRun().settings,coinFlip:true},peak:COIN_UNLOCK_PEAK+1,cash:1000,coinEnabled:true};s=playCoinFlip(s,100,true);
   const old={...s,peak:COIN_UNLOCK_PEAK,settings:{...s.settings,handToys:true,dockToy:"tap"}};
   const restored=readSave(JSON.stringify(old))!;
   expect(restored).toMatchObject({id:old.id,cash:1100,coinRounds:1,coinWins:1,coinEnabled:false,settings:{handToys:true,dockToy:"tap"}});

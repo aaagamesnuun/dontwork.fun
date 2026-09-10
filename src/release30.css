@@ -28,16 +28,19 @@ html[lang=en] .spin-result small{font-size:9px}html[lang=en] .bet-card h3{letter
 .app .auto-control .trial-clock>small {display:none}
 .app.desk-layout.trial-mode {--dock-base:92px}
 /* Reserve the same row for tips, tutorial prompts and Jackpot status. */
-.app.desk-layout,.app.tab-layout,.app.capture-mode.desk-layout {--news-h:84px}
-.app .news-strip {box-sizing:border-box;height:calc(var(--news-h) - 4px);min-height:0;margin:2px 0;padding:5px 9px;gap:8px;border-left-width:5px;overflow:hidden}
+.app.desk-layout,.app.tab-layout,.app.capture-mode.desk-layout {--news-h:48px}
+.app .news-strip {box-sizing:border-box;height:calc(var(--news-h) - 4px);min-height:0;margin:2px 0;padding:1px 9px;gap:8px;border-left-width:5px;overflow:hidden}
 .app .news-strip>p,.app.position-lesson .news-strip>p {margin:0;min-height:0;max-height:100%;white-space:normal;overflow-y:auto;overflow-wrap:anywhere;overscroll-behavior:contain;scrollbar-width:thin}
 .app .news-strip>button,.app .news-strip.jackpot-news>button {position:static;transform:none;align-self:center;min-width:32px;width:32px;min-height:32px;height:32px}
-.app .jackpot-news-body {flex:1;min-width:0;min-height:0;max-height:100%;display:flex;flex-direction:column;gap:4px;overflow:hidden}
-.app .news-strip .jackpot-news-rule {flex:0 1 auto;min-height:0;margin:0;white-space:normal;overflow-y:auto;overflow-wrap:anywhere;overscroll-behavior:contain;scrollbar-width:thin;font:500 12px/1.35 system-ui,sans-serif;color:#ffe6a1}
-.app .news-strip .rush-remaining {flex:0 0 auto;gap:5px}
+.app .jackpot-news-body {flex:1;min-width:0;min-height:0;max-height:100%;display:flex;flex-direction:column;gap:1px;overflow:hidden}
+.app .news-strip .jackpot-news-rule {flex:0 1 auto;min-height:0;margin:0;white-space:normal;overflow-y:auto;overflow-wrap:anywhere;overscroll-behavior:contain;scrollbar-width:thin;font:500 12px/1.25 system-ui,sans-serif;color:#ffe6a1}
+.app .news-strip .rush-remaining {flex:0 0 auto;align-items:center;gap:5px}
+.app .news-strip .rush-remaining>strong {font-size:22px;line-height:1}
+.app .news-strip .rush-remaining>span {font-size:11px}
+.app .news-strip>p {font-size:13px;line-height:1.4}
 .app .news-strip .rush-remaining>strong {min-width:0;overflow-x:auto;white-space:nowrap;scrollbar-width:none}
 .app .news-strip .rush-remaining>span {flex-shrink:0}
-.app .news-strip .rush-remaining>small {min-width:0;font-size:11px;white-space:normal;overflow-wrap:anywhere}
+.app .news-strip .rush-remaining>small {min-width:0;max-height:24px;overflow-y:auto;scrollbar-width:thin;font-size:10px;line-height:1.1;white-space:normal;overflow-wrap:anywhere}
 .app .news-strip.jackpot-news .jackpot-counter {display:none}
 @media(max-width:759px){
  .app.desk-layout {--dock-base:80px}
@@ -67,7 +70,7 @@ html[lang=en] .spin-result small{font-size:9px}html[lang=en] .bet-card h3{letter
 
 /* Tutorial emphasis changes the copy, not the space reserved above the chart. */
 .app.position-lesson .news-strip>.news-label {display:none}
-.app.position-lesson .news-strip p {margin:0;font-size:14px;line-height:1.4}
+.app.position-lesson .news-strip p {margin:0;font-size:14px;line-height:1.35}
 .intro-message>strong {color:#d3ff93;font-weight:800}
 /* One balance row gives the saved space back to the chart in every number mode. */
 .app.desk-layout,.app.tab-layout {--balance-row-h:44px;--balance-h:var(--balance-row-h)}
@@ -106,3 +109,67 @@ html[lang=en] .spin-result small{font-size:9px}html[lang=en] .bet-card h3{letter
 .app.full-money .stats-grid>div {min-width:0}
 .app.full-money .stats-grid strong {display:block;max-width:100%;overflow-x:auto;white-space:nowrap}
 .app.full-money .trial-ranking li>b {display:block;max-width:55%;min-width:0;overflow-x:auto;white-space:nowrap;font-size:clamp(12px,3vw,19px)}
+
+/* One compact editor row for every destination; spare height belongs to play. */
+.app.desk-layout:not(.capture-mode) .compact-workspace.has-chart,
+.app.desk-layout:not(.capture-mode) .compact-workspace.has-chart.lab-card-expanded {
+ --editor-height:196px;
+ --sweep-share:.55fr;
+ grid-template-rows:minmax(132px,var(--sweep-share)) minmax(90px,1fr) var(--editor-height);
+}
+.app.desk-layout:not(.capture-mode) .compact-workspace.has-chart.spin-size-expanded {--sweep-share:.85fr}
+.app.desk-layout:not(.capture-mode) .shared-spin {min-height:0;height:100%;overflow:hidden}
+.app.desk-layout:not(.capture-mode) .compact-workspace .shared-spin .roll-station {
+ height:100%;min-height:0;max-height:none;
+ grid-template-rows:minmax(0,1fr) var(--spin-metrics-height) 3px;
+ gap:3px;
+}
+.app .positions-grid .bet-bottom {justify-content:flex-start}
+.app .positions-grid .counter {margin:0;flex:0 0 auto;height:46px;min-height:46px;align-items:center}
+.app.desk-layout:not(.capture-mode) .positions-page>.workspace-heading {min-height:24px;padding:0}
+.app.desk-layout:not(.capture-mode) .positions-grid {
+ flex:1 1 auto;align-items:flex-start;padding:0 2px 4px;gap:8px;
+ overflow-y:auto;touch-action:pan-x pan-y;
+}
+.app.desk-layout:not(.capture-mode) .positions-grid .bet-card {
+ height:auto;min-height:0;padding:6px;gap:2px;flex-shrink:0;
+}
+.app.desk-layout:not(.capture-mode) .positions-grid .bet-card>* {flex-shrink:0}
+.app.desk-layout:not(.capture-mode) .positions-grid .expected-equation {padding:1px 0}
+.app.desk-layout:not(.capture-mode) .positions-grid .equation-term {gap:2px}
+.app.desk-layout:not(.capture-mode) .positions-grid .hit-faces {margin:0}
+.app.desk-layout:not(.capture-mode) .positions-grid .bet-bottom {margin-top:0;gap:6px;flex-wrap:nowrap}
+.app.desk-layout:not(.capture-mode) .positions-grid .bet-bottom>.wager-term,
+.app.desk-layout:not(.capture-mode) .positions-grid .bet-bottom>.pay-column {min-width:0;flex:1}
+.app.desk-layout:not(.capture-mode) .positions-grid .counter button {width:44px;min-width:44px;height:44px;min-height:44px}
+.app .upgrades-page>.upgrades-grid {margin-top:0}
+.app.desk-layout:not(.capture-mode) .upgrades-grid {gap:6px}
+.app.desk-layout:not(.capture-mode) .upgrade-card {padding:8px;min-height:0}
+.app.desk-layout:not(.capture-mode) .upgrade-card h3 {margin:2px 0;font-size:15px}
+.app.desk-layout:not(.capture-mode) .upgrade-card p {margin:2px 0;font-size:12px;line-height:1.35}
+.app .upgrades-page>.upgrade-spend {margin-top:6px;padding:6px 8px;gap:4px 8px}
+.app .upgrades-page>.upgrade-spend dt {font-size:12px}
+.app .upgrades-page>.upgrade-spend dd {font-size:16px}
+.app .coin-panel {padding:6px 8px;gap:4px;justify-content:flex-start}
+.app .coin-panel>.workspace-heading {display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;min-height:38px;padding:0}
+.app .coin-panel>.workspace-heading h2 {margin:0;font-size:15px}
+.app .coin-switch.setting-row {margin:0;padding:0;border:0;min-height:38px;font-size:12px}
+.app .coin-switch .native-switch {flex-shrink:0}
+.app .coin-stakes {margin:0;padding:0 0 4px}
+.app .coin-stakes button {min-height:44px;padding:6px 10px}
+.app .coin-summary {min-height:38px;gap:6px}
+.app .coin-summary small {font-size:11px}
+@media(max-height:650px){
+ .app.desk-layout:not(.capture-mode) .compact-workspace.has-chart,
+ .app.desk-layout:not(.capture-mode) .compact-workspace.has-chart.lab-card-expanded {
+  grid-template-rows:minmax(115px,var(--sweep-share)) minmax(0,1fr) var(--editor-height);
+ }
+}
+
+/* The LAB number display needs room for its result label and growth strip. */
+.app.desk-layout:not(.capture-mode) .compact-workspace.has-chart:has(.number-mode) {
+ grid-template-rows:minmax(125px,var(--sweep-share)) minmax(0,1fr) var(--editor-height);
+}
+.app.desk-layout:not(.capture-mode) .compact-workspace.has-chart:has(.number-mode .spin-growth) {
+ grid-template-rows:minmax(175px,var(--sweep-share)) minmax(0,1fr) var(--editor-height);
+}

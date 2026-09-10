@@ -29,7 +29,7 @@ export function ResultCard({ s, name }: {
     <div className="result-time"><strong>{duration(s.completion?.timeMs ?? s.clearActiveMs ?? s.activeMs)}</strong><span>{_t("クリア時間")}</span></div>
     <WealthChart s={s} summary/>
     <div className="result-numbers"><div><b>{(s.clearSpins ?? s.spins).toLocaleString()}</b><span>{_t("スピン")}</span></div><div><b>{s.maxChain.toLocaleString()}</b><span>{_t("最大連鎖")}</span></div><div><b>{money(s.spent)}</b><span>{_t("強化への投資")}</span></div></div>
-    <div className="result-numbers result-effort"><div><b>{effort.work}</b><span>{effort.known?_t("WORK回数 · {0}", money(s.work)):_t("WORK回数")}</span></div><div><b>{effort.wager}</b><span>{_t("FLIPの賭け金累計")}</span></div><div><b>{effort.profit}</b><span>{_t("FLIPの損益")}</span></div></div>
+    <div className="result-numbers result-effort"><div><b>{effort.work}</b><span>{effort.known?_t("WORK回数 · {0}", money(s.work)):_t("WORK回数")}</span></div>{(s.settings.coinFlip || s.coinRounds > 0) && <><div><b>{effort.wager}</b><span>{_t("FLIPの賭け金累計")}</span></div><div><b>{effort.profit}</b><span>{_t("FLIPの損益")}</span></div></>}</div>
     <footer><span>{catalogById(s.completion?.catalog ?? s.catalog).name}</span><span>{s.completion?.ranked ? "CLEAR RECORD" : "LAB RECORD"} · v{s.completion?.appVersion ?? VERSION}</span></footer>
   </section>;
 }
