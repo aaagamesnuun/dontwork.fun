@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { renderToStaticMarkup } from "react-dom/server";
-import { freshRun, freshTrial, resumeTrial, work, spin, setCount, readSave, configure, defaultSettings, type Run } from "./game/engine";
+import { freshRun, freshTrial, resumeTrial, work, spin, setCount, readSave, configure, finish, TARGET, defaultSettings, type Run } from "./game/engine";
 import { secondBetStep } from "./game/positionTutorial";
 import { guidance } from "./game/guidance";
 import { presentationReducer, presentedRun } from "./presentation";
@@ -43,11 +43,11 @@ describe("second position tutorial", () => {
     expect(guidance({...swapped(),cash:50})).toMatchObject({target:"work",key:"second-bet-funds"});
     expect(secondBetStep({...multi,rushLeft:20})).toBeNull();
   });
-  it("leaves the first second-bet result random by default while retaining the swap lesson", () => {
+  it("guarantees the first second-bet win by default, then returns to random spins", () => {
     lowestRoll();const run=swapped();
-    expect(defaultSettings.secondBetAssist).toBe(false);expect(run.settings.spinAssist).toBe(true);
+    expect(defaultSettings.secondBetAssist).toBe(true);expect(run.settings.spinAssist).toBe(true);
     expect(secondBetStep(run)?.action).toBe("spin");
-    const result=spin(run);expect(result.last!.roll).toBe(1);expect(result.last!.hits).not.toContain("edge-25");
+    const result=spin(run);expect(result.last!.hits).toContain("edge-25");expect(result.last!.profit).toBeGreaterThan(0);
     expect(result.secondBetTutorial).toBe("done");expect(result.debug).toBe(false);
     expect(spin(withAid(result)).last!.hits).not.toContain("edge-25");
   });
@@ -55,25 +55,45 @@ describe("second position tutorial", () => {
     lowestRoll();const run=configure(swapped(),{spinAssist:false,secondBetAssist:true});
     expect(spin(run).last!.hits).toContain("edge-25");
     const restored=readSave(JSON.stringify(run))!;expect(restored.settings.secondBetAssist).toBe(true);expect(restored.debug).toBe(true);
-    expect(freshRun("classic",{...defaultSettings,secondBetAssist:true}).debug).toBe(true);
+    expect(freshRun("classic",{...defaultSettings,secondBetAssist:true}).debug).toBe(false);
+    expect(freshRun("classic",{...defaultSettings,secondBetAssist:false}).debug).toBe(true);
     expect(configure(withAid(swapped()),{secondBetAssist:false}).debug).toBe(true);
     const html=renderToStaticMarkup(<Lab s={swapped()} change={()=>{}} notify={()=>{}}/>);
-    expect(html).toMatch(/2つ目のギャンブルのスピン補助<\/span><input type="checkbox"\/>/);
+    expect(html).toMatch(/2つ目のギャンブルのスピン補助<\/span><input type="checkbox" checked=""\/>/);
   });
-  it("migrates existing saves to aid OFF without losing the lesson or identity and rejects invalid flags", () => {
-    const run=swapped(),old=JSON.parse(JSON.stringify(run));delete old.settings.secondBetAssist;
+  it("migrates ordinary saves to aid ON without losing the lesson or identity and rejects invalid flags", () => {
+    const run=swapped(),old=JSON.parse(JSON.stringify(run));old.settings.secondBetAssist=false;delete old.settings.secondBetAssistRevision;
     const restored=readSave(JSON.stringify(old))!;
-    expect(restored).toMatchObject({id:run.id,cash:run.cash,debug:false,secondBetTutorial:"active",settings:{secondBetAssist:false,spinAssist:true}});
+    expect(restored).toMatchObject({id:run.id,cash:run.cash,debug:false,secondBetTutorial:"active",settings:{secondBetAssist:true,secondBetAssistRevision:1,spinAssist:true}});
     expect(readSave(JSON.stringify({...old,settings:{...old.settings,secondBetAssist:"yes"}}))).toBeNull();
     const trial=freshTrial({...defaultSettings,secondBetAssist:true});
     expect(trial.settings.secondBetAssist).toBe(false);expect(trial.debug).toBe(false);
     expect(configure(trial,{secondBetAssist:true}).settings.secondBetAssist).toBe(false);
   });
+  it("preserves explicit LAB choices and an OFF choice made after this update", () => {
+    for (const currentRevision of [false,true]) {
+      const run=configure(swapped(),{secondBetAssist:false}),saved=JSON.parse(JSON.stringify(run));
+      if (!currentRevision) delete saved.settings.secondBetAssistRevision;
+      const restored=readSave(JSON.stringify(saved))!;
+      expect(restored).toMatchObject({id:run.id,debug:true,settings:{secondBetAssist:false,secondBetAssistRevision:1}});
+      lowestRoll();expect(spin(restored).last!.hits).not.toContain("edge-25");vi.restoreAllMocks();
+    }
+  });
+  it("does not replay an already consumed first spin or alter an existing clear during migration", () => {
+    lowestRoll();const consumed=spin(swapped(),1),cleared=finish({...consumed,cash:TARGET});
+    for(const run of [consumed,cleared]) {
+      const old=JSON.parse(JSON.stringify(run));old.settings.secondBetAssist=false;delete old.settings.secondBetAssistRevision;
+      const restored=readSave(JSON.stringify(old))!;
+      expect(restored).toMatchObject({id:run.id,cash:run.cash,spins:run.spins,secondBetTutorial:"done",debug:run.debug});
+      expect(restored.completion).toEqual(run.completion);expect(restored.clearSnapshot).toEqual(run.clearSnapshot);
+      expect(spin(restored).last!.hits).not.toContain("edge-25");
+    }
+  });
   it("lands the first new bet once, without Jackpot, and cannot reset through re-equipping or reload", () => {
     lowestRoll();let run=spin(withAid(swapped()));
     expect(run.last!.hits).toContain("edge-25");expect(run.last!.roll).toBeGreaterThanOrEqual(76);
     expect(run.last!.roll).toBeLessThanOrEqual(90);expect(run.last!.jackpot).toBe(false);
-    expect(run.secondBetTutorial).toBe("done");expect(run.debug).toBe(true);
+    expect(run.secondBetTutorial).toBe("done");expect(run.debug).toBe(false);
     run=readSave(JSON.stringify(run))!;run=setCount(setCount(run,"edge-25",-1),"edge-25",1);
     expect(spin(run).last!.hits).not.toContain("edge-25");
     expect(secondBetStep(run)).toBeNull();

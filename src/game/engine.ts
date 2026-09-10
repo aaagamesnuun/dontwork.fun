@@ -116,6 +116,7 @@ export interface Settings {
   upgradeTutorial: "money" | "scripted";
   spinAssist: boolean;
   secondBetAssist: boolean;
+  secondBetAssistRevision: 1;
   spinAssistSequence: string;
   presentationRevision: 1;
   spinSound: "rhythm" | "original";
@@ -319,7 +320,8 @@ export const defaultSettings: Settings = {
   workCosmetics: false,
   upgradeTutorial: "money",
   spinAssist: true,
-  secondBetAssist: false,
+  secondBetAssist: true,
+  secondBetAssistRevision: 1,
   spinAssistSequence: "WWLWW",
   presentationRevision: 1,
   spinSound: "rhythm",
@@ -362,8 +364,8 @@ export const defaultSettings: Settings = {
 };
 export const customRules = (settings: Settings, trial = false) =>
   settings.handToys || settings.jackpotRule !== "combined" || settings.probabilityUpgrades || settings.baccarat ||
-  settings.workMode === "gamble" || settings.workCosmetics || settings.secondBetAssist ||
-  (!trial && (!settings.spinAssist || settings.spinAssistSequence !== "WWLWW")) ||
+  settings.workMode === "gamble" || settings.workCosmetics ||
+  (!trial && (!settings.secondBetAssist || !settings.spinAssist || settings.spinAssistSequence !== "WWLWW")) ||
   JSON.stringify([
     settings.opening,
     trial ? true : settings.assist,
@@ -1433,7 +1435,11 @@ export function readSave(raw: string | null): Run | null {
       running: false,
       last: null,
     } as Run;
-    if (typeof n.settings.secondBetAssist !== "boolean" || typeof n.settings.spinAssist !== "boolean" || typeof n.settings.spinAssistSequence !== "string" || !/^[WL]{5}$/.test(n.settings.spinAssistSequence)) return null;
+    if (n.settings.secondBetAssistRevision !== 1 || typeof n.settings.secondBetAssist !== "boolean" || typeof n.settings.spinAssist !== "boolean" || typeof n.settings.spinAssistSequence !== "string" || !/^[WL]{5}$/.test(n.settings.spinAssistSequence)) return null;
+    // Adopt the new standard once for ordinary saves; retain LAB choices and
+    // never rewind whether this bet's first spin has already been consumed.
+    if (v.settings?.secondBetAssistRevision === undefined && !n.debug && !n.trial)
+      n.settings.secondBetAssist = true;
     if (v.secondBetTutorial === undefined) {
       const second = introductoryBets(n)?.second;
       n.secondBetTutorial = !second || n.peak >= second.unlock ? "done" : "waiting";
@@ -1943,7 +1949,7 @@ export function freshTrial(settings:Settings=defaultSettings,rule:TrialRule="fix
   for(const key of ["jackpotRule","handToys","coinFlip","baccarat","probabilityUpgrades","workMode","workCosmetics","upgradeTutorial","spinAssist","secondBetAssist","spinAssistSequence","fuelEnabled","opening","assist","assistAfter","spinSpeedScale","jackpotSpinIntervalMs","rushBase","upgradePrices","economyProfile","upgradeMode","positionPriceBase","positionPriceMultiplier","speedPriceBase","speedPriceMultiplier"] as const)
     Object.assign(normalized,{[key]:defaultSettings[key]});
   const run=freshRun("classic",normalized);
-  return {...run,debug:rule!=="fixed",settings:{...normalized,assist:false,spinAssist:false,dockToy:"off"},trial:{scoring:"assets",rule,elapsedMs:0,addedMs:0,anchor:null,started:false,paused:true,result:null,nickname:"",submitted:false,purchases:0,spent:0,lastPurchase:null}};
+  return {...run,debug:rule!=="fixed",settings:{...normalized,assist:false,spinAssist:false,secondBetAssist:false,dockToy:"off"},trial:{scoring:"assets",rule,elapsedMs:0,addedMs:0,anchor:null,started:false,paused:true,result:null,nickname:"",submitted:false,purchases:0,spent:0,lastPurchase:null}};
 }
 export function trialDeadline(s:Run):number {
   const t=s.trial;return t && t.anchor!==null && !t.paused && !t.result?t.anchor+trialRemaining(t):Infinity;
