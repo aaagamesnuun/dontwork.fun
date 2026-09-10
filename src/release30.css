@@ -27,13 +27,17 @@ html[lang=en] .spin-result small{font-size:9px}html[lang=en] .bet-card h3{letter
 .app .auto-control .trial-clock {flex-wrap:wrap;justify-content:center;gap:2px 6px}
 .app .auto-control .trial-clock>small {display:none}
 .app.desk-layout.trial-mode {--dock-base:92px}
-.app .news-strip.jackpot-news {gap:8px;padding-block:5px}
-.app.rush-mode,.app.capture-mode.desk-layout.rush-mode {--news-h:84px}
-.app .jackpot-news-body {flex:1;min-width:0;display:flex;flex-direction:column;gap:4px}
-.app .news-strip .jackpot-news-rule {margin:0;white-space:normal;overflow:visible;font:500 12px/1.35 system-ui,sans-serif;color:#ffe6a1}
-.app .news-strip.jackpot-news>button {position:static;transform:none;align-self:center;min-width:28px;width:28px;height:28px}
-.app .news-strip .rush-remaining {gap:5px}
-.app .news-strip .rush-remaining>small {font-size:11px}
+/* Reserve the same row for tips, tutorial prompts and Jackpot status. */
+.app.desk-layout,.app.tab-layout,.app.capture-mode.desk-layout {--news-h:84px}
+.app .news-strip {box-sizing:border-box;height:calc(var(--news-h) - 4px);min-height:0;margin:2px 0;padding:5px 9px;gap:8px;border-left-width:5px;overflow:hidden}
+.app .news-strip>p,.app.position-lesson .news-strip>p {margin:0;min-height:0;max-height:100%;white-space:normal;overflow-y:auto;overflow-wrap:anywhere;overscroll-behavior:contain;scrollbar-width:thin}
+.app .news-strip>button,.app .news-strip.jackpot-news>button {position:static;transform:none;align-self:center;min-width:32px;width:32px;min-height:32px;height:32px}
+.app .jackpot-news-body {flex:1;min-width:0;min-height:0;max-height:100%;display:flex;flex-direction:column;gap:4px;overflow:hidden}
+.app .news-strip .jackpot-news-rule {flex:0 1 auto;min-height:0;margin:0;white-space:normal;overflow-y:auto;overflow-wrap:anywhere;overscroll-behavior:contain;scrollbar-width:thin;font:500 12px/1.35 system-ui,sans-serif;color:#ffe6a1}
+.app .news-strip .rush-remaining {flex:0 0 auto;gap:5px}
+.app .news-strip .rush-remaining>strong {min-width:0;overflow-x:auto;white-space:nowrap;scrollbar-width:none}
+.app .news-strip .rush-remaining>span {flex-shrink:0}
+.app .news-strip .rush-remaining>small {min-width:0;font-size:11px;white-space:normal;overflow-wrap:anywhere}
 .app .news-strip.jackpot-news .jackpot-counter {display:none}
 @media(max-width:759px){
  .app.desk-layout {--dock-base:80px}
@@ -61,10 +65,9 @@ html[lang=en] .spin-result small{font-size:9px}html[lang=en] .bet-card h3{letter
  .particle-confetti {box-shadow:none}
 }
 
-/* Extra room only while the first position swap is being taught. */
-.app.position-lesson,.app.capture-mode.desk-layout.position-lesson {--news-h:76px}
+/* Tutorial emphasis changes the copy, not the space reserved above the chart. */
 .app.position-lesson .news-strip>.news-label {display:none}
-.app.position-lesson .news-strip p {white-space:normal;overflow:visible;margin:0;font-size:14px;line-height:1.4}
+.app.position-lesson .news-strip p {margin:0;font-size:14px;line-height:1.4}
 .intro-message>strong {color:#d3ff93;font-weight:800}
 /* One balance row gives the saved space back to the chart in every number mode. */
 .app.desk-layout,.app.tab-layout {--balance-row-h:44px;--balance-h:var(--balance-row-h)}

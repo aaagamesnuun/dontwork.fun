@@ -151,6 +151,8 @@ AUTOを停止しただけなら、ニュースは残り回数を保持して再�
 
 [BalanceReadout.tsx](../src/BalanceReadout.tsx) は公開済みの`Run`と最新の資産変化だけを受け取り、見出しのない1段の資産欄を表示します。`Settings.balanceChangeInline`は標準OFFで、ONにすると資産・変化額・目標の順で隣接表示します。表示だけの設定として保存し、欠落した旧セーブにはOFFを補います。資産欄の高さを数字表記と分離し、浮いた縦幅をチャートへ戻します。
 
+ニュース欄の高さは [release30.css](../src/release30.css) で統一しています。通常ニュース・チュートリアル・ジャックポットで共通の84px枠を予約し、上下2pxの余白を引いた80pxの表示枠を使います。desk・tab・撮影モード、上配置・下配置も同じ契約です。内容が変わってもチャートの位置や高さを変えません。長文は本文内でスクロールでき、ジャックポットの残り回数は説明文と分離して常に残します。説明ボタンも同じサイズです。
+
 ## 任意のWorker / D1とfork
 
 [serviceConfig.ts](../src/serviceConfig.ts)が接続の境界です。通常のforkはオンラインサービス・新規プレイの計測設定ともにOFFです。自分の同一配信元のAPIを使うビルドでは`VITE_ENABLE_SERVICES=true`、計測の初期値を変更する場合は別に`VITE_ENABLE_TELEMETRY=true`を指定します。保存済みの計測選択は環境変数で上書きしません。localhost / 開発環境からの計測送信は[Telemetry](../src/api.ts)が抑止します。
