@@ -181,7 +181,7 @@ describe("v1.8 first-play guidance", () => {
   it("guides earning, equipping, auto, shortages and optional capacity to the matching control", () => {
     expect(guidance(freshRun()).target).toBe("work");
     expect(guidance({ ...freshRun(), cash: 10 }).target).toBe("equip");
-    expect(guidance({ ...ready(), running: false }).target).toBe("auto");
+    expect(guidance(configure({ ...ready(), running: false },{autoAlwaysOn:false})).target).toBe("auto");
     expect(guidance({ ...ready(), cash: 0 }).target).toBe("work");
     expect(
       guidance({

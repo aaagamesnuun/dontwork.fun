@@ -31,14 +31,15 @@ describe('compact production desk',()=>{
   expect(html.indexOf('class="shared-spin"')).toBeLessThan(html.indexOf('class="chart-page"'));
   expect(html.indexOf('class="chart-page"')).toBeLessThan(html.indexOf('class="positions-page"'));
   expect(html.indexOf('id="work-button"')).toBeLessThan(html.indexOf('class="dock-upgrade'));
-  expect(html.indexOf('class="dock-upgrade')).toBeLessThan(html.indexOf('class="auto-control'));
+  expect(html).not.toContain('class="auto-control');
+  expect(html).toContain('play-dock without-auto');
   expect(html).not.toContain('class="main-tabs');
   expect(html).not.toContain('class="position-tools"');
  });
- it('guides work then the visible plus then auto; old tabs still call the chart a chart',()=>{
+ it('guides work then the visible plus without AUTO; manual tabs still call the chart a chart',()=>{
   let s=freshRun();expect(guidance(s).target).toBe('work');for(let i=0;i<10;i++)s=work(s);
-  expect(guidance(s)).toMatchObject({target:'equip'});s=setCount(s,'edge-50',1);expect(guidance(s).target).toBe('auto');
-  expect(guidance(configure(s,{workspaceMode:'tabs'}),0,'positions').text).toContain('チャート');
+  expect(guidance(s)).toMatchObject({target:'equip'});s=setCount(s,'edge-50',1);expect(guidance(s).target).toBeNull();
+  expect(guidance(configure(s,{workspaceMode:'tabs',autoAlwaysOn:false}),0,'positions').text).toContain('チャート');
   const upgrade=guidance({...s,cash:150,peak:150,spins:1,running:true});expect(upgrade.text).toContain('「アップグレード」');
  });
  it('keeps the last discovery out of help until achieved',()=>{

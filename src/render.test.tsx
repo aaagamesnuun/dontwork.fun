@@ -25,7 +25,8 @@ describe("game rendering", () => {
     expect(html.indexOf('class="play-dock')).toBeGreaterThan(html.indexOf("</main>"));
     expect(html.indexOf('class="dock-upgrade')).toBeGreaterThan(html.indexOf('id="work-button"'));
     expect(html).toContain("WORK");
-    expect(html).toContain("AUTO");
+    expect(html).not.toContain('aria-label="AUTO"');
+    expect(html).toContain('play-dock without-auto');
     expect(html).toContain("クリア目標:1B$");
     expect(html).not.toContain("NaN");
   });

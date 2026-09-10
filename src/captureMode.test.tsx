@@ -18,7 +18,7 @@ describe('LAB capture mode',()=>{
     expect(readSave(JSON.stringify({...filming,settings:{...filming.settings,captureMode:'yes'}}))).toBeNull();
   });
   it('keeps one real spin and chart visible with WORK, AUTO and an entry to the hidden controls',()=>{
-    const run=configure(freshRun(),{captureMode:true,workspaceMode:'tabs',sharedSpin:false,sharedChart:false});
+    const run=configure(freshRun(),{autoAlwaysOn:false,captureMode:true,workspaceMode:'tabs',sharedSpin:false,sharedChart:false});
     vi.stubGlobal('localStorage',{getItem:(key:string)=>key==='bebullish-save-v1'?JSON.stringify(run):null,setItem:()=>{}});
     const html=renderToStaticMarkup(<App/>);
     expect(html).toContain('capture-mode');

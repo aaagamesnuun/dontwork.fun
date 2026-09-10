@@ -19,7 +19,7 @@ it("keeps the remaining spins and cut range alongside each rotating explanation"
     expect(html).toContain(tick % 2 === 0 ? "91以上が2回連続" : "最大まで補充");
     expect(html).not.toContain("無限");
   }
-  expect(renderToStaticMarkup(<JackpotNews s={{ ...s, running: false }} tick={0}/>)).toContain("AUTOで再開");
+  expect(renderToStaticMarkup(<JackpotNews s={{ ...s, running: false }} tick={0}/>)).toContain("停止中");
 });
 it("introduces the actual rule on a first chain and follows LAB rule changes", () => {
   for (const rule of ["combined", "hundred", "double-high"] as const) {
@@ -63,7 +63,7 @@ it("ends an unfunded Jackpot on the revealed loss and guides ordinary play recov
   expect(spin(refilled, 80).rushLeft).toBe(0);
 });
 it("highlights AUTO when Jackpot is paused and localizes the stopping reason", () => {
-  const paused = { ...playable(), spins: 15, rushLeft: 18, running: false };
+  const paused = { ...playable(), settings:{...playable().settings,autoAlwaysOn:false}, spins: 15, rushLeft: 18, running: false };
   expect(guidance(paused)).toMatchObject({ key: "jackpot-paused", target: "auto", urgent: true });
   expect(newsTopic("jackpot-paused")).toBe("spin");
   const html = renderToStaticMarkup(<JackpotNews s={paused} tick={1}/>);

@@ -15,7 +15,7 @@ const withAid = (run: Run) => configure(run,{secondBetAssist:true});
 const lowestRoll = () => vi.spyOn(crypto,"getRandomValues").mockImplementation(array => { (array as Uint32Array).fill(0); return array; });
 
 describe("second position tutorial", () => {
-  it("starts on a WORK or spin unlock, then guides remove, equip and AUTO", () => {
+  it("starts on a WORK or spin unlock, then guides remove, equip and automatic spins", () => {
     expect(spin(beforeUnlock(),80).secondBetTutorial).toBe("active");
     let run=unlocked(); expect(run.secondBetTutorial).toBe("active");
     expect(guidance(run,0,"positions")).toMatchObject({target:"remove",betId:"edge-50"});
@@ -24,12 +24,12 @@ describe("second position tutorial", () => {
     run=setCount(run,"edge-50",-1);
     expect(guidance(run,0,"positions")).toMatchObject({target:"equip",betId:"edge-25"});
     run=readSave(JSON.stringify(run))!;run=setCount(run,"edge-25",1);
-    expect(guidance(run,0,"positions")).toMatchObject({target:"auto",key:"second-bet-spin"});
+    expect(guidance(run,0,"positions")).toMatchObject({target:null,key:"second-bet-spin"});
     const html=renderToStaticMarkup(<BetCard b={betById("edge-25")} s={run} change={()=>{}} guided/>);
     expect(html).toContain('data-bet-id="edge-25"');
   });
   it("selects the position panel and then the chart in the tabs layout", () => {
-    const run=configure(unlocked(),{workspaceMode:"tabs"});
+    const run=configure(unlocked(),{workspaceMode:"tabs",autoAlwaysOn:false});
     expect(guidance(run,0,"upgrades").target).toBe("positions");
     const ready=setCount(setCount(run,"edge-50",-1),"edge-25",1);
     expect(guidance(ready,0,"positions").target).toBe("spin");

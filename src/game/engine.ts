@@ -83,6 +83,7 @@ export interface Settings {
   dockToy: "off" | "tap" | "beat" | "charge";
   backgroundPlay: boolean;
   autoAlwaysOn: boolean;
+  autoAlwaysOnRevision: 1;
   backgroundRevision: 3;
   bigChangeNotifications: boolean;
   jackpotNotifications: boolean;
@@ -290,7 +291,8 @@ export const defaultSettings: Settings = {
   rollDisplay: "number",
   spectacleRevision: 1, handToys: false, coinFlip: false, dockToy: "off",
   backgroundPlay: true,
-  autoAlwaysOn: false,
+  autoAlwaysOn: true,
+  autoAlwaysOnRevision: 1,
   backgroundRevision: 3,
   bigChangeNotifications: false,
   jackpotNotifications: false,
@@ -367,7 +369,7 @@ export const defaultSettings: Settings = {
 export const customRules = (settings: Settings, trial = false) =>
   settings.handToys || settings.jackpotRule !== "combined" || settings.probabilityUpgrades || settings.baccarat ||
   settings.workMode === "gamble" || settings.workCosmetics ||
-  (!trial && (settings.autoAlwaysOn || !settings.secondBetAssist || !settings.spinAssist || settings.spinAssistSequence !== defaultSettings.spinAssistSequence)) ||
+  (!trial && (settings.autoAlwaysOn !== defaultSettings.autoAlwaysOn || !settings.secondBetAssist || !settings.spinAssist || settings.spinAssistSequence !== defaultSettings.spinAssistSequence)) ||
   JSON.stringify([
     settings.opening,
     trial ? true : settings.assist,
@@ -1478,7 +1480,10 @@ export function readSave(raw: string | null): Run | null {
     if(typeof n.settings.bigChangeNotifications!=="boolean")n.settings.bigChangeNotifications=false;
     if([n.settings.jackpotNotifications,n.settings.sweepSound,n.settings.coinChartMarkers,n.settings.streakEffects].some(v=>typeof v!=="boolean") || !Number.isFinite(n.settings.effectIntensity) || n.settings.effectIntensity<.25 || n.settings.effectIntensity>2)return null;
     if(n.settings.handToys)n.debug=true;
-    if(typeof n.settings.autoAlwaysOn!=="boolean" || typeof n.settings.backgroundPlay!=="boolean" || !Number.isFinite(n.backgroundMs) || n.backgroundMs<0 || n.backgroundMs>n.activeMs) return null;
+    if(n.settings.autoAlwaysOnRevision!==1 || typeof n.settings.autoAlwaysOn!=="boolean" || typeof n.settings.backgroundPlay!=="boolean" || !Number.isFinite(n.backgroundMs) || n.backgroundMs<0 || n.backgroundMs>n.activeMs) return null;
+    // Adopt automatic ordinary play once without resetting progress or prior LAB status.
+    // A later explicit choice to restore the AUTO button survives reloads.
+    if(v.settings?.autoAlwaysOnRevision===undefined && !n.trial)n.settings.autoAlwaysOn=true;
     const bg=n.background;
     if(bg!==null && (!bg || !Number.isFinite(bg.at) || bg.at<0 || !Number.isFinite(bg.until) || bg.until<bg.at || bg.until-bg.at>3600000 || !Number.isFinite(bg.remainingMs) || bg.remainingMs<=0 || bg.remainingMs>100000 || !Number.isInteger(bg.spinsLeft) || bg.spinsLeft<0 || bg.spinsLeft>12000)) return null;
     if(!n.settings.backgroundPlay) n.background=null;

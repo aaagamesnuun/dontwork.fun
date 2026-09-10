@@ -668,7 +668,7 @@ export default function App({ onOpenDesk, studio }: {
         if (returning && result.done) {
             clock.current = result.run.running ? interval(result.run) - (result.remainingMs ?? interval(result.run)) : 0;
             setProgress(0);
-            setToast(result.capped ? _t("離席中の上限まで進みました。AUTOで再開できます。") : _t("離れていた間の進行を反映しました。"));
+            setToast(result.capped ? _t("離席中の上限まで進みました。") : _t("離れていた間の進行を反映しました。"));
             telemetry.current?.checkpoint(result.run);
         }
         return true;

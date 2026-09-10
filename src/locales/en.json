@@ -416,6 +416,7 @@
   "保存できません。設定からセーブを書き出してください。": "Can't save. Export your save from Settings.",
   "保存できませんでした。現在の進行はそのままです。": "Couldn't save. Your current progress is unchanged.",
   "保存できないため、バックグラウンド進行を停止しました。": "Background play stopped because your progress couldn't be saved.",
+  "離席中の上限まで進みました。": "The away-play limit has been reached.",
   "離席中の上限まで進みました。AUTOで再開できます。": "You've reached the background limit. Turn on AUTO to resume.",
   "離れていた間の進行を反映しました。": "Your progress while away has been applied.",
   "保存できなかったため、更新を中止しました。": "Update canceled because your save couldn't be written.",

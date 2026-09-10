@@ -6,7 +6,7 @@ import { snapshot } from "../api";
 
 describe("v2.2 guidance and configurable pacing", () => {
   it("guides exactly WORK → positions → plus → chart tab → AUTO in legacy navigation", () => {
-    let s = configure(freshRun(), {workspaceMode:"tabs"});
+    let s = configure(freshRun(), {workspaceMode:"tabs",autoAlwaysOn:false});
     expect(guidance(s, 0, "spin").target).toBe("work");
     for (let i = 0; i < 10; i++) s = work(s);
     expect(guidance(s, 0, "spin").target).toBe("positions");
