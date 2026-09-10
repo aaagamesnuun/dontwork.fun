@@ -1077,5 +1077,7 @@
   "現金＋強化に使った総額で競います。AUTOがONの間は、賭け金不足でも時計が進み、WORKできます。OFFにすると時計・WORK・スピンが止まります。ギャンブル変更と強化購入はいつでもできます。": "Compete on cash plus total upgrade spending. While AUTO is on, the clock keeps running even without enough cash to spin, and WORK stays available. Turning AUTO off pauses the clock, WORK, and spins. You can always change gambles and buy upgrades.",
   "総資産の推移。最新の記録{0}。横軸は{1}。黄色の中抜き丸は強化購入。": "Total wealth over time. Latest record {0}. The horizontal axis shows {1}. Yellow hollow circles mark upgrade purchases.",
   "{0}のクリア記念カード。WORK {1}回。": "{0}'s clear card. {1} WORK taps.",
-  "AUTOがONの間は、賭け金不足でも時計が進み、WORKできます。OFFにすると時計・WORK・スピンが止まります。ギャンブル変更と強化購入はいつでもできます。": "While AUTO is on, the clock keeps running even without enough cash to spin, and WORK stays available. Turning AUTO off pauses the clock, WORK, and spins. You can always change gambles and buy upgrades."
+  "AUTOがONの間は、賭け金不足でも時計が進み、WORKできます。OFFにすると時計・WORK・スピンが止まります。ギャンブル変更と強化購入はいつでもできます。": "While AUTO is on, the clock keeps running even without enough cash to spin, and WORK stays available. Turning AUTO off pauses the clock, WORK, and spins. You can always change gambles and buy upgrades.",
+  "表示を増やす": "Show More",
+  "「表示を増やす」を押す": "Tap “Show More”"
 }

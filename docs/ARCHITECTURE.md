@@ -172,6 +172,8 @@ AUTOを停止しただけなら、ニュースは残り回数を保持して再�
 
 ## ビルド、PWA更新、DB更新
 
+ホーム画面への追加案内は [Pwa.tsx](../src/Pwa.tsx) で共通化しています。iPhone/iPad（Safari・Chrome）は、共有→「表示を増やす」→ホーム画面に追加→アイコンから起動の4手順です。Androidはメニュー→インストール→アイコンから起動の3手順を維持します。
+
 [package.json](../package.json)の`npm run build`はTypeScript検査、Viteビルド、[prepare-sites-build.mjs](../scripts/prepare-sites-build.mjs)を順に実行します。静的成果物は`dist/client/`、Worker用のコピーは`dist/server/`、SQLのコピーは`dist/.openai/drizzle/`です。スクリプト名にSitesが残っていますが、`dist/client/`は通常の静的ホスティングでも利用できます。現在のパス前提は`/`です。
 
 [generate-pwa.mjs](../scripts/generate-pwa.mjs)はHTML・JS・CSS・対象素材・Service WorkerテンプレートからビルドIDを作り、HTMLと`sw.js`に埋め込みます。[service-worker.template.js](../scripts/service-worker.template.js)は一式の事前キャッシュが成功してから有効化します。API、POST、外部配信元はキャッシュ対象にしません。

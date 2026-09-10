@@ -73,10 +73,10 @@ export const isMobileDevice = (nav: Pick<Navigator, "userAgent" | "platform" | "
 // mobile visits retain the installation requirement.
 export const needsPwa = () => isMobileDevice() && !detectStandalone() && !fileAudioRequested();
 function InstallDiagram({ kind }: {
-    kind: "share" | "home" | "launch";
+    kind: "share" | "more" | "home" | "launch";
 }) {
-    return <svg viewBox="0 0 96 72" className="install-diagram" role="img" aria-label={kind === "share" ? _t("共有ボタン") : kind === "home" ? _t("ホーム画面に追加") : _t("ホーム画面のアイコンをタップ")} fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
- {kind === "share" ? <><path d="M31 35v25h34V35M48 45V12m-10 10 10-10 10 10"/></> : kind === "home" ? <><rect x="13" y="15" width="70" height="44" rx="5"/><rect x="23" y="26" width="22" height="22" rx="3"/><path d="M34 31v12m-6-6h12M55 32h17m-17 11h12"/></> : <><rect x="27" y="9" width="42" height="54" rx="8"/><path d="m35 46 9-13 8 5 9-16m-8 0h8v8"/></>}
+    return <svg viewBox="0 0 96 72" className="install-diagram" role="img" aria-label={kind === "share" ? _t("共有ボタン") : kind === "more" ? _t("表示を増やす") : kind === "home" ? _t("ホーム画面に追加") : _t("ホーム画面のアイコンをタップ")} fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+ {kind === "share" ? <><path d="M31 35v25h34V35M48 45V12m-10 10 10-10 10 10"/></> : kind === "more" ? <><rect x="13" y="10" width="70" height="52" rx="5"/><path d="M25 23h46M25 33h46m-31 12 8 8 8-8"/></> : kind === "home" ? <><rect x="13" y="15" width="70" height="44" rx="5"/><rect x="23" y="26" width="22" height="22" rx="3"/><path d="M34 31v12m-6-6h12M55 32h17m-17 11h12"/></> : <><rect x="27" y="9" width="42" height="54" rx="8"/><path d="m35 46 9-13 8 5 9-16m-8 0h8v8"/></>}
  </svg>;
 }
 export function InstallInstructions() {
@@ -84,7 +84,12 @@ export function InstallInstructions() {
     const [platform, setPlatform] = useState(/Android/i.test(ua) ? 'android' : /CriOS/i.test(ua) ? 'ios-chrome' : 'ios-safari');
     const copy = () => void navigator.clipboard?.writeText(location.origin + '/').catch(() => { });
     return <div className="install-guide"><label className="setting-row"><span>{_t("使っているブラウザ")}</span><select value={platform} onChange={e => setPlatform(e.target.value)}><option value="ios-safari">iPhone / iPad · Safari</option><option value="ios-chrome">iPhone / iPad · Chrome</option><option value="android">Android · Chrome</option></select></label>
- <ol className="install-picture-steps"><li><InstallDiagram kind="share"/><b>1</b><p>{platform === 'android' ? _t("右上の「⋮」を開く") : platform === 'ios-chrome' ? _t("アドレスバー右の共有ボタンを押す") : _t("共有ボタンを押す（「…」の中にある場合も）")}</p></li><li><InstallDiagram kind="home"/><b>2</b><p>{platform === 'android' ? _t("「インストール」または「ホーム画面に追加」を選ぶ") : _t("「ホーム画面に追加」→「追加」を押す")}{platform === 'ios-safari' && <small>{_t("「Webアプリとして開く」があればON。")}</small>}</p></li><li><InstallDiagram kind="launch"/><b>3</b><p>{_t("ホーム画面に戻って")}<br />{_t("dontwork.funのアイコンを開く")}</p></li></ol>
+ <ol className="install-picture-steps">
+  <li><InstallDiagram kind="share"/><b>1</b><p>{platform === 'android' ? _t("右上の「⋮」を開く") : platform === 'ios-chrome' ? _t("アドレスバー右の共有ボタンを押す") : _t("共有ボタンを押す（「…」の中にある場合も）")}</p></li>
+  {platform !== 'android' && <li><InstallDiagram kind="more"/><b>2</b><p>{_t("「表示を増やす」を押す")}</p></li>}
+  <li><InstallDiagram kind="home"/><b>{platform === 'android' ? 2 : 3}</b><p>{platform === 'android' ? _t("「インストール」または「ホーム画面に追加」を選ぶ") : _t("「ホーム画面に追加」→「追加」を押す")}{platform === 'ios-safari' && <small>{_t("「Webアプリとして開く」があればON。")}</small>}</p></li>
+  <li><InstallDiagram kind="launch"/><b>{platform === 'android' ? 3 : 4}</b><p>{_t("ホーム画面に戻って")}<br />{_t("dontwork.funのアイコンを開く")}</p></li>
+ </ol>
  <details><summary>{_t("追加の項目が見つからない")}</summary><p>{_t("LINEなどのアプリ内では、メニューからSafariまたはChromeで開いてください。共有メニュー内を下にスクロールすると「ホーム画面に追加」が見つかる場合もあります。")}</p><button className="secondary" onClick={copy}>{_t("このURLをコピー")}</button><p className="selectable-url">{typeof location !== 'undefined' ? location.origin : ''}</p></details>
  </div>;
 }
