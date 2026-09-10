@@ -66,16 +66,16 @@ describe('30 minute competition',()=>{
   const rejected=presentationReducer(pending,{type:'trial-time',now:1000,forced:true});expect(rejected.run.trial?.purchases).toBe(0);
   const lost=presentationReducer(model(s),{type:'trial-time',now:1000,forced:false});expect(lost.run.cash).toBe(0);expect(lost.run.trial?.addedMs).toBe(0);
  });
- it('stops background spins at the deadline, including when background bankroll is blocked',()=>{
+ it('pauses on leaving without background spins or time credit, even near the deadline',()=>{
   const near={...rich(),trial:{...rich().trial!,elapsedMs:TRIAL_MS-11000}};
   const bg=startBackground(near,1000);const done=advanceBackground(bg,9999999,true,12000,80);
-  expect(done.done).toBe(true);expect(done.run.trial?.result).not.toBeNull();expect(done.run.spins).toBe(2);expect(done.run.trial?.elapsedMs).toBe(TRIAL_MS);
+  expect(done.done).toBe(true);expect(done.run.trial?.result).toBeNull();expect(done.run.spins).toBe(0);expect(done.run.trial?.elapsedMs).toBe(TRIAL_MS-11000);
   const poor=startBackground({...near,cash:totalCost(near)},1000);const out=advanceBackground(poor,9999999,true,12000,1);
-  expect(out.run.spins).toBe(1);expect(out.run.trial?.result).not.toBeNull();
+  expect(out.run.spins).toBe(0);expect(out.run.trial?.result).toBeNull();expect(out.run.trial?.elapsedMs).toBe(TRIAL_MS-11000);
  });
- it('settles background spins before a media pause',()=>{
+ it('does not credit background spins after an already paused departure',()=>{
   const bg=startBackground(rich(),1000);const paused=presentationReducer(model(bg),{type:'trial-pause',now:15000});
-  expect(paused.run.spins).toBeGreaterThan(0);expect(paused.run.background).toBeNull();expect(paused.run.trial?.elapsedMs).toBe(14000);expect(paused.run.trial?.paused).toBe(true);
+  expect(paused.run.spins).toBe(0);expect(paused.run.background).toBeNull();expect(paused.run.trial?.elapsedMs).toBe(0);expect(paused.run.trial?.paused).toBe(true);
  });
  it('restores clocks and names and retains normal saves in a separate slot',()=>{
   const normal={...freshRun(),cash:100,peak:100};const trial=switchTrialMode(normal,'trial','fixed',1000);

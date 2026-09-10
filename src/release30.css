@@ -19,6 +19,10 @@ html[lang=en] .spin-result small{font-size:9px}html[lang=en] .bet-card h3{letter
 .app .topbar .wordmark .brand-icon {display:block;width:34px;height:34px;flex:0 0 34px;object-fit:contain}
 .app .topbar nav {display:flex;align-items:center;gap:2px;margin-left:auto}
 .app.desk-layout .play-dock {grid-template-columns:minmax(0,1fr) minmax(0,1.25fr) minmax(0,1.05fr);gap:6px}
+.app .play-dock.without-auto {grid-template-columns:minmax(0,1fr)}
+.app.desk-layout .play-dock.without-auto,.app:not(.no-fuel) .play-dock.without-auto {grid-template-columns:repeat(2,minmax(0,1fr))}
+.app.desk-layout:not(.no-fuel) .play-dock.without-auto {grid-template-columns:repeat(3,minmax(0,1fr))}
+.app .trial-time-control>span>b {font-size:11px}
 .app.desk-layout .play-dock>button,.app.desk-layout .play-dock>label {box-sizing:border-box;min-width:0;padding-inline:6px}
 .app .auto-control {display:flex;flex-direction:column;align-items:stretch;justify-content:center}
 .app .auto-control>span {display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:3px 5px;width:100%;min-width:0}

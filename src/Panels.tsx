@@ -32,7 +32,7 @@ export function Lab({ s, change, notify, preparePreview, onWorkMode, }: {
     return (<>
       <label className="setting-row"><span>{_t("ギャンブル名")}</span><select value={nameStyle} onChange={e => setBetNameStyle(e.target.value as BetNameStyle)}><option value="english">{_t("英語 · 標準")}</option><option value="katakana">{_t("日本語 · 金融用語風")}</option></select></label>
       <label className="setting-row"><span>{_t("金額の表示")}</span><select value={numberStyle} onChange={e => setMoneyStyle(e.target.value as MoneyStyle)}><option value="compact">{_t("省略 · $1K / $1M（標準）")}</option><option value="full">{_t("全桁 · $1,000 / $1,000,000")}</option></select></label>
-      <BackgroundSettings s={s} change={change}/>
+      <BackgroundSettings s={s} change={change} lab/>
       <ReleaseLab s={s} change={change} onWorkMode={onWorkMode}/>
       <EffectsLab s={s} change={change} preparePreview={preparePreview}/>
       <section className="settings-section">

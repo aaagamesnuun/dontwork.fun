@@ -48,12 +48,12 @@ describe('v3 trial rules and exit safety',()=>{
   const applied=reduce({run:freshRun(),pending:null},{type:'change',update:()=>decoded});
   const later=reduce(applied,{type:'trial-clock',now:9999999});expect(later.run.trial?.elapsedMs).toBe(0);expect(later.run.trial?.result).toBeNull();
  });
- it('holds the background clock at the first Jackpot, surviving save/reload until returning',()=>{
-  const source=startBackground({...ready(),settings:{...ready().settings,backgroundPlay:true}},1000);
+ it('holds ordinary background play at the first Jackpot, surviving save/reload until returning',()=>{
+  const source=startBackground({...freshRun(),cash:1e6,peak:1e6,running:true,portfolio:[{id:'edge-50',count:1}],settings:{...freshRun().settings,backgroundPlay:true}},1000);
   const hit=advanceBackground(source,999999,true,12000,100).run;
-  expect(hit).toMatchObject({spins:1,running:false,background:null,backgroundJackpot:true,trial:{elapsedMs:5000,paused:true}});
-  const restored=readSave(JSON.stringify(hit))!;expect(advanceBackground(restored,9999999,true).run.trial?.elapsedMs).toBe(5000);
-  const back=resumeBackgroundJackpot(restored,9999999);expect(advanceTrial(back,10000999).trial?.elapsedMs).toBe(6000);
+  expect(hit).toMatchObject({spins:1,running:false,background:null,backgroundJackpot:true,trial:null});
+  const restored=readSave(JSON.stringify(hit))!;expect(advanceBackground(restored,9999999,true).run.spins).toBe(1);
+  const back=resumeBackgroundJackpot(restored,9999999);expect(back).toMatchObject({running:true,backgroundJackpot:false});
  });
  it('updates next positions immediately without replacing the accepted result or its reserve',()=>{
   const run={...freshRun(),cash:10000,peak:10000,slots:2,portfolio:[{id:'edge-50',count:1}],running:true};
@@ -94,7 +94,7 @@ describe('v3 player-facing defaults and records',()=>{
   }
  });
  it('requires sound and granted notifications, but always allows an already-enabled setting to be turned off',()=>{
-  const run={...ready(),settings:{...ready().settings,backgroundPlay:true,jackpotNotifications:true}};
+  const run={...freshRun(),settings:{...freshRun().settings,backgroundPlay:true,jackpotNotifications:true}};
   vi.stubGlobal('navigator',{locks:{},serviceWorker:{}});vi.stubGlobal('Notification',{permission:'denied'});expect(backgroundAccess(run)).toBe(false);
   const html=renderToStaticMarkup(<BackgroundSettings s={run} change={()=>{}}/>);expect(html).toContain('バックグラウンド進行をOFFにする');expect(html).not.toContain('disabled=""');
   vi.stubGlobal('Notification',{permission:'granted'});expect(backgroundAccess(run)).toBe(true);expect(backgroundAccess({...run,settings:{...run.settings,sound:false}})).toBe(false);

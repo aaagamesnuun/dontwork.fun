@@ -9,6 +9,7 @@ export function ReleaseLab({ s, change, onWorkMode }: {
 }) {
     const set = (patch: Partial<Settings>) => change(run => configure(run, patch));
     return <section className="settings-section release-lab"><h3>{_t("画面・遊び方の比較")}</h3>
+ <label className="setting-row"><span>{_t("AUTOボタンをなくす")}<small>{_t("通常モード専用。準備ができると自動で回ります。30分チャレンジは砂時計で開始・一時停止します。")}</small></span><input type="checkbox" disabled={!!s.trial} checked={s.settings.autoAlwaysOn} onChange={e => set({autoAlwaysOn:e.target.checked})}/></label>
  <label className="setting-row"><span>{_t("ジャックポット条件")}<small>{_t("連続モードは91以上が続く間、2回目以降毎回発動。")}</small></span><select value={s.settings.jackpotRule} onChange={e => set({ jackpotRule: e.target.value as Settings['jackpotRule'] })}><option value="combined">{_t("100 または 91以上を2回連続 · 標準")}</option><option value="hundred">{_t("100だけで発動")}</option><option value="double-high">{_t("91以上を2回連続")}</option></select></label>
  <label className="setting-row"><span>{_t("前回Jackpotからのスピン数")}</span><input type="checkbox" checked={s.settings.showJackpotCounter} onChange={e => set({ showJackpotCounter: e.target.checked })}/></label>
  <label className="setting-row"><span>{_t("撮影モード")}<small>{_t("資産・スピン・チャートを大きく表示。ギャンブルと強化は「操作」から開けます。")}</small></span><input type="checkbox" checked={s.settings.captureMode} onChange={e => set({ captureMode: e.target.checked })}/></label>

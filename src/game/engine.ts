@@ -82,6 +82,7 @@ export interface Settings {
   coinFlip: boolean;
   dockToy: "off" | "tap" | "beat" | "charge";
   backgroundPlay: boolean;
+  autoAlwaysOn: boolean;
   backgroundRevision: 2;
   bigChangeNotifications: boolean;
   jackpotNotifications: boolean;
@@ -289,6 +290,7 @@ export const defaultSettings: Settings = {
   rollDisplay: "number",
   spectacleRevision: 1, handToys: false, coinFlip: false, dockToy: "off",
   backgroundPlay: false,
+  autoAlwaysOn: false,
   backgroundRevision: 2,
   bigChangeNotifications: false,
   jackpotNotifications: false,
@@ -365,7 +367,7 @@ export const defaultSettings: Settings = {
 export const customRules = (settings: Settings, trial = false) =>
   settings.handToys || settings.jackpotRule !== "combined" || settings.probabilityUpgrades || settings.baccarat ||
   settings.workMode === "gamble" || settings.workCosmetics ||
-  (!trial && (!settings.secondBetAssist || !settings.spinAssist || settings.spinAssistSequence !== defaultSettings.spinAssistSequence)) ||
+  (!trial && (settings.autoAlwaysOn || !settings.secondBetAssist || !settings.spinAssist || settings.spinAssistSequence !== defaultSettings.spinAssistSequence)) ||
   JSON.stringify([
     settings.opening,
     trial ? true : settings.assist,
@@ -1245,6 +1247,7 @@ export function playBaccarat(s: Run, wager: number, side: "player" | "banker", t
     history:appendHistory(s.history,{cash,at:s.activeMs,spin:s.spins,kind:"baccarat"})});
 }
 export function configure(s: Run, patch: Partial<Settings>): Run {
+  if (s.trial) patch = {...patch,autoAlwaysOn:false,backgroundPlay:false};
   if (patch.spinAssistSequence !== undefined && !/^[WL]{4}$/.test(patch.spinAssistSequence)) return s;
   if (s.trial && patch.secondBetAssist !== undefined) patch = {...patch,secondBetAssist:false};
   if (s.trial && patch.spinAssist !== undefined) patch = {...patch,spinAssist:false};
@@ -1274,6 +1277,7 @@ export function configure(s: Run, patch: Partial<Settings>): Run {
         "workMode",
         "workCosmetics",
         "spinAssist",
+        "autoAlwaysOn",
         "secondBetAssist",
         "spinAssistSequence",
         "fuelEnabled",
@@ -1474,7 +1478,7 @@ export function readSave(raw: string | null): Run | null {
     if(typeof n.settings.bigChangeNotifications!=="boolean")n.settings.bigChangeNotifications=false;
     if([n.settings.jackpotNotifications,n.settings.sweepSound,n.settings.coinChartMarkers,n.settings.streakEffects].some(v=>typeof v!=="boolean") || !Number.isFinite(n.settings.effectIntensity) || n.settings.effectIntensity<.25 || n.settings.effectIntensity>2)return null;
     if(n.settings.handToys)n.debug=true;
-    if(typeof n.settings.backgroundPlay!=="boolean" || !Number.isFinite(n.backgroundMs) || n.backgroundMs<0 || n.backgroundMs>n.activeMs) return null;
+    if(typeof n.settings.autoAlwaysOn!=="boolean" || typeof n.settings.backgroundPlay!=="boolean" || !Number.isFinite(n.backgroundMs) || n.backgroundMs<0 || n.backgroundMs>n.activeMs) return null;
     const bg=n.background;
     if(bg!==null && (!bg || !Number.isFinite(bg.at) || bg.at<0 || !Number.isFinite(bg.until) || bg.until<bg.at || bg.until-bg.at>3600000 || !Number.isFinite(bg.remainingMs) || bg.remainingMs<=0 || bg.remainingMs>100000 || !Number.isInteger(bg.spinsLeft) || bg.spinsLeft<0 || bg.spinsLeft>12000)) return null;
     if(!n.settings.backgroundPlay) n.background=null;
@@ -1862,6 +1866,10 @@ export function readSave(raw: string | null): Run | null {
       n.settings.assist=false;
       n.settings.spinAssist=false;
       n.settings.secondBetAssist=false;
+      n.settings.autoAlwaysOn=false;
+      n.settings.backgroundPlay=false;
+      n.background=null;
+      n.backgroundJackpot=false;
       if(t.rule!=="fixed")n.debug=true;
       if(t.result){
         const r=t.result;
@@ -1954,7 +1962,7 @@ export function freshTrial(settings:Settings=defaultSettings,rule:TrialRule="fix
   for(const key of ["jackpotRule","handToys","coinFlip","baccarat","probabilityUpgrades","workMode","workCosmetics","upgradeTutorial","spinAssist","secondBetAssist","spinAssistSequence","fuelEnabled","opening","assist","assistAfter","spinSpeedScale","jackpotSpinIntervalMs","rushBase","upgradePrices","economyProfile","upgradeMode","positionPriceBase","positionPriceMultiplier","speedPriceBase","speedPriceMultiplier"] as const)
     Object.assign(normalized,{[key]:defaultSettings[key]});
   const run=freshRun("classic",normalized);
-  return {...run,debug:rule!=="fixed",settings:{...normalized,assist:false,spinAssist:false,secondBetAssist:false,dockToy:"off"},trial:{scoring:"assets",rule,elapsedMs:0,addedMs:0,anchor:null,started:false,paused:true,result:null,nickname:"",submitted:false,purchases:0,spent:0,lastPurchase:null}};
+  return {...run,debug:rule!=="fixed",settings:{...normalized,assist:false,spinAssist:false,secondBetAssist:false,autoAlwaysOn:false,backgroundPlay:false,dockToy:"off"},trial:{scoring:"assets",rule,elapsedMs:0,addedMs:0,anchor:null,started:false,paused:true,result:null,nickname:"",submitted:false,purchases:0,spent:0,lastPurchase:null}};
 }
 export function trialDeadline(s:Run):number {
   const t=s.trial;return t && t.anchor!==null && !t.paused && !t.result?t.anchor+trialRemaining(t):Infinity;

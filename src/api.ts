@@ -1,3 +1,4 @@
+import { Journey, JOURNEY_KEY } from "./journey";
 import { servicesEnabled } from "./serviceConfig";
 import { t as _t } from "./i18n";
 import { soundAssignment, soundExperimentProps } from "./soundExperiment";
@@ -113,6 +114,7 @@ export function snapshot(s: Run) {
         payoffStyle: s.settings.payoffStyle,
         sweepMotion: s.settings.sweepMotion,
         spinAssist: s.settings.spinAssist,
+        autoAlwaysOn: s.settings.autoAlwaysOn,
         spinAssistSequence: s.settings.spinAssistSequence,
         music: s.settings.music,
         jackpotMusic: s.settings.jackpotMusic,
@@ -142,6 +144,9 @@ export function snapshot(s: Run) {
 }
 export const localTelemetryHost = (hostname: string, development = false) => development || /^(localhost|127(?:\.\d{1,3}){3}|\[?::1\]?)$/i.test(hostname) || hostname.endsWith(".localhost");
 export class Telemetry {
+    private journey: Journey | null = null;
+    private spinVisit = "";
+    private origin: "new" | "saved";
     private installId = "";
     private sessionId = crypto.randomUUID();
     private sequence = 0;
@@ -206,6 +211,7 @@ export class Telemetry {
         if (this.hidden === hidden)
             return;
         this.hidden = hidden;
+        if (!hidden) this.journey?.activate();
         this.event(s, hidden ? "session_end" : "session_start", hidden
             ? {
                 reason: "hidden",
@@ -266,7 +272,8 @@ export class Telemetry {
             });
         }
     }
-    constructor() {
+    constructor(origin: "new" | "saved" = "saved") {
+        this.origin = origin;
         if (this.localOnly) {
             this.disabled = true;
             return;
@@ -300,6 +307,13 @@ export class Telemetry {
             /* Local telemetry buffering is optional. */
         }
     }
+    foreground(s: Run, ms: number) {
+        if (this.disabled || !s.telemetry) return;
+        this.ensureJourney(s).played(ms, false);
+    }
+    private ensureJourney(s: Run) {
+        return this.journey ??= new Journey({ origin: this.origin, language: s.settings.language, device: innerWidth < 780 ? "mobile" : "desktop", version: VERSION, mode: s.trial ? "30m" : "normal" }, localStorage);
+    }
     event(s: Run, eventName: string, props: Record<string, unknown> = {}) {
         if (eventName === "tab_view")
             this.view = {
@@ -309,6 +323,8 @@ export class Telemetry {
             };
         if (this.disabled || !s.telemetry)
             return;
+        const journey = this.ensureJourney(s);
+        if (!this.hidden && props.source !== "background" && ["interaction_start", "work_batch", "spin_batch", "upgrade_purchase", "deck_change", "coin_batch", "baccarat_round"].includes(eventName)) journey.played();
         this.queue.push({
             eventId: crypto.randomUUID(),
             runId: s.id,
@@ -319,12 +335,12 @@ export class Telemetry {
             eventName,
             appVersion: VERSION,
             rulesetVersion: ruleset(s),
-            schemaVersion: 2,
+            schemaVersion: 3,
             debug: s.debug,
             language: s.settings.language,
             deviceClass: innerWidth < 780 ? "mobile" : "desktop",
             viewportClass: innerWidth < 640 ? "small" : innerWidth < 1100 ? "medium" : "large",
-            props: { ...props, ...soundExperimentProps(s.settings) },
+            props: { ...props, ...soundExperimentProps(s.settings), ...journey.props(), modal: this.view.modal, tab: this.view.tab, gameStatus: status(s) },
         });
         if (this.queue.length > 120) {
             const dropped = this.queue.splice(0, this.queue.length - 120);
@@ -333,6 +349,9 @@ export class Telemetry {
     }
     observe(s: Run) {
         if (!s.telemetry) {
+            this.journey?.clear();
+            try { localStorage.setItem(JOURNEY_KEY, "null"); } catch { /* Optional telemetry. */ }
+            this.journey = null;
             this.queue = [];
             this.sealed.clear();
             this.persist();
@@ -366,21 +385,25 @@ export class Telemetry {
     }
     musicPlayed(s: Run, musicPack: Settings["musicPack"], playing: boolean, requested: boolean, rush: boolean, durationMs: number) {
         if (this.disabled || !s.telemetry || !Number.isFinite(durationMs) || durationMs <= 0 || durationMs > 1000) return;
-        const props = { musicPack, music: playing, requested, phase: rush ? "jackpot" : "normal", source: "foreground", durationMs };
+        const journeyProps = this.ensureJourney(s).props();
+        const props = { ...journeyProps, musicPack, music: playing, requested, phase: rush ? "jackpot" : "normal", source: "foreground", durationMs };
         const batch = [...this.queue].reverse().find(e => {
             const p = e.props as typeof props;
-            return e.runId === s.id && e.eventName === "music_play_batch" && !this.sealed.has(e.eventId) && p.musicPack === musicPack && p.music === playing && p.requested === requested && p.phase === props.phase;
+            return e.runId === s.id && e.eventName === "music_play_batch" && p.journey?.id === journeyProps.journey.id && !this.sealed.has(e.eventId) && p.musicPack === musicPack && p.music === playing && p.requested === requested && p.phase === props.phase;
         });
         if (batch) {
             const p = batch.props as typeof props;
+            p.journey = journeyProps.journey;
             p.durationMs = Math.min(30 * 86400000, p.durationMs + durationMs);
             batch.activeMs = Math.round(s.activeMs);
         } else this.event(s, "music_play_batch", props);
     }
     changed(before: Run, after: Run) {
         if (!this.disabled && after.telemetry && before.id === after.id && after.coinRounds > before.coinRounds) {
-            const props = { rounds: after.coinRounds - before.coinRounds, wins: after.coinWins - before.coinWins, wager: apiMoney(after.coinWagered - before.coinWagered), payout: apiMoney(after.coinPaid - before.coinPaid), coinRounds: after.coinRounds, coinWins: after.coinWins, coinWagered: after.coinWagered, coinPaid: after.coinPaid };
-            const batch = [...this.queue].reverse().find(e => e.runId === after.id && e.eventName === "coin_batch" && !this.sealed.has(e.eventId) && Math.floor(Number(e.activeMs) / 10000) === Math.floor(after.activeMs / 10000));
+            if (!this.hidden) this.ensureJourney(after).played();
+            const journeyProps = this.ensureJourney(after).props();
+            const props = { ...journeyProps, rounds: after.coinRounds - before.coinRounds, wins: after.coinWins - before.coinWins, wager: apiMoney(after.coinWagered - before.coinWagered), payout: apiMoney(after.coinPaid - before.coinPaid), coinRounds: after.coinRounds, coinWins: after.coinWins, coinWagered: after.coinWagered, coinPaid: after.coinPaid };
+            const batch = [...this.queue].reverse().find(e => e.runId === after.id && e.eventName === "coin_batch" && (e.props as {journey?:{id:string}}).journey?.id === journeyProps.journey.id && !this.sealed.has(e.eventId) && Math.floor(Number(e.activeMs) / 10000) === Math.floor(after.activeMs / 10000));
             if (batch) {
                 const old = batch.props as Record<string, number>;
                 batch.props = { ...old, ...props, rounds: old.rounds + props.rounds, wins: old.wins + props.wins, wager: apiMoney(old.wager + props.wager), payout: apiMoney(old.payout + props.payout) };
@@ -405,6 +428,7 @@ export class Telemetry {
             this.observe(after);
             return;
         }
+        if (!this.hidden && after.work > before.work) this.ensureJourney(after).played();
         this.trackWait(after);
         if (before.spins === after.spins &&
             before.clearAt === null &&
@@ -461,6 +485,16 @@ export class Telemetry {
         if (this.disabled || !after.telemetry)
             return;
         const source = background ? "background" : "foreground";
+        const journey = this.ensureJourney(after);
+        if (!background && !this.hidden && after.spins > before.spins) journey.played();
+        const journeyProps = journey.props();
+        // This prerequisite is emitted once per visit, before same-spin JP/clear.
+        if (!background && !this.hidden && after.spins > before.spins && this.spinVisit !== journeyProps.journey.id) {
+            this.spinVisit = journeyProps.journey.id;
+            this.event(after, "milestone", { name: "visit_spin", source });
+        }
+        if (before.secondBetTutorial !== "done" && after.secondBetTutorial === "done" && after.spins > before.spins)
+            this.event(after, "milestone", { name: "second_bet", source });
         if (!background && (before.rushLeft > 0 || (after.last?.jackpot && after.last.id !== before.last?.id)) && after.rushLeft === 0)
             this.event(after, "jackpot", {
                 phase: "end",
@@ -536,12 +570,14 @@ export class Telemetry {
         const tail = this.queue.at(-1);
         if (tail?.eventName === "spin_batch" &&
             !this.sealed.has(tail.eventId) &&
+            (tail.props as {journey?:{id:string}}).journey?.id === journeyProps.journey.id &&
             tail.runId === after.id &&
             tail.debug === after.debug &&
             (tail.props as Record<string, unknown>).source === source &&
             JSON.stringify((tail.props as Record<string, unknown>).deck) ===
                 JSON.stringify(before.portfolio)) {
             const p = tail.props as Record<string, unknown>;
+            p.journey = journeyProps.journey;
             for (const k of [
                 "spins",
                 "wins",
@@ -612,6 +648,8 @@ export class Telemetry {
         if (this.localOnly)
             return;
         this.disabled = true;
+        this.journey?.clear();
+        this.journey = null;
         this.queue = [];
         this.sealed.clear();
         this.persist();

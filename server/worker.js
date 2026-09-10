@@ -1,3 +1,4 @@
+import { sanitizeJourney, funnelProjection, funnelApi, funnelReady } from "./funnel.js";
 import {bankrollRankingsApi} from "./bankrollRankings.js";
 import { refreshSoundExperimentReport } from "./soundExperiment.js";
 import { rankingsApi } from "./rankings.js";
@@ -199,7 +200,7 @@ const EVENT_NAMES = new Set([
 
 const PROP_KEYS = new Set([
   "soundExperiment", "soundVariant", "soundAssignedAt", "workspaceMode", "sharedChart", "oddsDisplay", "probabilityUpgrades", "baccarat", "baccaratRounds",
-  "entryKind", "reason", "name", "source", "phase", "code", "action", "kind", "tab", "transactionId", "waitId",
+  "gameStatus", "entryKind", "reason", "name", "source", "phase", "code", "action", "kind", "tab", "transactionId", "waitId",
   "bankroll", "peakBankroll", "bankrollBefore", "bankrollAfter", "bankrollStart", "bankrollEnd", "bankrollMin",
   "bankrollMax", "fuel", "fuelCapacity", "slotCount", "spinSpeedLevel", "status", "isRunning", "running",
   "requested", "cleared", "debug", "duplicate", "pendingChoice", "totalSpins", "totalDraws", "totalWork",
@@ -316,6 +317,7 @@ NUMERIC_PROP_KEYS.add("spinsSinceJackpot"); INTEGER_COUNT_PROP_KEYS.add("spinsSi
 for(const key of ["backgroundJackpot","bigChangeNotifications","rollDisplay","language","trialScoring"])PROP_KEYS.add(key);
 SETTING_ENUM_VALUES.set("rollDisplay",new Set(["dice","number"]));SETTING_ENUM_VALUES.set("language",new Set(["ja","en"]));SETTING_ENUM_VALUES.set("trialScoring",new Set(["none","cash","assets"]));
 PROP_KEYS.add("spinAssist"); PROP_KEYS.add("spinAssistSequence");
+PROP_KEYS.add("autoAlwaysOn");
 SETTING_ENUM_VALUES.set("spinAssistSequence",new Set([4,5].flatMap(length=>Array.from({length:2**length},(_,n)=>n.toString(2).padStart(length,"0").replaceAll("0","L").replaceAll("1","W")))));
 PROP_KEYS.add("backgroundPlay"); PROP_KEYS.add("backgroundMs");
 for(const key of ["jackpotNotifications","sweepSound","coinChartMarkers","streakEffects","effectIntensity"])PROP_KEYS.add(key);
@@ -519,6 +521,8 @@ const parseEvent = (input) => {
   if (sequence === null || activeMs === null || engagedMs === null || schemaVersion === null || !appVersion || !rulesetVersion) return null;
   if (!['en', 'ja'].includes(input.language) || !['mobile', 'desktop'].includes(input.deviceClass) || !['small', 'medium', 'large'].includes(input.viewportClass)) return null;
   const props = sanitizeProps(input.props);
+  const journey = sanitizeJourney(input.props?.journey);
+  if (journey && schemaVersion >= 3) props.journey = journey;
   const propsJson = JSON.stringify(props);
   if (propsJson.length > 20_000) return null;
   return {
@@ -1383,9 +1387,12 @@ const telemetryApi = async (request, env, url) => {
   const id = await playerHash(input.installId, env.TELEMETRY_HASH_KEY);
 
   if (request.method === "DELETE") {
+    const visitsReady = await funnelReady(env.DB);
     await env.DB.batch([
       env.DB.prepare(`UPDATE game_ratings SET player_id=NULL,run_id=NULL,session_id=NULL,ruleset_version=NULL,active_ms=NULL,snapshot_json=NULL WHERE player_id=?`).bind(id),
       env.DB.prepare(`UPDATE feedback_messages SET player_id = NULL, run_id = NULL, session_id = NULL, ruleset_version = NULL, active_ms = NULL, snapshot_json = NULL, bankroll = 0, total_spins = 0, total_draws = 0 WHERE player_id = ?`).bind(id),
+      ...(visitsReady ? [env.DB.prepare(`DELETE FROM funnel_segments WHERE player_id = ?`).bind(id),
+      env.DB.prepare(`DELETE FROM funnel_devices WHERE player_id = ?`).bind(id)] : []),
       env.DB.prepare(`DELETE FROM telemetry_events WHERE player_id = ?`).bind(id),
       env.DB.prepare(`DELETE FROM telemetry_recent_runs WHERE run_id IN (SELECT run_id FROM telemetry_runs WHERE player_id = ?)`).bind(id),
       env.DB.prepare(`DELETE FROM telemetry_runs WHERE player_id = ?`).bind(id),
@@ -1430,7 +1437,8 @@ const telemetryApi = async (request, env, url) => {
     .bind(event.eventId, id, event.runId, event.sessionId, event.sequence, event.activeMs, event.engagedMs, event.eventName,
       event.appVersion, event.rulesetVersion, event.schemaVersion, event.debug, event.language, event.deviceClass,
       event.viewportClass, event.propsJson));
-  const results = await env.DB.batch(inserts);
+  const visitsReady = events.some(event=>event.props.journey) ? await funnelReady(env.DB) : false;
+  const results = await env.DB.batch([...inserts, ...(visitsReady ? events.flatMap(event => funnelProjection(env.DB, id, event)) : [])]);
   const byRun = new Map();
   for (const event of events) {
     const group = byRun.get(event.runId) ?? [];
@@ -1446,6 +1454,7 @@ const telemetryApi = async (request, env, url) => {
   }
   if (events.some((event) => event.eventName === "session_start")) {
     await env.DB.batch([
+      ...(visitsReady ? [env.DB.prepare(`DELETE FROM funnel_segments WHERE started_at < (unixepoch() - 15552000) * 1000`)] : []),
       env.DB.prepare(`DELETE FROM telemetry_events WHERE received_at < unixepoch() - 2592000`),
       env.DB.prepare(`DELETE FROM telemetry_runs WHERE last_seen_at < unixepoch() - 15552000`),
       env.DB.prepare(`DELETE FROM telemetry_recent_runs WHERE run_id NOT IN
@@ -1457,7 +1466,7 @@ const telemetryApi = async (request, env, url) => {
     // A/B reporting must never reject an otherwise accepted gameplay batch.
     try {await refreshSoundExperimentReport(env.DB)} catch { /* Raw events remain available for the next refresh. */ }
   }
-  const accepted = results.reduce((sum, result) => sum + Number(result.meta?.changes ?? 0), 0);
+  const accepted = results.slice(0, events.length).reduce((sum, result) => sum + Number(result.meta?.changes ?? 0), 0);
   return json({ accepted, ignored: events.length - accepted }, 202);
 };
 
@@ -1527,6 +1536,7 @@ export const ratingsApi=async(request,env,url)=>{
 const worker = {
   async fetch(request, env) {
     const url = new URL(request.url);
+    if (url.pathname === "/api/analytics/funnel") return funnelApi(request, env, url);
     if (["/api/save-codes", "/api/save-codes/restore"].includes(url.pathname)) return json({ error: "This feature is no longer available." }, 410);
     if (url.pathname === "/api/bankroll-rankings") return bankrollRankingsApi(request,env.DB,url);
     if (url.pathname === "/api/rankings") return rankingsApi(request, env.DB, url, score => !String(score.rulesetVersion).includes("-30m") && ASTRA_V9_CATALOG_IDS.includes(score.catalog) && typeof score.rulesetVersion === "string" && score.rulesetVersion.endsWith(":" + score.catalog) && acceptsTelemetry(score));

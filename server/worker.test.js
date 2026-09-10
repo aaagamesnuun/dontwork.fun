@@ -199,7 +199,7 @@ describe("feedback write-only endpoint", () => {
 const sqliteD1 = () => {
   const database = new DatabaseSync(":memory:");
   let queryCount = 0;
-  for (const name of ["0000_leaderboard.sql", "0001_telemetry.sql", "0002_feedback.sql", "0003_telemetry_v2.sql", "0004_leaderboard_rulesets.sql", "0005_feedback_context.sql", "0006_clear_records.sql", "0007_save_codes.sql", "0008_ratings.sql"]) {
+  for (const name of ["0000_leaderboard.sql", "0001_telemetry.sql", "0002_feedback.sql", "0003_telemetry_v2.sql", "0004_leaderboard_rulesets.sql", "0005_feedback_context.sql", "0006_clear_records.sql", "0007_save_codes.sql", "0008_ratings.sql", "0010_funnel.sql"]) {
     database.exec(readFileSync(new URL(`../drizzle/${name}`, import.meta.url), "utf8"));
   }
   const prepare = (sql) => {

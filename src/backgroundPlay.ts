@@ -4,12 +4,13 @@ import { remainingSpinMs, spinTiming } from "./spinTiming";
 export const BACKGROUND_MS = 60 * 60 * 1000;
 export const BACKGROUND_SPINS = 12000;
 export const backgroundSupported = () => typeof navigator !== "undefined" && !!navigator.locks;
-export const backgroundAccess = (run:Run) => backgroundSupported() && run.settings.sound && run.settings.soundVolume>0 && run.settings.jackpotNotifications && typeof Notification!=="undefined" && Notification.permission==="granted";
+export const backgroundAccess = (run:Run) => !run.trial && backgroundSupported() && run.settings.sound && run.settings.soundVolume>0 && run.settings.jackpotNotifications && typeof Notification!=="undefined" && Notification.permission==="granted";
 export function holdBackgroundJackpot(run:Run,at:number):Run {
   const stopped=pauseTrial({...run,background:null},at);
   return {...stopped,running:false,background:null,backgroundJackpot:true};
 }
 export function resumeBackgroundJackpot(run:Run,now:number):Run {
+  if (run.trial) return pauseTrial({...run,background:null,backgroundJackpot:false},run.background?.at ?? run.trial.anchor ?? now);
   if(!run.backgroundJackpot)return run;
   const resumed={...run,backgroundJackpot:false,running:true};
   return run.trial?resumeTrial(resumed,now):resumed;
@@ -17,18 +18,21 @@ export function resumeBackgroundJackpot(run:Run,now:number):Run {
 export type BackgroundClock = { at: number; remainingMs: number; until: number; spinsLeft: number };
 
 export function startBackground(run: Run, now: number, chargedMs = 0, revealMs = 0): Run {
+  if (run.trial) return pauseTrial({...run,background:null,backgroundJackpot:false},now);
   if (!run.settings.backgroundPlay || run.backgroundJackpot || !run.running || (!run.trial && !canSpin(run))) return {...run, background:null};
   return {...run, background:{at:now, remainingMs:Math.max(1,remainingSpinMs(run,chargedMs,revealMs)), until:now+BACKGROUND_MS, spinsLeft:BACKGROUND_SPINS}};
 }
 // A foreground save records exactly where AUTO could resume if the page is
 // killed without a visibility event. A live background clock is never reset.
 export function backgroundSave(run: Run, now: number, chargedMs = 0, revealMs = 0) {
+  if (run.trial) return {...run,background:null};
   if (!run.settings.backgroundPlay || run.backgroundJackpot) return {...run, background:null};
   return run.background ? run : startBackground(run, now, chargedMs, revealMs);
 }
 
 export function advanceBackground(run: Run, now: number, returning: boolean, maxSteps = 100, forced?: number, osReduced = false) {
   const transitions: {before:Run;after:Run}[] = [];
+  if (run.trial) return {run:pauseTrial({...run,background:null,backgroundJackpot:false},run.background?.at ?? run.trial.anchor ?? now),transitions,done:true,capped:false};
   if(run.backgroundJackpot)return {run,transitions,done:true,capped:false};
   if (!run.background) return {run:advanceTrial(run,now), transitions, done:true, capped:false};
   if (!run.settings.backgroundPlay || now < run.background.at) return {run:{...run,running:false,background:null},transitions,done:true,capped:false};

@@ -16,10 +16,19 @@ export function TrialClock({ s, onResult }: {
     if (!t)
         return null;
     return <div className={`trial-clock ${trialRemaining(t) <= 60000 ? 'trial-last-minute' : ''} ${t.paused ? 'is-paused' : ''}`}>
-  <small>{t.result ? _t("終了") : t.paused ? _t("AUTOで開始・再開") : _t("残り時間")}</small>
+  <small>{t.result ? _t("終了") : t.paused ? _t("砂時計で開始・再開") : _t("残り時間")}</small>
   <strong role="timer" aria-label={_t("残り時間")}>{trialClock(trialRemaining(t))}</strong>
   {t.result && <button onClick={onResult}>{_t("結果を見る")}</button>}
  </div>;
+}
+export function TrialControl({s,onToggle,onResult}:{s:Run;onToggle:()=>void;onResult:()=>void}) {
+    const trial=s.trial;
+    if (!trial) return null;
+    if (trial.result) return <div className="auto-control trial-time-control"><TrialClock s={s} onResult={onResult}/></div>;
+    return <button className={`auto-control trial-time-control ${trial.paused ? "" : "on"}`} onClick={onToggle} aria-pressed={!trial.paused} aria-label={trial.paused ? _t("砂時計：時間を開始・再開") : _t("砂時計：時間を一時停止")} data-ui-cue="auto">
+      <span><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" aria-hidden="true"><path d="M6 3h12M6 21h12M7 3v4l5 5-5 5v4m10-18v4l-5 5 5 5v4M9 7h6M9 18h6"/></svg><b>{trial.paused ? _t("開始・再開") : _t("一時停止")}</b></span>
+      <TrialClock s={s} onResult={onResult}/>
+    </button>;
 }
 export function TrialModes({ s, onSwitch, lab = false }: {
     s: Run;
@@ -29,7 +38,7 @@ export function TrialModes({ s, onSwitch, lab = false }: {
     const [confirm, setConfirm] = useState<TrialRule | null>(null);
     return <section className="trial-modes">
  <h3>{_t("30分で、どこまで増やせる？")}</h3>
- <p>{_t("現金＋強化に使った総額で競います。AUTOがONの間は、賭け金不足でも時計が進み、WORKできます。OFFにすると時計・WORK・スピンが止まります。ギャンブル変更と強化購入はいつでもできます。")}</p>
+ <p>{_t("現金＋強化に使った総額で競います。砂時計ボタンで開始・一時停止。開始中は賭け金不足でも時計が進み、WORKできます。ギャンブル変更と強化購入はいつでもできます。画面を離れると時計とスピンが止まります。")}</p>
  <p className="setting-note">{_t("通常モードのセーブは別に残ります。")}</p>
  <div className="menu-grid">
  {s.trial ? <button className="secondary" onClick={() => onSwitch('normal')}>{_t("通常モードに戻る →")}</button> : <button className="primary" onClick={() => onSwitch('trial')}>{_t("30分モードへ →")}</button>}

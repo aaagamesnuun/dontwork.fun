@@ -24,9 +24,10 @@ export function unlockedSince(before: Run, after: Run) {
     return visibleBets(after).filter((b) => !previous.has(b.id));
 }
 export function guidance(s: Run, tick = 0, tab: "spin" | "positions" | "upgrades" = "spin"): Guidance {
+    if (!s.trial && s.settings.autoAlwaysOn && !s.running) s = {...s,running:true};
     const result = (key: string, text: string, target: GuideTarget = null, label = "NEXT MOVE", urgent = target !== null): Guidance => ({ key, text, target, label, urgent });
     if (s.trial?.paused)
-        return result("trial", s.trial.result ? _t("30分終了。上の「結果を見る」から記録とランキングへ。") : !s.trial.started ? _t("AUTOをONにして30分スタート。まずはWORKで資金を作ろう。") : _t("ポーズ中。ギャンブルの入れ替え・強化はできます。AUTOをONにすると時計もスピンも再開。"), null, "30 MIN", false);
+        return result("trial", s.trial.result ? _t("30分終了。上の「結果を見る」から記録とランキングへ。") : !s.trial.started ? _t("砂時計ボタンで30分スタート。まずはWORKで資金を作ろう。") : _t("ポーズ中。ギャンブルの入れ替え・強化はできます。砂時計ボタンで時計とスピンを再開。"), null, "30 MIN", false);
     const desk = s.settings.workspaceMode === "desk";
     if (desk && tab === "spin")
         tab = "positions";
@@ -83,7 +84,7 @@ export function guidance(s: Run, tick = 0, tab: "spin" | "positions" | "upgrades
             const action = upgrade === "speed" ? _t("「スピン周期」を強化して、スピンを速くしよう。") :
                 upgrade === "gacha" ? _t("強化ガチャを引いて、最初のアップグレードを手に入れよう。") : _t("光っている強化を購入しよう。");
             return { ...result("first-upgrade", tab === "upgrades" ? (s.cash >= price ? action : _t("あと{0}で{1}。AUTOで貯めよう。", money(price - s.cash), upgrade === "speed" ? _t("スピン周期を強化できる") : upgrade === "gacha" ? _t("強化ガチャを引ける") : _t("最初の強化を購入できる"))) :
-                    upgrade === "speed" ? desk ? _t("WORKとAUTOの間の「アップグレード」を開いて、スピン周期を強化しよう。") : _t("「アップグレード」を開いて、まずスピン周期を強化しよう。") : desk ? _t("WORKとAUTOの間の「アップグレード」を開こう。") : _t("「アップグレード」を開いて、最初の強化を試そう。"), tab !== "upgrades" ? "upgrades" : s.cash >= price ? "purchase" : null), upgrade };
+                    upgrade === "speed" ? desk && !s.trial && !s.settings.autoAlwaysOn ? _t("WORKとAUTOの間の「アップグレード」を開いて、スピン周期を強化しよう。") : _t("「アップグレード」を開いて、まずスピン周期を強化しよう。") : desk && !s.trial && !s.settings.autoAlwaysOn ? _t("WORKとAUTOの間の「アップグレード」を開こう。") : _t("「アップグレード」を開いて、最初の強化を試そう。"), tab !== "upgrades" ? "upgrades" : s.cash >= price ? "purchase" : null), upgrade };
         }
     }
     const next = availableBets(s)

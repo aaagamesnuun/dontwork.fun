@@ -1,5 +1,8 @@
 import { SpinReveal } from "./spinReveal";
 import { BalanceReadout } from "./BalanceReadout";
+import { BackgroundSettings } from "./BackgroundSettings";
+import { resumeAutomaticPlay } from "./automaticPlay";
+import { TrialControl } from "./TimeTrial";
 import { useMoneyStyle } from "./moneyPreferences";
 import { secondBetStep } from "./game/positionTutorial";
 import { JackpotNews } from "./JackpotNews";
@@ -8,7 +11,7 @@ import { useBetNameStyle } from "./betNamePreferences";
 import { MusicSettings } from "./MusicSettings";
 import { useLanguage, setLanguage } from "./i18n";
 import { t as _t, textValue as _text } from "./i18n";
-import { TrialClock, TrialModes, TrialTimeShop, TrialResult, TrialLeaderboard } from "./TimeTrial";
+import { TrialModes, TrialTimeShop, TrialResult, TrialLeaderboard } from "./TimeTrial";
 import { switchTrialMode } from "./trialSaves";
 import { trialUnlocked, rememberTrialUnlock } from "./trialUnlock";
 import { saveTrialName, flushTrialScores } from "./trialScores";
@@ -269,13 +272,16 @@ export default function App({ onOpenDesk, studio }: {
     const pwa = usePwa();
     const [updating, setUpdating] = useState(false), [updateError, setUpdateError] = useState("");
     const autoUpdateAllowed = useRef(true), reloadStarted = useRef(false);
+    const entryOrigin = useRef<"new" | "saved">("new");
     const [model, dispatch] = useReducer(presentationReducer, undefined, () => {
         if (studio)
             return { run: recordingRun(structuredClone(studio.initialRun)), pending: null };
         let run: Run;
         try {
             const raw = localStorage.getItem(saveKey);
-            run = initializeSoundExperiment(readSave(raw) ?? freshRun(), !raw);
+            const saved = readSave(raw);
+            entryOrigin.current = saved ? "saved" : "new";
+            run = initializeSoundExperiment(saved ?? freshRun(), !raw);
             if (!backgroundAccess(run))
                 run = pauseTrial({ ...run, running:false, background: null },run.background?.at??Date.now());
         }
@@ -307,7 +313,7 @@ export default function App({ onOpenDesk, studio }: {
         setS(run => ({ ...run, running: false })); }, [studio?.controlsOpen, setS]);
     const [progressSignal] = useState(createProgressSignal);
     const setProgress = progressSignal.update;
-    const [tab, setTab] = useState<DockPanel>("spin"), [frame, setFrame] = useState<SweepFrame | null>(null), [detailBet, setDetailBet] = useState<string | null>(null), [modal, setModal] = useState<"trial-mode" | "trial-result" | "trial-ranking" | "common-roll" | "jackpot-help" | "news-help" | "intro" | "install" | "pwa" | "help" | "lab" | "sound" | "settings" | "feedback" | "rating" | "stats" | "leaderboard" | "clear" | "restart" | "presets" | "draft" | "menu" | "bet" | null>(() => {
+    const [tab, setTab] = useState<DockPanel>("spin"), [frame, setFrame] = useState<SweepFrame | null>(null), [detailBet, setDetailBet] = useState<string | null>(null), [modal, setModal] = useState<"background" | "trial-mode" | "trial-result" | "trial-ranking" | "common-roll" | "jackpot-help" | "news-help" | "intro" | "install" | "pwa" | "help" | "lab" | "sound" | "settings" | "feedback" | "rating" | "stats" | "leaderboard" | "clear" | "restart" | "presets" | "draft" | "menu" | "bet" | null>(() => {
         if (studio)
             return null;
         if (needsPwa())
@@ -433,6 +439,7 @@ export default function App({ onOpenDesk, studio }: {
         return () => clearInterval(timer);
     }, []);
     const dismissIntro = () => {
+        telemetry.current?.event(state.current, "milestone", { name: "intro_complete" });
         try {
             localStorage.setItem(INTRO_KEY, "1");
         }
@@ -465,6 +472,8 @@ export default function App({ onOpenDesk, studio }: {
     }, [pwa.standalone, modal]);
     const state = useRef(s), clock = useRef(0), previousState = useRef(s), musicRush = useRef(s.rushLeft > 0), lastJackpotFx = useRef(0), surface = useRef<HTMLElement | null>(null), pointers = useRef(new Set<number>()), touches = useRef(0), pendingJackpotTab = useRef<string | null>(null), tabTimer = useRef<ReturnType<typeof setTimeout> | null>(null), flash = useRef<HTMLDivElement | null>(null), fxTimer = useRef<ReturnType<typeof setTimeout> | null>(null), telemetry = useRef<Telemetry | null>(null);
     const heardState = useRef(shown);
+    const autoSaveFailed = useRef(false), autoPreviewPaused = useRef(false);
+    useEffect(() => { if (modal !== "lab") autoPreviewPaused.current = false; }, [modal]);
     heardState.current = shown;
     state.current = s;
     const saveCurrentRun = useCallback(() => {
@@ -476,9 +485,11 @@ export default function App({ onOpenDesk, studio }: {
             const settled = current.pending && current.run.last ? presentationReducer(current, { type: "reveal", runId: current.run.id, spinId: current.run.last.id }).run : state.current;
             const saved = backgroundAccess(settled) ? backgroundSave(settled, Date.now(), clock.current, Math.max(0, resultReveal.dueAt - performance.now())) : { ...settled, background: null };
             localStorage.setItem(saveKey, JSON.stringify(studio ? recordingRun(saved) : saved));
+            autoSaveFailed.current = false;
             return true;
         }
         catch {
+            autoSaveFailed.current = true;
             setToast(_t("保存できません。設定からセーブを書き出してください。"));
             return false;
         }
@@ -626,6 +637,7 @@ export default function App({ onOpenDesk, studio }: {
         }
         catch {
             publishBackground({ ...current, running: false, background: null });
+            autoSaveFailed.current = true;
             setToast(_t("保存できないため、バックグラウンド進行を停止しました。"));
             return true;
         }
@@ -825,7 +837,11 @@ export default function App({ onOpenDesk, studio }: {
             return;
         if (typeof MediaMetadata !== "undefined")
             media.metadata = new MediaMetadata({ title: "dontwork.fun", artist: _t("AUTO · スピンの音"), artwork: [{ src: new URL("/icons/icon-512-dw-arrow.png", location.href).href, sizes: "512x512", type: "image/png" }] });
-        const pause = () => { if (state.current.trial && !state.current.trial.paused) {
+        const pause = () => { if (!state.current.trial && state.current.settings.autoAlwaysOn) {
+            stopSounds(); musicPulse(state.current.settings, false, false);
+            flushSync(() => setS(run => configure(run,{sound:false})));
+            saveCurrentRun(); return;
+        } if (state.current.trial && !state.current.trial.paused) {
             toggleTrial();
             return;
         } stopSounds(); musicPulse(state.current.settings, false, false); flushSync(() => setS(run => ({ ...run, running: false, background: null }))); saveCurrentRun(); };
@@ -878,7 +894,8 @@ export default function App({ onOpenDesk, studio }: {
     useEffect(() => {
         if (studio)
             return;
-        telemetry.current ??= new Telemetry();
+        telemetry.current ??= new Telemetry(entryOrigin.current);
+        telemetry.current.event(state.current, "tab_view", { tab, name: tab, screen: "game", modal: modal ?? "none" });
         telemetry.current.observe(state.current);
         if (needsPwa())
             telemetry.current.event(state.current, "pwa_gate", { reason: "install-required", action: "view" });
@@ -907,7 +924,7 @@ export default function App({ onOpenDesk, studio }: {
         };
     }, []);
     useEffect(() => {
-        let previous = performance.now(), active = 0, trialTick = 0, lastInput = Date.now();
+        let previous = performance.now(), active = 0, trialTick = 0, lastInput = Date.now(), lastVisibleAt = Date.now();
         const input = () => {
             lastInput = Date.now();
         };
@@ -915,9 +932,24 @@ export default function App({ onOpenDesk, studio }: {
             const now = performance.now(), delta = Math.min(200, now - previous);
             previous = now;
             let current = state.current;
+            if (!document.hidden) lastVisibleAt = Date.now();
+            if (document.hidden && current.trial) {
+                if (!current.trial.paused || liveModel.current.pending) {
+                    flushSync(() => dispatch({type:"trial-pause",now:lastVisibleAt}));
+                    clock.current = 0; stopSpinCharge(); stopHaptics();
+                    resultReveal.cancel(); setFrame(f=>f?{...f,settled:true}:f);
+                    saveCurrentRun();
+                }
+                return;
+            }
             if (backgroundControls.current.processBackground()) {
                 musicPulse(musicForWealth(state.current), musicRush.current, state.current.running);
                 return;
+            }
+            const automatic = resumeAutomaticPlay(current,Date.now(),readyToPlay.current,!document.hidden,!!liveModel.current.pending || autoSaveFailed.current || autoPreviewPaused.current);
+            if (automatic !== current) {
+                flushSync(() => setS(run => resumeAutomaticPlay(run,Date.now(),readyToPlay.current,!document.hidden,!!liveModel.current.pending || autoSaveFailed.current || autoPreviewPaused.current)));
+                current = state.current;
             }
             if (readyToPlay.current && current.trial) {
                 if (Date.now() - trialTick >= 200) {
@@ -940,6 +972,7 @@ export default function App({ onOpenDesk, studio }: {
                 ((current.running && canSpin(current)) ||
                     Date.now() - lastInput < 120000)) {
                 active += delta;
+                telemetry.current?.foreground(current, delta);
                 const musicSettings = musicForWealth(heardState.current), heardPack = playingMusicPack();
                 const musicRequested = musicRush.current && musicSettings.jackpotMusic !== "follow" ? musicSettings.jackpotMusic === "on" : musicSettings.music;
                 telemetry.current?.musicPlayed(current, heardPack ?? musicSettings.musicPack, heardPack !== null, musicRequested && musicSettings.musicVolume > 0, musicRush.current, delta);
@@ -1001,8 +1034,13 @@ export default function App({ onOpenDesk, studio }: {
                 saveCurrentRun();
             }
         };
-        const pagehide = () => { if (!state.current.background)
-            backgroundControls.current.enterBackground(); };
+        const pagehide = () => {
+            if (state.current.trial) {
+                flushSync(() => dispatch({type:"trial-pause",now:Date.now()}));
+                clock.current = 0; stopSpinCharge(); stopHaptics();
+                resultReveal.cancel(); setFrame(f=>f?{...f,settled:true}:f); saveCurrentRun();
+            } else if (!state.current.background) backgroundControls.current.enterBackground();
+        };
         document.addEventListener("visibilitychange", visibility);
         addEventListener("pagehide", pagehide);
         addEventListener("pointerdown", input);
@@ -1410,6 +1448,9 @@ export default function App({ onOpenDesk, studio }: {
           <button className="contact-button sound-button" aria-label={_t("音楽・サウンド")} title={_t("音楽・サウンド")} onClick={() => setModal("sound")}>
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M9 18V5l12-2v13M9 9l12-2"/><ellipse cx="6" cy="18" rx="3" ry="3"/><ellipse cx="18" cy="16" rx="3" ry="3"/></svg>
           </button>
+          {!studio && <button className={`contact-button background-button ${shown.settings.backgroundPlay && backgroundAccess(shown) ? "enabled" : ""}`} onClick={() => setModal("background")} aria-label={_t("バックグラウンドで遊ぶ")} title={_t("バックグラウンドで遊ぶ")}>
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" aria-hidden="true"><rect x="6" y="2" width="12" height="20" rx="3"/><path d="M10 5h4m-3 14h2"/><path d="m10 9 5 3-5 3Z"/></svg>
+          </button>}
           <button className="contact-button menu-button" onClick={() => setModal("menu")} aria-label={_t("メニューと設定")}>
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
           </button>
@@ -1556,7 +1597,7 @@ export default function App({ onOpenDesk, studio }: {
           </button>))}
       </nav>}
       {shown.settings.newsPosition === "bottom" && news}
-      <div className="play-dock">
+      <div className={`play-dock ${shown.settings.autoAlwaysOn && !shown.trial ? "without-auto" : ""}`}>
         <TrialTimeShop s={shown} budget={coinBudget(model)} onBuy={() => { flushSync(() => dispatch({ type: "trial-time", now: Date.now() })); telemetry.current?.event(state.current, "trial_time", { amount: state.current.trial?.lastPurchase?.cost ?? 0, durationMs: state.current.trial?.lastPurchase?.addedMs ?? 0 }); }}/>
         {shown.settings.handToys && shown.settings.dockToy !== "off" ? <HandToyButton key={shown.id + shown.settings.dockToy} runId={shown.id} mode={shown.settings.dockToy} settings={shown.settings} onEarn={() => { if (!trialActive(state.current))
             return; change(work); impact(surface.current, "work", shown.settings, flash.current); }}/> : coinUnlocked(shown) && shown.coinEnabled ? <button id="work-button" className="work-button flip-button" disabled={!trialActive(shown)} data-ui-cue="handled" onClick={event => flipCoin(event.currentTarget)} aria-label={_t("コインを投げる 賭け金{0}", money(shown.coinStake))}><span>FLIP <img src="/flip-bull-coin.png" alt=""/></span><small>{_t("{0} / 1枚", money(shown.coinStake))}</small></button> : shown.settings.workMode === "gamble" ? <button className="work-button" disabled={rush} onClick={() => setTab("positions")}>{_t("WORKギャンブル")}<small>{_t("毎スピン +$5 · 賭け金$0")}</small></button> : <button id="work-button" className={`work-button ${guide.target === "work" ? "guide-target" : ""}`} disabled={!trialActive(shown)} data-ui-cue="work" onClick={(event) => { if (!trialActive(state.current))
@@ -1587,17 +1628,16 @@ export default function App({ onOpenDesk, studio }: {
         {desk && !captureMode && <button className={`dock-upgrade dock-cycle ${guide.target === "upgrades" || (tab === "upgrades" && guide.target === "positions") ? "guide-target" : ""}`} onClick={() => setTab(nextPanel)} aria-label={_t("{0}を開く", dockLabel(nextPanel))}>
           <span key={nextPanel}>{dockLabel(nextPanel)}</span><small>{_t("↻ 切り替え")}</small>
         </button>}
-        <label className={`auto-control ${shown.running ? "on" : ""} ${guide.target === "auto" ? "guide-target" : ""}`} data-ui-cue="auto">
+        {shown.trial ? <TrialControl s={shown} onToggle={toggleTrial} onResult={() => setModal("trial-result")}/> : !shown.settings.autoAlwaysOn && <label className={`auto-control ${shown.running ? "on" : ""} ${guide.target === "auto" ? "guide-target" : ""}`} data-ui-cue="auto">
           <span>
             <b className="auto-label">AUTO</b>
-            <NativeSwitch label="AUTO" checked={shown.running} disabled={shown.trial ? !!shown.trial.result : !shown.portfolio.length || (!desk && shown.spins === 0 && !shown.running && tab !== "spin")} tactile={shown.settings.haptics} onChange={(running) => shown.trial ? toggleTrial() : change((shown) => ({
+            <NativeSwitch label="AUTO" checked={shown.running} disabled={!shown.portfolio.length || (!desk && shown.spins === 0 && !shown.running && tab !== "spin")} tactile={shown.settings.haptics} onChange={(running) => change((shown) => ({
             ...shown,
             running,
             startedAt: shown.startedAt ?? Date.now(),
         }))}/>
           </span>
-          {shown.trial && <TrialClock s={shown} onResult={() => setModal("trial-result")}/>}
-        </label>
+        </label>}
       </div>
       {model.positionRequest?.confirm && <Modal title={_t("ジャックポットを終了しますか？")} onClose={() => dispatch({ type: "position-decision", request: model.positionRequest!, accept: false })}><p>{_t("ギャンブルを変更すると、このジャックポットと出目カットが終了します。")}</p><div className="button-row"><button className="secondary" onClick={() => dispatch({ type: "position-decision", request: model.positionRequest!, accept: false })}>{_t("変更せず続ける")}</button><button className="primary" onClick={() => dispatch({ type: "position-decision", request: model.positionRequest!, accept: true })}>{_t("終了して変更する")}</button></div></Modal>}
       {s.background && pageVisible && <Modal title={_t("離れていた間の進行を反映中")} dismissible={false} onClose={() => { }}><p role="status">{_t("スピンとセーブを更新しています…")}</p></Modal>}
@@ -1663,12 +1703,14 @@ export default function App({ onOpenDesk, studio }: {
           <section className="settings-section"><h3>{_t("30分チャレンジ")}</h3><button className="secondary" disabled={trialAvailable} onClick={unlockTrialFromLab}>{trialAvailable ? _t("解放済み") : _t("30分チャレンジモードを解放")}</button></section>
           {trialAvailable && <TrialModes s={shown} onSwitch={switchMode} lab/>}
           <Lab onWorkMode={(mode, dockToy) => requestPosition({ kind: "work-mode", mode, dockToy })} s={shown} change={change} notify={setToast} preparePreview={() => {
+                autoPreviewPaused.current = true;
                 change((run) => ({ ...run, running: false }));
                 clock.current = 0;
                 stopSpinCharge();
                 return Math.max(0, resultReveal.dueAt - performance.now()) + 220;
             }}/>
         </Modal>)}
+      {!studio && modal === "background" && <Modal title={_t("バックグラウンドで遊ぶ")} onClose={() => setModal(null)}><BackgroundSettings s={shown} change={change}/></Modal>}
       {modal === "sound" && <Modal title={_t("音楽・サウンド")} onClose={() => setModal(null)}>
         <label className="setting-row"><span>{_t("効果音")}</span><NativeSwitch label={_t("効果音")} checked={shown.settings.sound} tactile={shown.settings.haptics} onChange={sound => { change(run => configure(run, { sound })); setAudioEnabled(audioEnabled({ ...shown.settings, sound })); if (sound)
             wakeAudio(true); }}/></label>
