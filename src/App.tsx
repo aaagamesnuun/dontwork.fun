@@ -14,6 +14,7 @@ import { t as _t, textValue as _text } from "./i18n";
 import { TrialModes, TrialTimeShop, TrialResult, TrialLeaderboard } from "./TimeTrial";
 import { switchTrialMode } from "./trialSaves";
 import { trialUnlocked, rememberTrialUnlock } from "./trialUnlock";
+import {ModeSwitchNotice,prestartMode} from "./ModeSwitchNotice";
 import { saveTrialName, flushTrialScores } from "./trialScores";
 import { pauseTrial, trialActive, freshTrial, type TrialRule } from "./game/engine";
 import { settleAccepted } from "./presentation";
@@ -341,6 +342,7 @@ export default function App({ onOpenDesk, studio }: {
         setModal(null); };
     const closeResult = () => { const id = modal === "clear" ? shown.completion?.id : ratingAfterRanking.current; ratingAfterRanking.current = null; openClearRating(id); };
     const sendRating = (body: Record<string, unknown>) => telemetry.current?.sendRating(state.current, body) ?? request("/api/ratings", { ...body, telemetryEnabled: false });
+    const [dismissedModeRun,setDismissedModeRun] = useState<string|null>(null);
     const [trialAccess, setTrialAccess] = useState(() => !studio && trialUnlocked(s));
     const trialAvailable = trialAccess || (!studio && !!(shown.completion || shown.trial));
     useEffect(() => {
@@ -349,7 +351,7 @@ export default function App({ onOpenDesk, studio }: {
         try { rememberTrialUnlock(); } catch { /* The completed run also retains access. */ }
     }, [trialAvailable, studio]);
     const unlockTrialFromLab = () => {
-        try { rememberTrialUnlock(); setTrialAccess(true); setToast(_t("30分チャレンジモード解放！")); }
+        try { rememberTrialUnlock(); setTrialAccess(true); setToast(_t("30分モード解放！")); }
         catch { setToast(_t("保存できませんでした。現在の進行はそのままです。")); }
     };
     const [newsDetail, setNewsDetail] = useState<Guidance | null>(null);
@@ -1223,7 +1225,7 @@ export default function App({ onOpenDesk, studio }: {
                 clearTimeout(goalTimer.current);
         }
         if (before.id === shown.id && before.at === null && shown.clearAt !== null && !document.hidden && !s.background) {
-            setGoalCelebration({ kind: "goal", title: money(completionTarget(shown)) + " CLEARED", sub: _t("30分チャレンジモード解放！ 記念カードから次の挑戦へ。") });
+            setGoalCelebration({ kind: "goal", title: money(completionTarget(shown)) + " CLEARED", sub: _t("30分モード解放！ 記念カードから次の挑戦へ。") });
             sound("infinity", shown.settings);
             resultImpact("infinity", shown.settings);
             haptic("infinity", shown.settings);
@@ -1302,7 +1304,8 @@ export default function App({ onOpenDesk, studio }: {
             sub: secondBetStep(shown) ? _t("ギャンブルは{0}個まで。ニュースに沿って入れ替えてみよう。", shown.slots) : _t("新しく解放！ ギャンブルの＋でセットできます。"),
         }
         : celebration);
-    const chartNotices = !modal && (announcement || toast) && <ChartNotices anchor={chartTarget} plotOnly={captureMode} reduced={osReduced || shown.settings.motion === "reduced"}>
+    const alternateMode = !studio && pageVisible && !model.pending && dismissedModeRun!==shown.id ? prestartMode(shown,trialAvailable) : null;
+    const chartNotices = !modal && (announcement || toast || alternateMode) && <ChartNotices anchor={chartTarget} plotOnly={captureMode} reduced={osReduced || shown.settings.motion === "reduced"}>
       {announcement && !toast && (<div className={`celebration ${announcement.kind}`} aria-live="polite" key={announcement.title}>
           <span>{announcement.kind === "infinity" ? "∞" : "↗"}</span>
           <strong>{announcement.title}</strong>
@@ -1311,6 +1314,7 @@ export default function App({ onOpenDesk, studio }: {
             {Array.from({ length: 16 }, (_, i) => (<i key={i} style={{ "--i": i } as React.CSSProperties}/>))}
           </div>
         </div>)}
+      {alternateMode && !announcement && !toast && <ModeSwitchNotice target={alternateMode} onSwitch={switchMode} onDismiss={()=>setDismissedModeRun(shown.id)}/>}
       {toast && (<div className="toast" role="status">
           {_text(toast)}
         </div>)}
@@ -1657,7 +1661,7 @@ export default function App({ onOpenDesk, studio }: {
             {shown.catalog === "legacy" && <button className="secondary" disabled={rush} onClick={() => setModal("draft")}>{_t("特殊ガチャ →")}</button>}
             {!isMobileDevice() && onOpenDesk && <button className="secondary" disabled={!!model.pending} onClick={onOpenDesk}>{_t("縦長ウィンドウで遊ぶ ↗")}</button>}
             {([
-                ["trial-mode", _t("モードを選ぶ · 30分チャレンジ")],
+                ["trial-mode", _t("モードを選ぶ · 30分モード")],
                 ["help", _t("遊び方")],
                 ["lab", _t("LAB(開発者用)")],
                 ["stats", _t("プレイ記録")],
@@ -1701,7 +1705,7 @@ export default function App({ onOpenDesk, studio }: {
       {modal === "news-help" && newsDetail && <Modal title={newsDetail.label} onClose={() => setModal(null)}><NewsHelp s={shown} guide={newsDetail}/></Modal>}
       {!studio && modal === "lab" && (<Modal title="THE LAB" wide onClose={() => setModal(null)}>
           <details className="settings-section"><summary>{_t("別のバージョン")}</summary><VersionLinks /></details>
-          <section className="settings-section"><h3>{_t("30分チャレンジ")}</h3><button className="secondary" disabled={trialAvailable} onClick={unlockTrialFromLab}>{trialAvailable ? _t("解放済み") : _t("30分チャレンジモードを解放")}</button></section>
+          <section className="settings-section"><h3>{_t("30分モード")}</h3><button className="secondary" disabled={trialAvailable} onClick={unlockTrialFromLab}>{trialAvailable ? _t("解放済み") : _t("30分モードを解放")}</button></section>
           {trialAvailable && <TrialModes s={shown} onSwitch={switchMode} lab/>}
           <Lab onWorkMode={(mode, dockToy) => requestPosition({ kind: "work-mode", mode, dockToy })} s={shown} change={change} notify={setToast} preparePreview={() => {
                 autoPreviewPaused.current = true;
@@ -1738,8 +1742,8 @@ export default function App({ onOpenDesk, studio }: {
           {modal === "leaderboard" && <div className="button-row"><button className="primary">{_t("クリア時間")}</button>{trialAvailable && <button className="secondary" onClick={() => setModal("trial-ranking")}>{_t("30分・総資産")}</button>}</div>}
           <Leaderboard key={modal} s={shown} change={change} clear={modal === "clear"} saveName={(name) => saveCompletionName(state.current, name)} notify={setToast} onRanking={() => { ratingAfterRanking.current = shown.completion?.id ?? null; setModal("leaderboard"); }}/>
           {modal === "clear" && <>
-            <section className="trial-unlocked" role="status"><strong>{_t("30分チャレンジモード解放！")}</strong><p>{_t("次は30分で、いくらまで増やせる？通常モードの記録はそのまま残ります。")}</p></section>
-            <button className="primary continue-button" disabled={!shown.completionNickname} onClick={() => switchMode("trial")}>{_t("30分チャレンジを始める →")}</button>
+            <section className="trial-unlocked" role="status"><strong>{_t("30分モード解放！")}</strong><p>{_t("次は30分で、いくらまで増やせる？通常モードの記録はそのまま残ります。")}</p></section>
+            <button className="primary continue-button" disabled={!shown.completionNickname} onClick={() => switchMode("trial")}>{_t("30分モードを始める →")}</button>
             <button className="secondary continue-button" disabled={!shown.completionNickname} onClick={closeResult}>{_t("このまま続ける →")}</button>
             <button className="secondary continue-button" disabled={!shown.completionNickname} onClick={() => { setRestartFrom("clear"); setModal("restart"); }}>{_t("初めからやり直す")}</button>
           </>}

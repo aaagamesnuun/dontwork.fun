@@ -44,7 +44,7 @@ it("supports full amounts and the challenge score without adding a heading row",
     expect(trial).toContain('<small>総資産</small><strong>$1,250</strong>');
     expect(trial.indexOf('</h1>')).toBeLessThan(trial.indexOf('balance-trial-assets'));
     expect(trial.indexOf('balance-trial-assets')).toBeLessThan(trial.indexOf('balance-goal'));
-    expect(trial).toContain('30 MIN CHALLENGE');expect(trial).not.toContain('クリア目標');
+    expect(trial).toContain('30分モード');expect(trial).not.toContain('クリア目標');
   }
 });
 it("shows total holdings without changing an old challenge's cash-only score", () => {

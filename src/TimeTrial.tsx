@@ -8,7 +8,7 @@ import {useResultImage} from './useResultImage';
 import { request } from './api';
 import { trialRankingPath, saveTrialName, flushTrialScores } from './trialScores';
 export const trialClock = (ms: number) => { const seconds = Math.ceil(ms / 1000); return `${Math.floor(seconds / 60).toString().padStart(2, '0')}:${(seconds % 60).toString().padStart(2, '0')}`; };
-export const trialRuleLabel = (rule: TrialRule) => rule === 'fixed' ? _t("30分チャレンジ") : rule === 'shop' ? _t("時間ショップ · LAB") : _t("時間ガチャ · LAB");
+export const trialRuleLabel = (rule: TrialRule) => rule === 'fixed' ? _t("30分モード") : rule === 'shop' ? _t("時間ショップ · LAB") : _t("時間ガチャ · LAB");
 export function TrialClock({ s, onResult }: {
     s: Run;
     onToggle?: () => void;
@@ -88,7 +88,7 @@ export function TrialResult({ s, onChange, onRanking, onRetry, onNormal }: {
     finally {
         setBusy(false);
     } };
-    return <>{imageUrl?<img className="share-card-image" src={imageUrl} alt={_t("30分チャレンジの記念カード")}/>:<section className="result-card trial-result"><div className="result-brand"><img src="/icons/dontwork.svg" alt="" width="34"/><strong>dontwork.fun</strong><span>TIME UP</span></div>
+    return <>{imageUrl?<img className="share-card-image" src={imageUrl} alt={_t("30分モードの記念カード")}/>:<section className="result-card trial-result"><div className="result-brand"><img src="/icons/dontwork.svg" alt="" width="34"/><strong>dontwork.fun</strong><span>TIME UP</span></div>
  <div className="result-hero"><span>{trialClock(r.durationMs)} · FINAL ASSETS</span><h3>{money(r.finalBankroll)}</h3><p>{t.nickname || _t("30分、おつかれさま！")}</p></div>
  <ResultRank s={s} rank={rank.ranking}/><WealthChart s={{ ...s, coinChartHold: null, settings: { ...s.settings, chartAxis: 'spins' } }} summary/>
  <div className="result-numbers"><div><b>{r.spins.toLocaleString()}</b><span>{_t("スピン")}</span></div><div><b>{money(s.spent)}</b><span>{_t("強化への投資")}</span></div><div><b>{s.maxChain}</b><span>{_t("最大連鎖")}</span></div></div>

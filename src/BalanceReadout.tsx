@@ -8,7 +8,7 @@ export function BalanceReadout({ s, amount, serial }: { s: Run; amount: number; 
   const cash = money(s.cash);
   const assets = s.trial ? money(finiteMoney(s.cash + s.spent)) : null;
   const latest = (amount > 0 ? "+" : "") + money(amount);
-  const goal = <span className="balance-goal">{s.trial ? "30 MIN CHALLENGE" : s.clearAt !== null ? "GOAL CLEARED" : t("クリア目標:{0}$", style === "full" ? "1,000,000,000" : "1B")}</span>;
+  const goal = <span className="balance-goal">{s.trial ? t("30分モード") : s.clearAt !== null ? "GOAL CLEARED" : t("クリア目標:{0}$", style === "full" ? "1,000,000,000" : "1B")}</span>;
   const summary = <>{assets !== null && <span className="balance-trial-assets" aria-label={`${t("総資産")}: ${assets}`}><small>{t("総資産")}</small><strong>{assets}</strong></span>}{goal}</>;
   const change = <div className="balance-result" aria-label={`${t("最新の資産変化")}: ${latest}`}><div className={`pnl ${amount < 0 ? "negative" : "positive"}`} key={serial}>{latest}</div></div>;
   return <div className={`balance-money-line ${s.trial ? "trial-balance" : ""} ${s.settings.balanceChangeInline ? "change-inline" : ""}`}>

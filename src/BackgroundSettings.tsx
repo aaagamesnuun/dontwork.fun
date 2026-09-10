@@ -7,7 +7,7 @@ import { notificationsSupported } from "./jackpotNotifications";
 import { sound, wakeAudio } from "./audio";
 
 function TrialBackgroundNotice() {
-    return <section className="settings-section"><h3>{_t("30分チャレンジは画面を開いて遊ぼう")}</h3><p>{_t("画面を離れると時計とスピンが止まります。戻ったら砂時計ボタンで再開してください。バックグラウンド進行は通常モードで利用できます。")}</p></section>;
+    return <section className="settings-section"><h3>{_t("30分モードは画面を開いて遊ぼう")}</h3><p>{_t("画面を離れると時計とスピンが止まります。戻ったら砂時計ボタンで再開してください。バックグラウンド進行は通常モードで利用できます。")}</p></section>;
 }
 
 export function NotificationSettings({s,change}:{s:Run;change:Change}) {
