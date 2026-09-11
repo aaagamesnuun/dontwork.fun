@@ -1,3 +1,4 @@
+import { rankingPeriod, periodFilter } from "./rankingPeriod.js";
 import { clearRecordRank } from "./recordRank.js";
 const json = (body, status = 200) =>
   new Response(JSON.stringify(body), {
@@ -45,7 +46,7 @@ export async function rankingsApi(request, db, url, acceptsScore) {
   const allowed =
     !origin ||
     origin === url.origin ||
-    origin === "https://bebullish.fun" || origin === "https://dontwork.fun" ||
+    origin === "https://bebullish.fun" || origin === "https://dontwork.fun" || origin === "https://dontwork-fun.ronefire.workers.dev" ||
     /^https:\/\/[a-z0-9-]+\.realnuun\.chatgpt\.site$/.test(origin) ||
     /^http:\/\/(localhost|127\.0\.0\.1):\d+$/.test(origin);
   if (!allowed) return json({ error: "このページからは送信できません。" }, 403);
@@ -70,6 +71,9 @@ export async function rankingsApi(request, db, url, acceptsScore) {
         if (!uuid(id)) return respond(json({ error: "Invalid completion ID" }, 400));
         return respond(json({ ranking: await clearRecordRank(db, id) ?? null }));
       }
+      const period = rankingPeriod(url.searchParams.get("period") ?? "all");
+      if (!period) return respond(json({ error: "Invalid period" }, 400));
+      const filter = periodFilter(period);
       const version = url.searchParams.get("version") ?? "all";
       const offset = Number(url.searchParams.get("offset") ?? 0);
       if (
@@ -83,8 +87,8 @@ export async function rankingsApi(request, db, url, acceptsScore) {
         offset > 1e7
       )
         return respond(json({ error: "表示条件を確認してください。" }, 400));
-      const where = version === "all" ? "" : " WHERE app_version = ?";
-      const params = version === "all" ? [] : [version];
+      const where = (version === "all" ? " WHERE 1=1" : " WHERE app_version = ?") + filter.sql;
+      const params = [...(version === "all" ? [] : [version]), ...filter.params];
       const [scores, count, versions] = await Promise.all([
         db
           .prepare(
@@ -93,7 +97,7 @@ export async function rankingsApi(request, db, url, acceptsScore) {
           .bind(...params, offset)
           .all(),
         db
-          .prepare(`SELECT COUNT(*) AS total FROM clear_records${where}`)
+          .prepare(`SELECT COUNT(*) AS total, AVG(time_ms) AS averageTimeMs FROM clear_records${where}`)
           .bind(...params)
           .first(),
         db
@@ -104,6 +108,8 @@ export async function rankingsApi(request, db, url, acceptsScore) {
         json({
           scores: scores.results ?? [],
           total: Number(count?.total ?? 0),
+          averageTimeMs: count?.averageTimeMs ?? null,
+          ...period,
           offset,
           pageSize: 50,
           versions: [

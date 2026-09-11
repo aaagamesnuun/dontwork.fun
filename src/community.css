@@ -1,0 +1,38 @@
+.ranking-periods{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;margin:16px 0 12px}
+.ranking-periods button{padding:11px 8px;border:1px solid var(--line);background:transparent;color:var(--muted);font-size:.9rem}
+.ranking-periods button.selected{border-color:var(--lime);background:color-mix(in srgb,var(--lime) 14%,transparent);color:var(--lime)}
+.ranking-summary{display:grid;grid-template-columns:2fr 1fr;gap:12px;padding:16px 0;border-block:1px solid var(--line);margin:12px 0}
+.ranking-summary>div{display:flex;flex-direction:column;gap:6px;min-width:0}
+.ranking-summary span{font-size:.875rem;color:var(--muted)}
+.ranking-summary strong{font-size:1.5rem;overflow-wrap:anywhere;font-variant-numeric:tabular-nums}
+.ranking-summary small{grid-column:1/-1;font-size:.75rem;color:var(--muted);line-height:1.6}
+.board-toolbar,.board-post footer,.board-form-bottom{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.board-toolbar{margin-bottom:16px}.board-toolbar p{font-size:.875rem;color:var(--muted)}
+.board-form{display:flex;flex-direction:column;gap:12px;margin:16px 0 24px;padding:16px;background:color-mix(in srgb,var(--lime) 5%,transparent);border:1px solid var(--line)}
+.board-form label{display:flex;flex-direction:column;gap:6px;font-size:.875rem}
+.board-form input,.board-form textarea{width:100%;min-width:0;border:1px solid var(--line);background:var(--panel);color:inherit;padding:10px;font-size:1rem;border-radius:3px;font-family:inherit}
+.board-form textarea{resize:vertical;min-height:86px;max-height:40vh;touch-action:pan-y}
+.board-form small{font-size:.75rem;line-height:1.6;color:var(--muted)}
+.board-form-bottom>span{color:var(--muted);font-size:.75rem}.board-form-bottom button{min-width:100px}
+.board-post{padding:16px 0;border-bottom:1px solid var(--line)}
+.board-post header{display:flex;align-items:center;flex-wrap:wrap;gap:6px 10px;font-size:1rem;overflow-wrap:anywhere}
+.board-post p{white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.75;font-size:1rem;margin:12px 0}
+.board-post time{font-size:.75rem;color:var(--muted)}
+.board-rank{font-size:.75rem;line-height:1.5;border:1px solid color-mix(in srgb,var(--lime) 45%,transparent);padding:2px 6px;color:var(--lime);border-radius:3px}
+.community-links{margin-top:20px;padding-top:18px;border-top:1px solid var(--line)}
+.community-links>a{display:block;text-align:center;text-decoration:none}
+.community-links p{font-size:.875rem;color:var(--muted);line-height:1.8;margin:12px 0}
+.community-links p a{color:var(--lime);white-space:nowrap}
+@media(max-width:480px){
+ .app .topbar{gap:4px}.app .topbar nav{gap:0}
+ .app .topbar .contact-button,.app .topbar .menu-button{width:32px;min-width:32px;height:40px;padding:5px}
+ .app .topbar .wordmark{gap:4px;min-width:0;flex-shrink:1}
+ .app .topbar .wordmark .brand-name{font-size:16px}
+ .app .topbar .wordmark .brand-icon{width:28px;height:28px;flex-basis:28px}
+}
+@media(max-width:360px){
+ .app .topbar .contact-button,.app .topbar .menu-button{width:30px;min-width:30px;padding:4px}
+ .app .topbar .wordmark{gap:3px}
+ .app .topbar .wordmark .brand-name{font-size:14px}
+ .app .topbar .wordmark .brand-icon{width:26px;height:26px;flex-basis:26px}
+}

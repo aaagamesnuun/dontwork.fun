@@ -7,6 +7,7 @@ import {useResultRanking,ResultRank,ResultRankStatus} from './resultRanking';
 import {useResultImage} from './useResultImage';
 import { request } from './api';
 import { trialRankingPath, saveTrialName, flushTrialScores } from './trialScores';
+import {RankingPeriods, RankingSummary, type RankingPeriod, type PeriodInfo} from './RankingPeriod';
 export const trialClock = (ms: number) => { const seconds = Math.ceil(ms / 1000); return `${Math.floor(seconds / 60).toString().padStart(2, '0')}:${(seconds % 60).toString().padStart(2, '0')}`; };
 export const trialRuleLabel = (rule: TrialRule) => rule === 'fixed' ? _t("30分モード") : rule === 'shop' ? _t("時間ショップ · LAB") : _t("時間ガチャ · LAB");
 export function TrialClock({ s, onResult }: {
@@ -100,7 +101,8 @@ export function TrialResult({ s, onChange, onRanking, onRetry, onNormal }: {
  <div className="menu-grid"><button className="primary" disabled={!t.nickname} onClick={onRanking}>{_t("30分ランキング →")}</button><button className="secondary" disabled={!t.nickname} onClick={onRetry}>{_t("もう一度挑戦")}</button><button className="secondary" disabled={!t.nickname} onClick={onNormal}>{_t("通常モードに戻る")}</button></div>
  </>;
 }
-interface TrialPage {
+interface TrialPage extends PeriodInfo {
+    averageBankroll: number | null;
     scores: {
         id: number;
         nickname: string;
@@ -113,12 +115,13 @@ interface TrialPage {
     pageSize: number;
 }
 export function TrialLeaderboard() {
+    const [period,setPeriod]=useState<RankingPeriod>('all');
     const [scoring,setScoring]=useState('assets');
     const [version, setVersion] = useState('all'), [offset, setOffset] = useState(0), [page, setPage] = useState<TrialPage | null>(null), [error, setError] = useState(''), [reload, setReload] = useState(0);
-    useEffect(() => { let live = true; setPage(null); setError(''); void request<TrialPage>(trialRankingPath(version, offset,scoring)).then(p => { if (live)
+    useEffect(() => { let live = true; setPage(null); setError(''); void request<TrialPage>(trialRankingPath(version, offset,scoring,period)).then(p => { if (live)
         setPage(p); }).catch(e => { if (live)
-        setError(e instanceof Error ? e.message : _t("読み込めませんでした。")); }); return () => { live = false; }; }, [version, offset, reload,scoring]);
-    return <section><h3>{_t("30分・総資産ランキング")}</h3><label className="setting-row"><span>{_t("採点ルール")}</span><select value={scoring} onChange={e=>{setScoring(e.target.value);setVersion("all");setOffset(0)}}><option value="assets">{_t("現金＋強化への投資")}</option><option value="cash">{_t("旧ルール · 現金のみ")}</option></select></label><label className="setting-row"><span>{_t("表示")}</span><select value={version} onChange={e => { setVersion(e.target.value); setOffset(0); }}><option value="all">{_t("全体")}</option>{[...new Set([VERSION, ...page?.versions ?? []])].map(v => <option key={v} value={v}>v{v}</option>)}</select></label>
- {error ? <p role="alert">{_text(error)} <button onClick={() => setReload(n => n + 1)}>{_t("再試行")}</button></p> : !page ? <p role="status">{_t("読み込み中…")}</p> : <><ol className="trial-ranking" start={offset + 1}>{page.scores.map((r, i) => <li key={r.id}><span>{offset + i + 1}</span><div><strong>{r.nickname}</strong><small>{_t("v{0} · {1}スピン", r.appVersion, r.spins.toLocaleString())}</small></div><b>{money(r.finalBankroll)}</b></li>)}</ol>{page.total === 0 && <p>{_t("まだ記録がありません。最初の挑戦者になろう。")}</p>}<div className="button-row"><button disabled={!offset} onClick={() => setOffset(n => Math.max(0, n - 50))}>{_t("前へ")}</button><span>{_t("{0}件", page.total)}</span><button disabled={offset + 50 >= page.total} onClick={() => setOffset(n => n + 50)}>{_t("次へ")}</button></div></>}
+        setError(e instanceof Error ? e.message : _t("読み込めませんでした。")); }); return () => { live = false; }; }, [version, offset, reload,scoring,period]);
+    return <section><RankingPeriods value={period} onChange={p=>{setPeriod(p);setOffset(0)}}/><h3>{_t(scoring==="assets"?"30分・総資産ランキング":"30分・現金ランキング")}</h3><label className="setting-row"><span>{_t("採点ルール")}</span><select value={scoring} onChange={e=>{setScoring(e.target.value);setVersion("all");setOffset(0)}}><option value="assets">{_t("現金＋強化への投資")}</option><option value="cash">{_t("旧ルール · 現金のみ")}</option></select></label><label className="setting-row"><span>{_t("表示")}</span><select value={version} onChange={e => { setVersion(e.target.value); setOffset(0); }}><option value="all">{_t("全バージョン")}</option>{[...new Set([VERSION, ...page?.versions ?? []])].map(v => <option key={v} value={v}>v{v}</option>)}</select></label>
+ {error ? <p role="alert">{_text(error)} <button onClick={() => setReload(n => n + 1)}>{_t("再試行")}</button></p> : !page ? <p role="status">{_t("読み込み中…")}</p> : <><RankingSummary page={page} label={_t(scoring==="assets"?"平均総資産":"平均現金")} value={page.averageBankroll==null?"—":money(page.averageBankroll)}/><ol className="trial-ranking" start={offset + 1}>{page.scores.map((r, i) => <li key={r.id}><span>{offset + i + 1}</span><div><strong>{r.nickname}</strong><small>{_t("v{0} · {1}スピン", r.appVersion, r.spins.toLocaleString())}</small></div><b>{money(r.finalBankroll)}</b></li>)}</ol>{page.total === 0 && <p>{_t("まだ記録がありません。最初の挑戦者になろう。")}</p>}<div className="button-row"><button disabled={!offset} onClick={() => setOffset(n => Math.max(0, n - 50))}>{_t("前へ")}</button><span>{_t("{0}件", page.total)}</span><button disabled={offset + 50 >= page.total} onClick={() => setOffset(n => n + 50)}>{_t("次へ")}</button></div></>}
  </section>;
 }

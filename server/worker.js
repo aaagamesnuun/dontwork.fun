@@ -1,3 +1,4 @@
+import { boardApi } from "./board.js";
 import { sanitizeJourney, funnelProjection, funnelApi, inquiriesApi, funnelReady } from "./funnel.js";
 import {bankrollRankingsApi} from "./bankrollRankings.js";
 import { refreshSoundExperimentReport } from "./soundExperiment.js";
@@ -1537,6 +1538,7 @@ export const ratingsApi=async(request,env,url)=>{
 const worker = {
   async fetch(request, env) {
     const url = new URL(request.url);
+    if (url.pathname === "/api/board") return boardApi(request, env.DB, url);
     if (url.pathname === "/api/analytics/inquiries") return inquiriesApi(request, env);
     if (url.pathname === "/api/analytics/funnel") return funnelApi(request, env, url);
     if (["/api/save-codes", "/api/save-codes/restore"].includes(url.pathname)) return json({ error: "This feature is no longer available." }, 410);

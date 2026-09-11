@@ -3,8 +3,9 @@ import { SAVE_KEY, type Run, type TrialResult } from './game/engine';
 import { cleanNickname } from './rankingOutbox';
 import { request } from './api';
 import { RANKING_ORIGIN } from './rankings';
+import type { RankingPeriod } from './RankingPeriod';
 const KEY = 'bebullish-30m-outbox-v1';
-export const trialRankingPath = (version = 'all', offset = 0, scoring='assets') => RANKING_ORIGIN + '/api/bankroll-rankings?scoring='+encodeURIComponent(scoring)+'&version=' + encodeURIComponent(version) + '&offset=' + offset;
+export const trialRankingPath = (version = 'all', offset = 0, scoring='assets', period:RankingPeriod='all') => RANKING_ORIGIN + '/api/bankroll-rankings?scoring='+encodeURIComponent(scoring)+'&version=' + encodeURIComponent(version) + '&offset=' + offset+'&period='+period;
 type Entry = {
     nickname: string;
     result: TrialResult;

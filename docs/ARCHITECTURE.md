@@ -6,6 +6,8 @@ dontwork.fun 3.0.0の実装を読むための案内です。ローカル起動�
 
 ## ソース地図
 
+ランキングの期間・平均、掲示板のD1保存・順位リンク・再送については [community.md](community.md) を参照してください。`RankingPeriod.tsx` と `server/rankingPeriod.js` が期間表示と日本時間の境界、`Board.tsx` / `boardDraft.ts` / `boardIdentity.ts` と `server/board.js` が掲示板を担当します。
+
 | 入口・領域 | 主な責務 |
 | --- | --- |
 | [main.tsx](../src/main.tsx)、[BrandGate.tsx](../src/BrandGate.tsx) | 言語・PWAの初期化、旧ドメイン案内、未完了の旧移行処理の復元、ゲーム画面の起動。`?studio=1`は撮影用の別入口。 |

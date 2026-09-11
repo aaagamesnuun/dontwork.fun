@@ -48,3 +48,5 @@ await copyFile(resolve('server/bankrollRankings.js'),resolve(serverDirectory,'ba
 await copyFile(resolve("server/funnel.js"), resolve(serverDirectory, "funnel.js"));
 
 await copyFile(resolve("server/recordRank.js"), resolve(serverDirectory, "recordRank.js"));
+
+for (const file of ["board.js", "rankingPeriod.js"]) await copyFile(resolve("server",file),resolve(serverDirectory,file));

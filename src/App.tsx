@@ -1,3 +1,6 @@
+import { Board } from "./Board";
+import { rememberBoardScores } from "./boardIdentity";
+import { CommunityLinks } from "./CommunityLinks";
 import { SpinReveal } from "./spinReveal";
 import { BalanceReadout } from "./BalanceReadout";
 import { NotificationSettings } from "./BackgroundSettings";
@@ -315,7 +318,7 @@ export default function App({ onOpenDesk, studio }: {
         setS(run => ({ ...run, running: false })); }, [studio?.controlsOpen, setS]);
     const [progressSignal] = useState(createProgressSignal);
     const setProgress = progressSignal.update;
-    const [tab, setTab] = useState<DockPanel>("spin"), [frame, setFrame] = useState<SweepFrame | null>(null), [detailBet, setDetailBet] = useState<string | null>(null), [modal, setModal] = useState<"background" | "trial-mode" | "trial-result" | "trial-ranking" | "common-roll" | "jackpot-help" | "news-help" | "intro" | "install" | "pwa" | "help" | "lab" | "sound" | "settings" | "feedback" | "rating" | "stats" | "leaderboard" | "clear" | "restart" | "presets" | "draft" | "menu" | "bet" | null>(() => {
+    const [tab, setTab] = useState<DockPanel>("spin"), [frame, setFrame] = useState<SweepFrame | null>(null), [detailBet, setDetailBet] = useState<string | null>(null), [modal, setModal] = useState<"board" | "background" | "trial-mode" | "trial-result" | "trial-ranking" | "common-roll" | "jackpot-help" | "news-help" | "intro" | "install" | "pwa" | "help" | "lab" | "sound" | "settings" | "feedback" | "rating" | "stats" | "leaderboard" | "clear" | "restart" | "presets" | "draft" | "menu" | "bet" | null>(() => {
         if (studio)
             return null;
         if (needsPwa())
@@ -343,6 +346,7 @@ export default function App({ onOpenDesk, studio }: {
         setModal(null); };
     const closeResult = () => { const id = modal === "clear" ? shown.completion?.id : ratingAfterRanking.current; ratingAfterRanking.current = null; openClearRating(id); };
     const sendRating = (body: Record<string, unknown>) => telemetry.current?.sendRating(state.current, body) ?? request("/api/ratings", { ...body, telemetryEnabled: false });
+    useEffect(()=>{if(!studio)rememberBoardScores(shown)},[shown.completion?.id,shown.completionNickname,shown.trial?.result?.id,shown.trial?.nickname,studio]);
     const [dismissedModeRun,setDismissedModeRun] = useState<string|null>(null);
     const [trialAccess, setTrialAccess] = useState(() => !studio && trialUnlocked(s));
     const trialAvailable = trialAccess || (!studio && !!(shown.completion || shown.trial));
@@ -1452,6 +1456,7 @@ export default function App({ onOpenDesk, studio }: {
           <span>v{VERSION}</span>
         </div>
         <nav>
+          {!studio && <button className="contact-button board-button" aria-label={_t("掲示板")} title={_t("掲示板")} onClick={()=>setModal("board")}><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M20 15a3 3 0 0 1-3 3H9l-5 3V6a3 3 0 0 1 3-3h10a3 3 0 0 1 3 3Z"/><path d="M8 8h8M8 12h5"/></svg></button>}
           <button className="contact-button" aria-label={_t("問い合わせ")} title={_t("問い合わせ")} onClick={() => setModal("feedback")}>
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 6 9 7 9-7"/></svg>
           </button>
@@ -1661,6 +1666,7 @@ export default function App({ onOpenDesk, studio }: {
       {!studio && modal === "trial-result" && shown.trial?.result && <Modal title="TIME UP" className="clear-modal" dismissible={!!shown.trial.nickname} onClose={() => setModal(null)}>
         <TrialResult s={shown} onChange={change} onRanking={() => setModal("trial-ranking")} onRetry={() => switchMode("trial", shown.trial!.rule)} onNormal={() => switchMode("normal")}/>
       </Modal>}
+      {!studio && modal === "board" && <Modal title={_t("掲示板")} onClose={()=>setModal(null)}><Board run={shown}/></Modal>}
       {modal === "menu" && (<Modal title="dontwork.fun" onClose={() => setModal(null)}>
           <div className="menu-grid">
             <div className="language-switch" role="group" aria-label="Language"><button aria-pressed={uiLanguage==="ja"} onClick={()=>setLanguage("ja")}>JP · 日本語</button><button aria-pressed={uiLanguage==="en"} onClick={()=>setLanguage("en")}>EN · English</button></div>
@@ -1678,6 +1684,7 @@ export default function App({ onOpenDesk, studio }: {
                 {_text(label)} →
               </button>))}
           </div>
+          <CommunityLinks/>
           <p className="setting-note">v{VERSION}</p>
         </Modal>)}
       {!studio && modal === "restart" && <Modal title={_t("初めからやり直す")} onClose={() => setModal(restartFrom)}>

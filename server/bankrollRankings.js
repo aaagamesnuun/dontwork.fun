@@ -1,3 +1,4 @@
+import { rankingPeriod, periodFilter } from "./rankingPeriod.js";
 import { trialRecordRank } from "./recordRank.js";
 const json = (body, status = 200) =>
   new Response(JSON.stringify(body), {
@@ -39,7 +40,7 @@ async function bodyJson(request) {
 }
 export async function bankrollRankingsApi(request, db, url) {
  const origin=request.headers.get('origin');
- if(origin && origin!==url.origin && origin!=='https://bebullish.fun' && origin!=='https://dontwork.fun' && !/^https:\/\/[a-z0-9-]+\.realnuun\.chatgpt\.site$/.test(origin) && !/^http:\/\/(localhost|127\.0\.0\.1):\d+$/.test(origin))return json({error:'このページからは送信できません。'},403);
+ if(origin && origin!==url.origin && origin!=='https://bebullish.fun' && origin!=='https://dontwork.fun' && origin!=='https://dontwork-fun.ronefire.workers.dev' && !/^https:\/\/[a-z0-9-]+\.realnuun\.chatgpt\.site$/.test(origin) && !/^http:\/\/(localhost|127\.0\.0\.1):\d+$/.test(origin))return json({error:'このページからは送信できません。'},403);
  const respond=(data,status=200)=>{const response=json(data,status);if(origin)response.headers.set('access-control-allow-origin',origin);response.headers.set('vary','Origin');response.headers.set('access-control-allow-methods','GET, POST, OPTIONS');response.headers.set('access-control-allow-headers','Content-Type');return response};
  if(request.method==='OPTIONS'){const response=respond(null);return new Response(null,{status:204,headers:response.headers})}
  if(!db)return respond({error:'ランキングの保存先に接続できません。'},503);
@@ -50,18 +51,21 @@ export async function bankrollRankingsApi(request, db, url) {
     if(!uuid(id))return respond({error:'Invalid score ID'},400);
     return respond({ranking:await trialRecordRank(db,id)??null});
    }
+   const period=rankingPeriod(url.searchParams.get('period')??'all');
+   if(!period)return respond({error:'Invalid period'},400);
+   const filter=periodFilter(period);
    const scoring=url.searchParams.get('scoring')??'cash';
    if(!['cash','assets'].includes(scoring))return respond({error:'Invalid scoring'},400);
    const version=url.searchParams.get('version')??'all',offset=Number(url.searchParams.get('offset')??0);
    if(!(version==='all'||/^\d+\.\d+\.\d+$/.test(version)) || !Number.isSafeInteger(offset)||offset<0||offset>1e7)return respond({error:'表示条件を確認してください。'},400);
    const rule=scoring==='assets'?'astra-v13-30m-assets:classic':'astra-v13-30m:classic';
-   const where=' WHERE ruleset_version = ?'+(version==='all'?'':' AND app_version = ?'),params=version==='all'?[rule]:[rule,version];
+   const where=' WHERE ruleset_version = ?'+(version==='all'?'':' AND app_version = ?')+filter.sql,params=[...(version==='all'?[rule]:[rule,version]),...filter.params];
    const [scores,count,versions]=await Promise.all([
     db.prepare(`SELECT id,nickname,app_version AS appVersion,final_bankroll AS finalBankroll,spins FROM bankroll_records${where} ORDER BY final_bankroll DESC,id ASC LIMIT 50 OFFSET ?`).bind(...params,offset).all(),
-    db.prepare(`SELECT COUNT(*) AS total FROM bankroll_records${where}`).bind(...params).first(),
+    db.prepare(`SELECT COUNT(*) AS total,AVG(final_bankroll) AS averageBankroll FROM bankroll_records${where}`).bind(...params).first(),
     db.prepare('SELECT DISTINCT app_version AS version FROM bankroll_records WHERE ruleset_version = ?').bind(rule).all()
    ]);
-   return respond({scores:scores.results??[],total:Number(count?.total??0),versions:(versions.results??[]).map(v=>v.version),offset,pageSize:50});
+   return respond({scores:scores.results??[],total:Number(count?.total??0),averageBankroll:count?.averageBankroll??null,...period,versions:(versions.results??[]).map(v=>v.version),offset,pageSize:50});
   }
   if(request.method!=='POST')return respond({error:'Method Not Allowed'},405);
   const input=await bodyJson(request),nickname=typeof input?.nickname==='string'?input.nickname.normalize('NFKC').replace(/[\u0000-\u001f\u007f]/g,'').trim():'';

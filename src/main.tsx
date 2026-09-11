@@ -29,3 +29,5 @@ import "./captureMode.css";
 import "./timeTrial.css";
 
 import "./release30.css";
+
+import "./community.css";

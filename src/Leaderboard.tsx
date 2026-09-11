@@ -9,6 +9,7 @@ import { resultShareText, resultXIntent, RESULT_POST_URL } from "./resultShare";
 import { rankingPath, rankingVersion, type RankingPage, } from "./rankings";
 import {useResultRanking,ResultRankStatus} from './resultRanking';
 import {useResultImage} from './useResultImage';
+import {RankingPeriods, RankingSummary, type RankingPeriod} from './RankingPeriod';
 import type { Change } from "./App";
 export function Leaderboard({ s, change, clear = false, notify, saveName, onRanking, }: {
     s: Run;
@@ -19,6 +20,7 @@ export function Leaderboard({ s, change, clear = false, notify, saveName, onRank
     onRanking?: () => void;
 }) {
     const [resultRun] = useState(() => clearCardRun(s));
+    const [period,setPeriod] = useState<RankingPeriod>('all');
     const [view, setView] = useState<"all" | "version">("all"), [version, setVersion] = useState(VERSION), [offset, setOffset] = useState(0);
     const [page, setPage] = useState<RankingPage | null>(null), [versions, setVersions] = useState([VERSION]), [refresh, setRefresh] = useState(0);
     const [name, setName] = useState(s.completionNickname ?? ""), [error, setError] = useState(""), [postError, setPostError] = useState(""), [busy, setBusy] = useState(false);
@@ -28,7 +30,7 @@ export function Leaderboard({ s, change, clear = false, notify, saveName, onRank
         let alive = true;
         setPage(null);
         setError("");
-        void request<RankingPage>(rankingPath(view === "all" ? "all" : version, offset))
+        void request<RankingPage>(rankingPath(view === "all" ? "all" : version, offset, period))
             .then((result) => {
             if (!alive)
                 return;
@@ -44,7 +46,7 @@ export function Leaderboard({ s, change, clear = false, notify, saveName, onRank
         return () => {
             alive = false;
         };
-    }, [clear, view, version, offset, refresh]);
+    }, [clear, view, version, offset, refresh, period]);
     const completion = s.completion;
     const named = !!s.completionNickname;
     const rank=useResultRanking(s,clear&&named);
@@ -132,12 +134,13 @@ export function Leaderboard({ s, change, clear = false, notify, saveName, onRank
         </p>)}
       {clear && named && <><ResultRankStatus status={rank.status} retry={rank.retry}/><div className="result-actions"><a className="primary" href={rank.status==="loading"?undefined:resultXIntent(resultRun, s.completionNickname, rank.ranking)} aria-disabled={rank.status==="loading"} target="_blank" rel="noopener noreferrer">{_t("Xで共有 ↗")}</a><button className="primary" disabled={rank.status==="loading" || (!cardImage && !imageFailed)} onClick={() => void share()}>{imageFailed ? _t("結果をテキストで共有") : cardImage ? _t("記念カードをシェア ↗") : _t("画像を準備中…")}</button></div><p className="setting-note">{_t("画像を長押しして保存、またはスクリーンショットで共有できます。")}</p>{imageFailed && <p className="setting-note">{_t("画像を作成できませんでした。このカードをスクリーンショットで共有できます。")}</p>}<button className="text-button result-ranking" onClick={onRanking}>{_t("ランキングを見る →")}</button></>}
       {!clear && <>
+      <RankingPeriods value={period} onChange={p=>{setPeriod(p);setOffset(0)}}/>
       <div className="ranking-controls">
         <div className="ranking-tabs" role="group" aria-label={_t("ランキングの範囲")}>
           <button className={view === "all" ? "selected" : ""} aria-pressed={view === "all"} onClick={() => {
                 setView("all");
                 setOffset(0);
-            }}>{_t("全体ランキング")}</button>
+            }}>{_t("全バージョン")}</button>
           <button className={view === "version" ? "selected" : ""} aria-pressed={view === "version"} onClick={() => {
                 setView("version");
                 setOffset(0);
@@ -159,6 +162,7 @@ export function Leaderboard({ s, change, clear = false, notify, saveName, onRank
           <p className="negative">{_text(error)}</p>
           <button className="secondary" onClick={() => setRefresh((n) => n + 1)}>{_t("もう一度読み込む")}</button>
         </div>) : !page ? (<p role="status">{_t("ランキングを読み込んでいます…")}</p>) : (<>
+          <RankingSummary page={page} label={_t("平均クリア時間")} value={page.averageTimeMs==null ? "—" : duration(page.averageTimeMs)}/>
           <p className="setting-note">{_t("{0}件のクリア記録 · 実プレイ時間の短い順", page.total.toLocaleString())}</p>
           {page.scores.length ? (<table className="scores">
               <thead>
@@ -184,7 +188,7 @@ export function Leaderboard({ s, change, clear = false, notify, saveName, onRank
                     <td>{rankingVersion(score.appVersion)}</td>
                   </tr>))}
               </tbody>
-            </table>) : (<div className="empty-state">{_t("このバージョンは、最初のクリアを待っています。")}</div>)}
+            </table>) : (<div className="empty-state">{_t("この条件の記録はまだありません。")}</div>)}
           {(offset > 0 || offset + page.scores.length < page.total) && (<div className="button-row">
               <button className="secondary" disabled={offset === 0} onClick={() => setOffset((n) => Math.max(0, n - 50))}>{_t("前の50件")}</button>
               <button className="secondary" disabled={offset + page.scores.length >= page.total} onClick={() => setOffset((n) => n + 50)}>{_t("次の50件")}</button>
