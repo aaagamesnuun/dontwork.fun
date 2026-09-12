@@ -1,11 +1,12 @@
 import { t as _t } from "./i18n";
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { sound, wakeAudio } from './audio';
 import { type Settings, defaultSettings } from './game/engine';
 export const INTRO_KEY = 'bebullish-intro-seen-v2';
-export function GameOverview({ settings = defaultSettings, onDone, fuelEnabled: _fuel, opening: _opening }: {
+export function GameOverview({ settings = defaultSettings, onDone, notificationStep, fuelEnabled: _fuel, opening: _opening }: {
     settings?: Settings;
     onDone?: () => void;
+    notificationStep?: ReactNode;
     fuelEnabled?: boolean;
     opening?: number;
 }) {
@@ -14,9 +15,10 @@ export function GameOverview({ settings = defaultSettings, onDone, fuelEnabled: 
         setPreviewed(false);
         setPage(1);
     }
-    else if (previewed) {
+    else if (page === 1 && previewed) {
         sound('ui', settings);
-        onDone?.();
+        if (notificationStep) setPage(2);
+        else onDone?.();
     } };
     // Only the first page advances from taps on the dialog or its margins.
     // The sound page requires a sample and an explicit confirmation.
@@ -32,14 +34,14 @@ export function GameOverview({ settings = defaultSettings, onDone, fuelEnabled: 
         return () => target.removeEventListener('click', tap);
     }, [page, onDone, settings]);
     return <div className={`intro-pages ${page === 0 ? "tap-anywhere" : ""}`} ref={root}>
- <div className="intro-pagination" aria-label={_t("全2ページ中{0}ページ", page + 1)}><i className={page === 0 ? 'current' : ''}/><i className={page === 1 ? 'current' : ''}/></div>
- {page === 0 ? <><img className="intro-cash" src="/intro-cash-front.png" alt={_t("札束の手前を走る、上昇チャート")} width="1536" height="1024"/><h3 className="intro-message">{_t("ギャンブルで")}<br /><em>{_t("1ビリオン")}</em>{_t("稼いだら")}<br /><strong>{_t("クリア！")}</strong></h3><button className="primary intro-start" onClick={advance}>{_t("タップして次へ")}</button></> : <>
+ <div className="intro-pagination" aria-label={_t("全{0}ページ中{1}ページ", notificationStep ? 3 : 2, page + 1)}>{Array.from({length:notificationStep ? 3 : 2},(_,i)=><i key={i} className={page === i ? 'current' : ''}/>)}</div>
+ {page === 0 ? <><img className="intro-cash" src="/intro-cash-front.png" alt={_t("札束の手前を走る、上昇チャート")} width="1536" height="1024"/><h3 className="intro-message">{_t("ギャンブルで")}<br /><em>{_t("1ビリオン")}</em>{_t("稼いだら")}<br /><strong>{_t("クリア！")}</strong></h3><button className="primary intro-start" onClick={advance}>{_t("タップして次へ")}</button></> : page === 1 ? <>
  <svg className="intro-volume" viewBox="0 0 100 100" fill="none" stroke="currentColor" strokeWidth="5" aria-hidden="true"><path d="M18 40h15l20-18v56L33 60H18Z"/><path d="M66 34q19 16 0 32M76 22q32 28 0 56" strokeLinecap="round"/></svg>
  <h3 className="intro-message">{_t("音量を上げると")}<br />{_t("ドパれます")}</h3>
  <button className={`secondary intro-start ${!previewed ? 'guide-target' : ''}`} onClick={() => { wakeAudio(true); sound('jackpot', { ...settings, sound: true, soundVolume: 1 }); setPreviewed(true); }}>{_t("♫ 音を試す")}</button>
- <button className={`intro-start ${previewed ? 'primary guide-target' : 'secondary'}`} disabled={!previewed} onClick={advance}>{_t("音を確認した · 始める →")}</button>
+ <button className={`intro-start ${previewed ? 'primary guide-target' : 'secondary'}`} disabled={!previewed} onClick={advance}>{_t(notificationStep ? "音を確認した · 次へ →" : "音を確認した · 始める →")}</button>
  <button className="text-button" onClick={() => setPage(0)}>{_t("← 戻る")}</button>
- </>}
+ </> : notificationStep}
  </div>;
 }
 export function JackpotHelp({ discovered = false, rule = "combined" }: {

@@ -9,6 +9,11 @@
 .intro-message {font-size:clamp(28px,6vw,44px);line-height:1.4;letter-spacing:-.035em;margin:22px 0}
 .intro-message em {font-style:normal;color:#bcf27c}
 .intro-volume {width:140px;height:140px;color:#bcf27c;margin:28px auto 8px}
+.intro-notifications .intro-volume{width:84px;height:84px;margin:12px auto 0}
+.intro-notifications .intro-message{font-size:clamp(26px,6vw,36px);margin:16px 0}
+.intro-notifications>p{font-size:16px;line-height:1.7;margin:12px 0}
+.intro-notifications>.setting-note{display:block;font-size:14px;line-height:1.6}
+.intro-notifications .notification-enabled{color:var(--lime)}
 .text-button {border:0;padding:14px;background:transparent;color:var(--muted)}
 .install-picture-steps {list-style:none;padding:0;display:grid;gap:10px}
 .install-picture-steps li {display:grid;grid-template-columns:74px 22px minmax(0,1fr);align-items:center;gap:10px;border:1px solid var(--line);border-radius:10px;padding:8px;background:#141d18}

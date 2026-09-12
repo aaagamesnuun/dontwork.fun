@@ -1,4 +1,13 @@
 {
+  "全{0}ページ中{1}ページ": "Page {1} of {0}",
+  "音を確認した · 次へ →": "Sound checked · Next →",
+  "通知ONがおすすめ": "Turn on notifications",
+  "通知をオンにすると、バックグラウンドで遊ぶときに有利になります。": "Notifications give you an advantage while playing in the background.",
+  "ジャックポットにすぐ気づいて戻れます。大事なときだけお知らせするので、うるさくはしません。": "Spot a Jackpot and jump back in. We only notify you when it matters, so we won't overwhelm you with alerts.",
+  "通知をオンにする": "Enable notifications",
+  "始める →": "Start playing →",
+  "今はスキップして始める →": "Skip for now and play →",
+  "通知はあとから、右上のベルで設定できます。": "You can change this later using the bell at the top right.",
   "下書きを保存できませんでした。投稿内容を控えてから再試行してください。": "Could not save the draft. Keep a copy of your message and try again.",
   "投稿しました。": "Posted.",
   "返信しました。": "Reply posted.",

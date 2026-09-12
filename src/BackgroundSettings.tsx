@@ -10,7 +10,7 @@ function TrialBackgroundNotice() {
     return <section className="settings-section"><h3>{_t("30分モードは画面を開いて遊ぼう")}</h3><p>{_t("画面を離れると時計とスピンが止まります。戻ったら砂時計ボタンで再開してください。バックグラウンド進行は通常モードで利用できます。")}</p></section>;
 }
 
-export function NotificationSettings({s,change}:{s:Run;change:Change}) {
+export function NotificationSettings({s,change,intro=false,onDone}:{s:Run;change:Change;intro?:boolean;onDone?:()=>void}) {
     const [busy,setBusy]=useState(false),[message,setMessage]=useState("");
     const [permission,setPermission]=useState(() => notificationsSupported() ? Notification.permission : "default");
     useEffect(() => {
@@ -35,6 +35,19 @@ export function NotificationSettings({s,change}:{s:Run;change:Change}) {
     };
     if(s.trial)return <TrialBackgroundNotice/>;
     const enabled=s.settings.jackpotNotifications && permission==="granted";
+    if(intro)return <section className="intro-notifications">
+        <svg className="intro-volume" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4"/></svg>
+        <h3 className="intro-message">{_t("通知ONがおすすめ")}</h3>
+        <p>{_t("通知をオンにすると、バックグラウンドで遊ぶときに有利になります。")}</p>
+        <p>{_t("ジャックポットにすぐ気づいて戻れます。大事なときだけお知らせするので、うるさくはしません。")}</p>
+        {!enabled && <button className="primary intro-start guide-target" disabled={busy || !notificationsSupported() || permission==="denied"} onClick={()=>void enable()}>{busy ? _t("確認中…") : _t("通知をオンにする")}</button>}
+        {enabled && <p className="notification-enabled" role="status">{_t("ジャックポット通知をONにしました。")}</p>}
+        {!notificationsSupported() && <p className="setting-note">{_t("この環境では通知を利用できません。iPhone・iPadはホーム画面に追加したアプリから開いてください。")}</p>}
+        {permission==="denied" && <p className="setting-note">{_t("通知は許可されていません。端末やブラウザの通知設定から変更できます。")}</p>}
+        {message && !enabled && permission!=="denied" && <p role="status">{message}</p>}
+        <button className={`intro-start ${enabled ? 'primary guide-target' : 'text-button'}`} disabled={busy} onClick={onDone}>{_t(enabled ? "始める →" : "今はスキップして始める →")}</button>
+        <small className="setting-note">{_t("通知はあとから、右上のベルで設定できます。")}</small>
+    </section>;
     return <section className="settings-section">
         <h3>{_t("ジャックポットを通知で受け取りますか？")}</h3>
         <p>{_t("画面を離れている間にジャックポットが出たら、進行を止めてお知らせします。ゲームに戻ると再開します。")}</p>

@@ -1713,7 +1713,7 @@ export default function App({ onOpenDesk, studio }: {
           <InstallWelcome pwa={pwa}/>
         </Modal>)}
       {modal === "intro" && (<Modal title="dontwork.fun" dismissible={false} onClose={dismissIntro}>
-          <GameOverview settings={shown.settings} onDone={dismissIntro}/>
+          <GameOverview settings={shown.settings} onDone={dismissIntro} notificationStep={!shown.trial ? <NotificationSettings s={shown} change={change} intro onDone={dismissIntro}/> : undefined}/>
         </Modal>)}
       {modal === "help" && <Modal title={_t("遊び方")} onClose={() => setModal(null)}><GameHelp s={shown}/></Modal>}
       {modal === "news-help" && newsDetail && <Modal title={newsDetail.label} onClose={() => setModal(null)}><NewsHelp s={shown} guide={newsDetail}/></Modal>}
