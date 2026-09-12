@@ -77,6 +77,17 @@ select {
   margin: auto;
   padding: 0 42px;
   min-height: 100svh;
+  /* Repeated play taps must not start a browser text selection. */
+  -webkit-user-select: none;
+  user-select: none;
+}
+.app input,
+.app select,
+.app textarea,
+.app [contenteditable="true"],
+.app [contenteditable="plaintext-only"] {
+  -webkit-user-select: text;
+  user-select: text;
 }
 .topbar {
   height: 88px;

@@ -18,7 +18,7 @@
 .install-diagram {width:74px;height:60px;color:#bdf28e}
 .install-guide select {max-width:65%;font-size:14px}
 .install-guide details {margin-top:18px;font-size:14px;line-height:1.65}
-.selectable-url {overflow-wrap:anywhere;user-select:all}
+.selectable-url {overflow-wrap:anywhere;-webkit-user-select:all;user-select:all}
 .install-welcome>.large-copy {font-size:26px;margin:16px 0}
 .install-welcome>p {line-height:1.6}
 .jackpot-help li {margin:18px 0;line-height:1.8}

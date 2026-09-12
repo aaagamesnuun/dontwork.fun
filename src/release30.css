@@ -1,5 +1,5 @@
 /* Keep the playing surface responsive while decorative layers move. */
-.share-card-image{display:block;width:100%;max-height:76svh;object-fit:contain;border-radius:10px;user-select:auto;-webkit-user-select:auto;-webkit-touch-callout:default;touch-action:manipulation}
+.share-card-image{display:block;width:100%;max-height:76svh;object-fit:contain;border-radius:10px;user-select:text;-webkit-user-select:text;-webkit-touch-callout:default;touch-action:manipulation}
 .result-effort{border-top:1px solid #51644440;padding-top:8px!important}
 .result-effort b{font-size:clamp(13px,3vw,20px)!important}.result-effort span{font-size:11px!important}
 .auto-control:has(.trial-clock){display:flex;flex-direction:column;gap:1px;padding:5px 8px}
