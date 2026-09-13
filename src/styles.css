@@ -2103,3 +2103,5 @@ select {
   opacity: 0.35;
   cursor: not-allowed;
 }
+
+.score-work { display: block; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }

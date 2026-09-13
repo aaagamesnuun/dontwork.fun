@@ -180,7 +180,7 @@ export const TRIAL_MS = 30 * 60 * 1000;
 export type TrialRule = "fixed" | "shop" | "lottery";
 export interface TrialResult {
   id:string; appVersion:string; rulesetVersion:string; catalog:CatalogId;
-  durationMs:number; finalBankroll:number; spins:number; ranked:boolean;
+  durationMs:number; finalBankroll:number; spins:number; ranked:boolean; workCount?:number|null;
   rule:TrialRule; addedMs:number;
 }
 export interface TimeTrial {
@@ -227,6 +227,7 @@ export interface Run {
     catalog: CatalogId;
     timeMs: number;
     spins: number;
+    workCount?: number | null;
     ranked: boolean;
   } | null;
   entryKind?: "transfer";
@@ -826,6 +827,7 @@ export function finish(s: Run): Run {
       catalog: n.catalog,
       timeMs: Math.max(1000, Math.round(n.activeMs)),
       spins: n.spins,
+      workCount: n.work,
       ranked: !n.debug && n.activeMs <= 14 * 86400000 && n.spins <= 1e8,
     };
   }
@@ -1741,6 +1743,10 @@ export function readSave(raw: string | null): Run | null {
     const record=n.clearSnapshot;
     if(record) for(const key of ["work","coinWagered","coinPaid"] as const) if(record[key]!==undefined && (!Number.isFinite(record[key]) || record[key]!<0)) delete record[key];
     if(record && (![record.cash,record.spent,record.maxChain].every(x=>typeof x==="number"&&Number.isFinite(x)&&x>=0) || !Array.isArray(record.history) || record.history.length<1 || record.history.length>150 || record.history.some(p=>!p || ![p.cash,p.at,p.spin??0,p.spent??0].every(x=>typeof x==="number"&&Number.isFinite(x)&&x>=0) || typeof p.kind!=="string"))) n.clearSnapshot=null;
+    if(n.completion){
+      const count=n.completion.workCount ?? n.clearSnapshot?.work;
+      n.completion={...n.completion,workCount:typeof count==="number" && Number.isSafeInteger(count) && count>=0?count:null};
+    }
     if(n.settings.workMode === "gamble") n.settings.fuelEnabled=false;
     if(n.catalog === "all-test") n.debug=true;
     const draw = n.lastUpgradeDraw;
@@ -1894,6 +1900,8 @@ export function readSave(raw: string | null): Run | null {
         if(r.id!==n.id || !Number.isFinite(r.finalBankroll)||r.finalBankroll<0||r.finalBankroll>MONEY_CEILING || r.finalBankroll!==(r.rulesetVersion.includes("-assets:")?finiteMoney(n.cash+n.spent):n.cash) ||
           r.durationMs!==TRIAL_MS+t.addedMs || r.addedMs!==t.addedMs || r.rule!==t.rule || r.spins!==n.spins || r.catalog!==n.catalog ||
           typeof r.appVersion!=="string" || typeof r.rulesetVersion!=="string" || typeof r.ranked!=="boolean" || t.anchor!==null || !t.paused || t.elapsedMs!==r.durationMs)return null;
+        const count=r.workCount ?? n.work;
+        r.workCount=typeof count==="number" && Number.isSafeInteger(count) && count>=0?count:null;
         n.running=false;n.background=null;
         if(retiredResult)t.result={...r,finalBankroll:trialAssets(n),rulesetVersion:r.rulesetVersion.replace("-30m:","-30m-assets:"),ranked:false};
       }
@@ -2006,7 +2014,7 @@ export function advanceTrial(s:Run,now:number):Run {
   let next={...s,trial:{...t,elapsedMs,anchor:now}};
   if(elapsedMs<TRIAL_MS+t.addedMs)return next;
   const result:TrialResult={id:s.id,appVersion:VERSION,rulesetVersion:`astra-v${ECONOMY_REVISION}-30m-assets:${s.catalog}`,catalog:s.catalog,
-    durationMs:TRIAL_MS+t.addedMs,finalBankroll:trialAssets(s),spins:s.spins,ranked:!s.debug && t.rule==="fixed" && t.addedMs===0 && t.purchases===0 && !s.assistUsed,
+    durationMs:TRIAL_MS+t.addedMs,finalBankroll:trialAssets(s),spins:s.spins,workCount:s.work,ranked:!s.debug && t.rule==="fixed" && t.addedMs===0 && t.purchases===0 && !s.assistUsed,
     rule:t.rule,addedMs:t.addedMs};
   return {...next,running:false,background:null,coinChartHold:null,coinPendingCount:0,coinPendingProfit:0,
     history:appendHistory(s.history,{cash:s.cash,spin:s.spins,at:s.activeMs,kind:"time-up",trialMs:elapsedMs,assets:trialAssets(s),coinProfit:s.coinPendingProfit,coinCount:s.coinPendingCount}),

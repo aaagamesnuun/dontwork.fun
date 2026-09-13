@@ -4,7 +4,7 @@ import {DatabaseSync} from 'node:sqlite';
 import {readFileSync} from 'node:fs';
 import {bankrollRankingsApi} from './bankrollRankings.js';
 let sqlite,db;
-beforeEach(()=>{sqlite=new DatabaseSync(':memory:');sqlite.exec(readFileSync(new URL('../drizzle/0009_bankroll_records.sql',import.meta.url),'utf8'));db={prepare(sql){const query={args:[],bind(...args){this.args=args;return this},async all(){return {results:sqlite.prepare(sql).all(...this.args)}},async first(){return sqlite.prepare(sql).get(...this.args)??null},async run(){return {meta:sqlite.prepare(sql).run(...this.args)}}};return query}}});
+beforeEach(()=>{sqlite=new DatabaseSync(':memory:');for(const file of ['0006_clear_records.sql','0009_bankroll_records.sql','0013_ranking_work.sql'])sqlite.exec(readFileSync(new URL('../drizzle/'+file,import.meta.url),'utf8'));db={prepare(sql){const query={args:[],bind(...args){this.args=args;return this},async all(){return {results:sqlite.prepare(sql).all(...this.args)}},async first(){return sqlite.prepare(sql).get(...this.args)??null},async run(){return {meta:sqlite.prepare(sql).run(...this.args)}}};return query}}});
 afterEach(()=>sqlite.close());
 const valid=()=>({scoreId:crypto.randomUUID(),nickname:'友達',appVersion:'3.0.0',rulesetVersion:'astra-v13-30m-assets:classic',catalog:'classic',rule:'fixed',ranked:true,durationMs:1800000,addedMs:0,finalBankroll:1000,spins:100});
 const post=async(body,origin='https://bebullish.fun')=>{const url=new URL('https://test.example/api/bankroll-rankings');return bankrollRankingsApi(new Request(url,{method:'POST',headers:{'content-type':'application/json',origin},body:JSON.stringify(body)}),db,url)};

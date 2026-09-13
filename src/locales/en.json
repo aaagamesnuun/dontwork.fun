@@ -12,10 +12,7 @@
   "投稿しました。": "Posted.",
   "返信しました。": "Reply posted.",
   "集計期間": "Period",
-  "日次": "Daily",
-  "週次": "Weekly",
   "記録数": "Records",
-  "登録日時で集計・日本時間。週は月曜始まり。": "By registration date (Japan time). Weeks start on Monday.",
   "全バージョン": "All versions",
   "平均クリア時間": "Average clear time",
   "平均総資産": "Average total assets",
@@ -1169,5 +1166,9 @@
   "順位を取得中…": "Getting your rank…",
   "この記録は現在のランキングにありません。": "This record is not on the current leaderboard.",
   "順位を取得できませんでした。": "Could not retrieve your rank.",
-  "順位を再取得": "Refresh rank"
+  "順位を再取得": "Refresh rank",
+  "直近24時間": "Last 24 hours",
+  "直近7日間": "Last 7 days",
+  "記録の登録日時で集計（日本時間）。": "Based on record submission time (Japan time).",
+  "WORK {0}回": "WORK {0} clicks"
 }

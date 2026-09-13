@@ -9,6 +9,7 @@ import { resultShareText, resultXIntent, RESULT_POST_URL } from "./resultShare";
 import { rankingPath, rankingVersion, type RankingPage, } from "./rankings";
 import {useResultRanking,ResultRankStatus} from './resultRanking';
 import {useResultImage} from './useResultImage';
+import {RankingWork} from "./RankingWork";
 import {RankingPeriods, RankingSummary, type RankingPeriod} from './RankingPeriod';
 import type { Change } from "./App";
 export function Leaderboard({ s, change, clear = false, notify, saveName, onRanking, }: {
@@ -177,7 +178,7 @@ export function Leaderboard({ s, change, clear = false, notify, saveName, onRank
                 {page.scores.map((score, i) => (<tr key={score.id}>
                     <td>{offset + i + 1}</td>
                     <td>
-                      <strong>{score.nickname}</strong>
+                      <strong>{score.nickname}</strong><RankingWork count={score.workCount}/>
                       <small className="score-catalog">
                         {score.appVersion === "pe-legacy"
                             ? _t("旧版の記録") : (CATALOGS.find((c) => c.id === score.catalog)

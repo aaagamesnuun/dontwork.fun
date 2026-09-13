@@ -62,7 +62,7 @@ export async function bankrollRankingsApi(request, db, url) {
    const rule='astra-v13-30m-assets:classic';
    const where=' WHERE ruleset_version = ?'+(version==='all'?'':' AND app_version = ?')+filter.sql,params=[...(version==='all'?[rule]:[rule,version]),...filter.params];
    const [scores,count,versions]=await Promise.all([
-    db.prepare(`SELECT id,nickname,app_version AS appVersion,final_bankroll AS finalBankroll,spins FROM bankroll_records${where} ORDER BY final_bankroll DESC,id ASC LIMIT 50 OFFSET ?`).bind(...params,offset).all(),
+    db.prepare(`SELECT id,nickname,app_version AS appVersion,final_bankroll AS finalBankroll,spins,work_count AS workCount FROM bankroll_records${where} ORDER BY final_bankroll DESC,id ASC LIMIT 50 OFFSET ?`).bind(...params,offset).all(),
     db.prepare(`SELECT COUNT(*) AS total,AVG(final_bankroll) AS averageBankroll FROM bankroll_records${where}`).bind(...params).first(),
     db.prepare('SELECT DISTINCT app_version AS version FROM bankroll_records WHERE ruleset_version = ?').bind(rule).all()
    ]);
@@ -70,8 +70,8 @@ export async function bankrollRankingsApi(request, db, url) {
   }
   if(request.method!=='POST')return respond({error:'Method Not Allowed'},405);
   const input=await bodyJson(request),nickname=typeof input?.nickname==='string'?input.nickname.normalize('NFKC').replace(/[\u0000-\u001f\u007f]/g,'').trim():'';
-  if(!input || !nickname || Array.from(nickname).length>16 || !uuid(input.scoreId) || !(input.appVersion==='3.0.0' && input.rulesetVersion==='astra-v13-30m-assets:classic') || input.catalog!=='classic' || input.rule!=='fixed' || input.ranked!==true || input.durationMs!==1800000 || input.addedMs!==0 || !Number.isFinite(input.finalBankroll) || input.finalBankroll<0 || input.finalBankroll>1e200 || !Number.isSafeInteger(input.spins)||input.spins<0||input.spins>1e8)return respond({error:'30分の記録と名前を確認してください。'},400);
-  const result=await db.prepare('INSERT OR IGNORE INTO bankroll_records (score_id,nickname,app_version,ruleset_version,catalog_id,duration_ms,final_bankroll,spins) VALUES (?,?,?,?,?,?,?,?)').bind(input.scoreId,nickname,input.appVersion,input.rulesetVersion,input.catalog,input.durationMs,input.finalBankroll,input.spins).run();
+  if(!input || !nickname || Array.from(nickname).length>16 || !uuid(input.scoreId) || !(input.appVersion==='3.0.0' && input.rulesetVersion==='astra-v13-30m-assets:classic') || input.catalog!=='classic' || input.rule!=='fixed' || input.ranked!==true || input.durationMs!==1800000 || input.addedMs!==0 || !Number.isFinite(input.finalBankroll) || input.finalBankroll<0 || input.finalBankroll>1e200 || !Number.isSafeInteger(input.spins)||input.spins<0||input.spins>1e8 || (input.workCount!=null && (!Number.isSafeInteger(input.workCount)||input.workCount<0)))return respond({error:'30分の記録と名前を確認してください。'},400);
+  const result=await db.prepare('INSERT OR IGNORE INTO bankroll_records (score_id,nickname,app_version,ruleset_version,catalog_id,duration_ms,final_bankroll,spins,work_count) VALUES (?,?,?,?,?,?,?,?,?)').bind(input.scoreId,nickname,input.appVersion,input.rulesetVersion,input.catalog,input.durationMs,input.finalBankroll,input.spins,input.workCount??null).run();
   const saved=await db.prepare('SELECT nickname FROM bankroll_records WHERE score_id=?').bind(input.scoreId).first();
   return respond({ok:true,duplicate:Number(result.meta?.changes??0)===0,nickname:saved.nickname},Number(result.meta?.changes??0)?201:200);
  }catch{return respond({error:'ランキングを読み書きできませんでした。もう一度お試しください。'},500)}

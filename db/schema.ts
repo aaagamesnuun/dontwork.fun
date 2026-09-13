@@ -205,6 +205,7 @@ export const clearRecordsSchemaSql = {
     app_version TEXT NOT NULL,
     ruleset_version TEXT NOT NULL,
     catalog_id TEXT NOT NULL,
+    work_count INTEGER CHECK(work_count IS NULL OR (typeof(work_count) = 'integer' AND work_count >= 0 AND work_count <= 9007199254740991)),
     time_ms INTEGER NOT NULL CHECK(time_ms >= 1000 AND time_ms <= 1209600000),
     spins INTEGER NOT NULL CHECK(spins >= 0 AND spins <= 100000000),
     created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
@@ -253,6 +254,7 @@ export const bankrollRecordsSchemaSql = `CREATE TABLE IF NOT EXISTS bankroll_rec
  app_version TEXT NOT NULL,
  ruleset_version TEXT NOT NULL,
  catalog_id TEXT NOT NULL,
+ work_count INTEGER CHECK(work_count IS NULL OR (typeof(work_count) = 'integer' AND work_count >= 0 AND work_count <= 9007199254740991)),
  duration_ms INTEGER NOT NULL CHECK(duration_ms = 1800000),
  final_bankroll REAL NOT NULL CHECK(final_bankroll >= 0 AND final_bankroll <= 1e200),
  spins INTEGER NOT NULL CHECK(spins >= 0),

@@ -19,7 +19,7 @@ it('keeps period, version and pagination filters independent',()=>{
 it('renders selected period and a population average independently of page size',()=>{
  for(const lang of ['ja','en'] as const){setLanguage(lang);
   const controls=renderToStaticMarkup(<RankingPeriods value="week" onChange={()=>{}}/>);
-  expect(controls).toContain('aria-pressed="true"');expect(controls).toContain(lang==='ja'?'週次':'Weekly');
+  expect(controls).toContain('aria-pressed="true"');expect(controls).toContain(lang==='ja'?'直近7日間':'Last 7 days');
   const html=renderToStaticMarkup(<RankingSummary page={{period:'day',periodStart:'2026-09-11T15:00:00Z',periodEnd:'2026-09-12T15:00:00Z',total:123}} label="Average" value="00:31"/>);
   expect(html).toContain('123');expect(html).toContain('00:31');expect(html).toContain(lang==='ja'?'日本時間':'Japan time');
  }

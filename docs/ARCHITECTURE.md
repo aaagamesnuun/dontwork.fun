@@ -182,7 +182,7 @@ AUTOを停止しただけなら、ニュースは残り回数を保持して再�
 | API | 現在の役割 |
 | --- | --- |
 | `/api/rankings` | [rankings.js](../server/rankings.js)による通常クリア記録。 |
-| `/api/bankroll-rankings` | [bankrollRankings.js](../server/bankrollRankings.js)による30分の記録と採点方式別の検索。 |
+| `/api/bankroll-rankings` | [bankrollRankings.js](../server/bankrollRankings.js)による30分の総資産記録と期間・バージョン別の検索。 |
 | `/api/telemetry` | [worker.js](../server/worker.js)による同意済み計測、検証・重複排除・集計。 |
 | `/api/feedback`、`/api/ratings` | 問い合わせ・評価。計測の選択とは別の明示的な送信。 |
 | `/api/leaderboard` | 以前のランキング方式に対応するAPI。現在のクリアカード送信は`/api/rankings`を使う。 |
@@ -247,3 +247,7 @@ Workerのテストは`node:sqlite`のメモリ内DBにマイグレーション�
 ### Retired timed scoring
 
 The 30-minute mode uses cash plus cumulative upgrade spending exclusively. Cash-only saves migrate once through `readSave`, preserving balances, progress and names as unranked personal runs. `assets-start` anchors prevent reconstruction of incomplete investment history; compaction retains the anchor. Old scores remain historical database rows but are excluded from current rankings, averages, version lists, board badges and result-rank APIs. The client prunes retired offline submissions before sending current records.
+
+### ランキングの期間とWORK回数
+
+期間のday/weekキーは互換性のため維持し、意味はリクエスト時点から直近24時間/7日間です。登録日時で集計し、平均も同じ期間・バージョンの全記録から計算します。境界は両端を含み、未来日時は除外します。`completion.workCount` と `trial.result.workCount` は確定時のWORK回数で、オフライン再送でも値を変えません。旧通常セーブは検証済みclearSnapshot.workだけから補完し、旧30分結果は終了後に凍結されたrun.workを利用します。不明な旧記録はNULL/—です。追加列は0013_ranking_work.sqlで移行し、登録済みレコードの再送は値や登録日時を更新しません。

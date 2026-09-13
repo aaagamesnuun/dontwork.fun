@@ -158,7 +158,7 @@ it("preserves cloud completion metadata across versions and never upgrades manua
   expect(
     decodeTransfer(JSON.stringify(source), freshRun(), true, "1.10.0")
       ?.completion,
-  ).toEqual(source.completion);
+  ).toEqual({...source.completion,workCount:null});
   expect(
     decodeTransfer(JSON.stringify(source), freshRun(), false)?.completion
       ?.ranked,

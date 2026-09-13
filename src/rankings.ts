@@ -13,6 +13,7 @@ export interface RankingScore {
     catalog: string;
     timeMs: number;
     spins: number;
+    workCount: number | null;
     createdAt: string;
 }
 export interface RankingPage extends PeriodInfo {

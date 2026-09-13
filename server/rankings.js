@@ -12,8 +12,8 @@ const uuid = (value) =>
   typeof value === "string" &&
   /^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/i.test(value);
 const columns =
-  "id, nickname, app_version AS appVersion, ruleset_version AS rulesetVersion, catalog_id AS catalog, time_ms AS timeMs, spins, created_at AS createdAt";
-const insert = `INSERT OR IGNORE INTO clear_records (completion_id, nickname, app_version, ruleset_version, catalog_id, time_ms, spins, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`;
+  "id, nickname, app_version AS appVersion, ruleset_version AS rulesetVersion, catalog_id AS catalog, time_ms AS timeMs, spins, work_count AS workCount, created_at AS createdAt";
+const insert = `INSERT OR IGNORE INTO clear_records (completion_id, nickname, app_version, ruleset_version, catalog_id, time_ms, spins, created_at, work_count) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`;
 async function bodyJson(request) {
   if (
     !request.headers.get("content-type")?.startsWith("application/json") ||
@@ -141,7 +141,8 @@ export async function rankingsApi(request, db, url, acceptsScore) {
       input.timeMs > 1209600000 ||
       !Number.isSafeInteger(input.spins) ||
       input.spins < 0 ||
-      input.spins > 1e8
+      input.spins > 1e8 ||
+      (input.workCount != null && (!Number.isSafeInteger(input.workCount) || input.workCount < 0))
     )
       return respond(
         json({ error: "クリア記録と名前を確認してください。" }, 400),
@@ -157,6 +158,7 @@ export async function rankingsApi(request, db, url, acceptsScore) {
         input.timeMs,
         input.spins,
         new Date().toISOString(),
+        input.workCount ?? null,
       )
       .run();
     const saved = await db

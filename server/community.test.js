@@ -17,7 +17,7 @@ const trialRow=(amount,at='2026-09-11 16:00:00',rule='astra-v13-30m-assets:class
 beforeEach(()=>{
  vi.useFakeTimers();vi.setSystemTime(new Date('2026-09-12T03:00:00Z'));
  sql=new DatabaseSync(':memory:');
- for(const name of ['0006_clear_records.sql',existsSync(new URL('../drizzle/0009_bankroll_records.sql',import.meta.url))?'0009_bankroll_records.sql':'0008_bankroll_records.sql','0012_community.sql'])sql.exec(readFileSync(new URL('../drizzle/'+name,import.meta.url),'utf8'));
+ for(const name of ['0006_clear_records.sql',existsSync(new URL('../drizzle/0009_bankroll_records.sql',import.meta.url))?'0009_bankroll_records.sql':'0008_bankroll_records.sql','0012_community.sql','0013_ranking_work.sql'])sql.exec(readFileSync(new URL('../drizzle/'+name,import.meta.url),'utf8'));
  db={prepare(text){let args=[];return {bind(...a){args=a;return this},async first(){return sql.prepare(text).get(...args)??null},async all(){return {results:sql.prepare(text).all(...args)}},async run(){const r=sql.prepare(text).run(...args);return {meta:{changes:r.changes,last_row_id:Number(r.lastInsertRowid)}}}}},async batch(rows){return Promise.all(rows.map(r=>r.run()))}};
  for(let i=0;i<cutoff;i++)normalRow(1000);
 });
@@ -27,22 +27,26 @@ const postInput=()=>({requestId:crypto.randomUUID(),actorId:crypto.randomUUID(),
 const board=async(body=null,query='',origin='https://dontwork.fun')=>{
  const url=new URL('https://service.test/api/board'+query);return boardApi(new Request(url,{headers:{origin,'content-type':'application/json','CF-Connecting-IP':'192.0.2.1'},...(body?{method:'POST',body:JSON.stringify(body)}:{})}),db,url,cutoff);
 };
-it('uses JST midnight and Monday boundaries with a half-open interval',()=>{
- expect(rankingPeriod('day',Date.parse('2026-09-11T14:59:59Z')).periodStart).toBe('2026-09-10T15:00:00.000Z');
- expect(rankingPeriod('day',Date.parse('2026-09-11T15:00:00Z')).periodStart).toBe('2026-09-11T15:00:00.000Z');
- expect(rankingPeriod('week',Date.parse('2026-09-13T14:59:59Z'))).toMatchObject({periodStart:'2026-09-06T15:00:00.000Z',periodEnd:'2026-09-13T15:00:00.000Z'});
- expect(rankingPeriod('week',Date.parse('2026-09-13T15:00:00Z')).periodStart).toBe('2026-09-13T15:00:00.000Z');
+it('uses rolling 24-hour and 7-day windows across midnight and Monday',()=>{
+ for(const at of ['2026-09-11T14:59:59Z','2026-09-11T15:00:00Z','2026-09-13T15:00:00Z']){
+  const now=Date.parse(at);
+  for(const [period,days] of [['day',1],['week',7]]){
+   const range=rankingPeriod(period,now);
+   expect(Date.parse(range.periodStart)).toBe(now-days*86400000);
+   expect(Date.parse(range.periodEnd)).toBe(now);
+  }
+ }
 });
 it('averages every matching record beyond page 1 and preserves reset/version/date boundaries',async()=>{
  for(let i=0;i<60;i++)normalRow(2000+i*1000,i%2?'2026-09-11T15:00:00.000Z':'2026-09-11 15:00:00');
- normalRow(900000,'2026-09-11 14:59:59');normalRow(900000,'2026-09-12T15:00:00.000Z');normalRow(1000,'2026-09-11 16:00:00','2.9.0');
+ normalRow(900000,'2026-09-11 02:59:59');normalRow(900000,'2026-09-12T03:00:00.001Z');normalRow(1000,'2026-09-11 16:00:00','2.9.0');
  for(const offset of [0,50]){const p=await ranking('rankings?period=day&version=3.0.0&offset='+offset);expect(p).toMatchObject({status:200,total:60,averageTimeMs:31500});expect(p.scores).toHaveLength(offset?10:50)}
- expect(await ranking('rankings?period=week&version=3.0.0')).toMatchObject({total:62});
+ expect(await ranking('rankings?period=week&version=3.0.0')).toMatchObject({total:61});
  expect(await ranking('rankings?period=day&version=8.0.0')).toMatchObject({total:0,averageTimeMs:null});
  expect((await ranking('rankings?period=bad')).status).toBe(400);
 });
 it('includes zero and huge timed amounts while excluding retired scores',async()=>{
- trialRow(0);trialRow(1e200);trialRow(999,'2026-09-11 14:59:59');trialRow(777,'2026-09-11 16:00:00','astra-v13-30m:classic');
+ trialRow(0);trialRow(1e200);trialRow(999,'2026-09-11 02:59:59');trialRow(777,'2026-09-11 16:00:00','astra-v13-30m:classic');
  expect(await ranking('bankroll-rankings?period=day')).toMatchObject({total:2,averageBankroll:5e199});
  expect(await ranking('bankroll-rankings?period=day&scoring=cash')).toMatchObject({status:410});
  expect(await ranking('bankroll-rankings?period=day&version=8.0.0')).toMatchObject({total:0,averageBankroll:null});
@@ -97,4 +101,16 @@ it('does not display or attach retired timed records to board posts',async()=>{
  expect((await(await board()).json()).posts[0].trialRank).toBeNull();
  sql.prepare('UPDATE board_posts SET trial_record_id=? WHERE id=?').run(trialRecordId,created.id);
  expect((await(await board()).json()).posts[0].trialRank).toBeNull();
+});
+
+it('includes exact rolling boundaries and excludes future records in both ranking modes',async()=>{
+ const now=Date.now();
+ for(const [period,days] of [['day',1],['week',7]]){
+  const start=now-days*86400000;
+  for(const at of [start-1,start,now,now+1]){
+   const stamp=new Date(at).toISOString();normalRow(3000,stamp);trialRow(500,stamp);
+  }
+  for(const api of ['rankings','bankroll-rankings'])expect(await ranking(api+'?period='+period)).toMatchObject({total:2});
+  sql.exec('DELETE FROM clear_records; DELETE FROM bankroll_records;');
+ }
 });

@@ -8,7 +8,7 @@ let sql,db;
 const cutoff=normal.RANKING_RESET_THROUGH_ID??0;
 beforeEach(()=>{
  sql=new DatabaseSync(':memory:');
- for(const file of ['0006_clear_records.sql','0009_bankroll_records.sql'])sql.exec(readFileSync(new URL('../drizzle/'+file,import.meta.url),'utf8'));
+ for(const file of ['0006_clear_records.sql','0009_bankroll_records.sql','0013_ranking_work.sql'])sql.exec(readFileSync(new URL('../drizzle/'+file,import.meta.url),'utf8'));
  db={prepare(text){let args=[];return {bind(...a){args=a;return this},async first(){return sql.prepare(text).get(...args)??null},async all(){return {results:sql.prepare(text).all(...args)}},async run(){return {meta:sql.prepare(text).run(...args)}}}},async batch(statements){return Promise.all(statements.map(s=>s.run()))}};
 });
 afterEach(()=>sql.close());
