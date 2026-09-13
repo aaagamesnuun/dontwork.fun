@@ -19,7 +19,7 @@ function postQuery(where,order) {
     CASE WHEN t.id IS NULL THEN NULL ELSE 1+(SELECT COUNT(*) FROM bankroll_records q WHERE q.ruleset_version=t.ruleset_version AND (q.final_bankroll>t.final_bankroll OR (q.final_bankroll=t.final_bankroll AND q.id<t.id))) END AS trialRank,
     t.ruleset_version AS trialRuleset
     FROM board_posts p LEFT JOIN clear_records c ON c.completion_id=p.clear_record_id AND c.id>?
-    LEFT JOIN bankroll_records t ON t.score_id=p.trial_record_id AND t.ruleset_version IN ('astra-v13-30m:classic','astra-v13-30m-assets:classic')
+    LEFT JOIN bankroll_records t ON t.score_id=p.trial_record_id AND t.ruleset_version = 'astra-v13-30m-assets:classic'
     WHERE ${where} ORDER BY p.id ${order} LIMIT ?`;
 }
 export async function boardApi(request,db,url,afterId=0) {
@@ -51,7 +51,7 @@ export async function boardApi(request,db,url,afterId=0) {
     if(input.parentId!=null&&!await db.prepare('SELECT id FROM board_posts WHERE id=? AND parent_id IS NULL').bind(input.parentId).first())return reply({error:'返信先が見つかりません。'},404);
     const [normal,trial]=await Promise.all([
       input.clearRecordId?db.prepare('SELECT completion_id AS id,nickname FROM clear_records WHERE completion_id=? AND id>?').bind(input.clearRecordId,afterId).first():null,
-      input.trialRecordId?db.prepare("SELECT score_id AS id,nickname FROM bankroll_records WHERE score_id=? AND ruleset_version IN ('astra-v13-30m:classic','astra-v13-30m-assets:classic')").bind(input.trialRecordId).first():null,
+      input.trialRecordId?db.prepare("SELECT score_id AS id,nickname FROM bankroll_records WHERE score_id=? AND ruleset_version = 'astra-v13-30m-assets:classic'").bind(input.trialRecordId).first():null,
     ]);
     const clearId=normal&&cleanName(normal.nickname)===nickname?normal.id:null,trialId=trial&&cleanName(trial.nickname)===nickname?trial.id:null;
     const now=Date.now();

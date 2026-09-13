@@ -127,7 +127,9 @@ export const PayoffSweep = memo(function PayoffSweep({ values, frame, reduced, s
 });
 export function chartGeometry(s: Run, range: "recent" | "all" = "recent") {
     const time = !!s.trial || s.settings.chartAxis === "time";
-    const raw = s.coinChartHold ?? s.history;
+    const source = s.coinChartHold ?? s.history;
+    const assetStart=s.trial?source.map(p=>p.kind).lastIndexOf("assets-start"):-1;
+    const raw=assetStart>=0?source.slice(assetStart):source;
     const history = s.trial ? [...raw.map(p => ({ ...p, at: p.trialMs ?? Math.min(s.trial!.elapsedMs, p.at), cash: p.assets ?? p.cash })), { at: s.trial.elapsedMs, cash: s.trial.result?.finalBankroll ?? trialAssets(s), kind: "trial-current", spin: s.spins }] : raw;
     const eligible = time
         ? history
@@ -145,7 +147,7 @@ export function chartGeometry(s: Run, range: "recent" | "all" = "recent") {
         }
     }
     const lastPoint = recorded[recorded.length - 1];
-    const upgradeDrop=(p:{spent?:number})=>s.trial?.scoring!=="cash"&&s.trial?0:p.spent??0;
+    const upgradeDrop=(p:{spent?:number})=>s.trial?0:p.spent??0;
     const peak = Math.max(100, ...recorded.map((p) => p.cash + upgradeDrop(p)));
     const unit = 10 ** Math.floor(Math.log10(peak));
     const ceiling = Math.ceil((peak * 1.55) / unit) * unit;

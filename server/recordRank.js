@@ -10,5 +10,5 @@ export async function trialRecordRank(db, recordId) {
   return db.prepare(`SELECT r.score_id AS recordId,r.nickname,r.app_version AS appVersion,r.ruleset_version AS rulesetVersion,
     1+(SELECT COUNT(*) FROM bankroll_records q WHERE q.ruleset_version=r.ruleset_version AND (q.final_bankroll>r.final_bankroll OR (q.final_bankroll=r.final_bankroll AND q.id<r.id))) AS overallRank,
     1+(SELECT COUNT(*) FROM bankroll_records q WHERE q.ruleset_version=r.ruleset_version AND q.app_version=r.app_version AND (q.final_bankroll>r.final_bankroll OR (q.final_bankroll=r.final_bankroll AND q.id<r.id))) AS versionRank
-    FROM bankroll_records r WHERE r.score_id=? AND r.ruleset_version IN ('astra-v13-30m:classic','astra-v13-30m-assets:classic')`).bind(recordId).first();
+    FROM bankroll_records r WHERE r.score_id=? AND r.ruleset_version = 'astra-v13-30m-assets:classic'`).bind(recordId).first();
 }

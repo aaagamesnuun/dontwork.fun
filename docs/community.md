@@ -2,7 +2,7 @@
 
 The trophy opens normal clear-time and 30-minute asset leaderboards. Each supports daily, weekly, and all-time views plus an independent app-version filter. Daily means today in Japan time; weekly starts Monday at 00:00 JST. Records belong to the period of their first server registration, including delayed offline submissions. Bounds are half-open and accept both ISO timestamps and legacy SQLite timestamp strings.
 
-The mean uses every record matching the selected period, version, and scoring rule, not just the visible 50-record page. An empty population shows `—`; zero assets remains a valid record. Legacy cash-only 30-minute scores stay separate from current cash-plus-upgrade scores. Result cards and board badges continue to show all-time ranks.
+The mean uses every record matching the selected period and version, not just the visible 50-record page. An empty population shows `—`; zero assets remains a valid record. Only current cash-plus-upgrade 30-minute records participate. Historical cash-only records are retained privately but excluded from lists, averages, exact-rank lookups and board badges; new old-rule submissions are rejected. Result cards and board badges continue to show all-time ranks.
 
 The header speech bubble opens one board with posts and one level of replies. `server/board.js` stores messages in D1 through migration `0012_community.sql`. On the official site, `/api/board` uses the shared ranking service so rank joins and messages use the same database. Self-hosted forks use their own service origin and database; online services remain opt-in.
 
@@ -12,7 +12,7 @@ Posts contain a nickname and plain text only. When a browser retains a registere
 
 Names are limited to 16 code points and bodies to 1,000. Requests are size-bounded. D1 atomically limits posts to one per three seconds and ten per minute per browser identity, plus sixty per minute per network hash. These limits do not provide account authentication. Messages render as React text, with no HTML execution or file upload.
 
-Tests: `server/community.test.js` exercises SQLite migrations, JST boundaries, population averages, scoring separation, pagination, rank changes, validation, retries, and private-field exclusion. `src/community.test.tsx` checks filters, bilingual rendering, escaped post text, score-reference retention, persistent retries, and fork/creator links.
+Tests: `server/community.test.js` exercises SQLite migrations, JST boundaries, population averages, retired-score exclusion, pagination, rank changes, validation, retries, and private-field exclusion. `src/community.test.tsx` checks filters, bilingual rendering, escaped post text, score-reference retention, persistent retries, and fork/creator links.
 
 Manual release checks:
 

@@ -11,7 +11,7 @@ export interface BoardPost {id:number;parentId:number|null;nickname:string;body:
 interface BoardPage {posts:BoardPost[];thread:BoardPost|null;nextCursor:number|null}
 export function BoardPostCard({post,onReply}: {post:BoardPost;onReply?:(post:BoardPost)=>void}) {
   return <article className="board-post">
-    <header><strong>{post.nickname}</strong>{post.normalRank!==null&&<span className="board-rank">{t("通常 {0}位",post.normalRank)}</span>}{post.trialRank!==null&&<span className="board-rank">{t(post.trialRuleset?.includes('-assets:')?'30分 {0}位':'30分・旧 {0}位',post.trialRank)}</span>}</header>
+    <header><strong>{post.nickname}</strong>{post.normalRank!==null&&<span className="board-rank">{t("通常 {0}位",post.normalRank)}</span>}{post.trialRank!==null&&post.trialRuleset==='astra-v13-30m-assets:classic'&&<span className="board-rank">{t('30分 {0}位',post.trialRank)}</span>}</header>
     <p>{post.body}</p><footer><time dateTime={new Date(post.createdAt).toISOString()}>{new Intl.DateTimeFormat(language()==='ja'?'ja-JP':'en-US',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'}).format(new Date(post.createdAt))}</time>{onReply&&<button className="text-button" onClick={()=>onReply(post)}>{post.replyCount?t("返信 {0}件",post.replyCount):t('返信する')}</button>}</footer>
   </article>;
 }

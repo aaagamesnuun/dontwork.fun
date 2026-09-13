@@ -243,3 +243,7 @@ Workerのテストは`node:sqlite`のメモリ内DBにマイグレーション�
 [src/workInput.ts](../src/workInput.ts)がUI入力の直近1秒を`performance.now()`で管理します。通常WORKとLABの手遊びが同じ受付を使い、設定変更やタブ切替では枠を補充しません。許可した入力だけ既存の`work`をdispatchし、結果待ちのスピンとは従来のpresentation合流を使います。設定は`workClicksPerSecond`（既定15、1〜60）で保存・統計へ反映します。30分モードにはこの速度制限を適用せず、エンジンの計算用`work`にもUI時計を持たせません。[テスト](../src/workInput.test.tsx)。
 
 問い合わせ管理APIの`/api/analytics/inquiries`は既存funnelと同じ`ANALYTICS_READ_TOKEN`で保護されたGETです。公開クライアントに問い合わせ本文や連絡先は含めず、認証済み管理ツールだけが最新一覧を取得します。DB変更はありません。
+
+### Retired timed scoring
+
+The 30-minute mode uses cash plus cumulative upgrade spending exclusively. Cash-only saves migrate once through `readSave`, preserving balances, progress and names as unranked personal runs. `assets-start` anchors prevent reconstruction of incomplete investment history; compaction retains the anchor. Old scores remain historical database rows but are excluded from current rankings, averages, version lists, board badges and result-rank APIs. The client prunes retired offline submissions before sending current records.

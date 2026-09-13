@@ -6,7 +6,7 @@ import {bankrollRankingsApi} from './bankrollRankings.js';
 let sqlite,db;
 beforeEach(()=>{sqlite=new DatabaseSync(':memory:');sqlite.exec(readFileSync(new URL('../drizzle/0009_bankroll_records.sql',import.meta.url),'utf8'));db={prepare(sql){const query={args:[],bind(...args){this.args=args;return this},async all(){return {results:sqlite.prepare(sql).all(...this.args)}},async first(){return sqlite.prepare(sql).get(...this.args)??null},async run(){return {meta:sqlite.prepare(sql).run(...this.args)}}};return query}}});
 afterEach(()=>sqlite.close());
-const valid=()=>({scoreId:crypto.randomUUID(),nickname:'友達',appVersion:'2.8.0',rulesetVersion:'astra-v13-30m:classic',catalog:'classic',rule:'fixed',ranked:true,durationMs:1800000,addedMs:0,finalBankroll:1000,spins:100});
+const valid=()=>({scoreId:crypto.randomUUID(),nickname:'友達',appVersion:'3.0.0',rulesetVersion:'astra-v13-30m-assets:classic',catalog:'classic',rule:'fixed',ranked:true,durationMs:1800000,addedMs:0,finalBankroll:1000,spins:100});
 const post=async(body,origin='https://bebullish.fun')=>{const url=new URL('https://test.example/api/bankroll-rankings');return bankrollRankingsApi(new Request(url,{method:'POST',headers:{'content-type':'application/json',origin},body:JSON.stringify(body)}),db,url)};
 const get=async(query='')=>{const url=new URL('https://test.example/api/bankroll-rankings'+query);return bankrollRankingsApi(new Request(url),db,url)};
 describe('30 minute ranking storage',()=>{
@@ -26,15 +26,19 @@ describe('30 minute ranking storage',()=>{
   expect((await get('?offset=-1')).status).toBe(400);
  });
 });
-it('shares 2.8 and 2.9 records across old and new domains without duplicates',async()=>{
- for(const appVersion of ['2.8.0','2.9.0']){const record={...valid(),appVersion};expect((await post(record,'https://dontwork.fun')).status).toBe(201);expect((await post(record,'https://bebullish.fun')).status).toBe(200);}
- expect((await(await get()).json()).total).toBe(2);
+it('shares current records across old and new domains without duplicates',async()=>{
+ const record=valid();expect((await post(record,'https://dontwork.fun')).status).toBe(201);expect((await post(record,'https://bebullish.fun')).status).toBe(200);
+ expect((await(await get()).json()).total).toBe(1);
 });
-
-it('keeps v3 cash-plus-investment scores in their own cohort and rejects mixed version/rule pairs',async()=>{
- const old=valid(),modern={...valid(),appVersion:'3.0.0',rulesetVersion:'astra-v13-30m-assets:classic',finalBankroll:9000};
- expect((await post(old)).status).toBe(201);expect((await post(modern)).status).toBe(201);
- expect((await(await get()).json()).scores.map(r=>r.finalBankroll)).toEqual([1000]);
- expect((await(await get('?scoring=assets')).json()).scores.map(r=>r.finalBankroll)).toEqual([9000]);
+it('retires old submissions and excludes historical rows from lists, averages and versions',async()=>{
+ const old={...valid(),appVersion:'2.9.0',rulesetVersion:'astra-v13-30m:classic',finalBankroll:1e100};
+ expect((await post(old)).status).toBe(400);
+ sqlite.prepare('INSERT INTO bankroll_records(score_id,nickname,app_version,ruleset_version,catalog_id,duration_ms,final_bankroll,spins) VALUES (?,?,?,?,?,?,?,?)').run(old.scoreId,old.nickname,old.appVersion,old.rulesetVersion,'classic',1800000,old.finalBankroll,100);
+ const modern=valid();expect((await post(modern)).status).toBe(201);
+ for(const query of ['', '?scoring=assets'])expect(await(await get(query)).json()).toMatchObject({total:1,averageBankroll:1000,versions:['3.0.0']});
+ expect((await get('?scoring=cash')).status).toBe(410);
+ expect((await get('?scoring=unknown')).status).toBe(400);
+ expect(await(await get('?scoreId='+old.scoreId)).json()).toEqual({ranking:null});
+ expect(sqlite.prepare('SELECT COUNT(*) AS n FROM bankroll_records').get().n).toBe(2);
  for(const patch of [{appVersion:'2.9.0'},{rulesetVersion:'astra-v13-30m:classic'}])expect((await post({...modern,...patch,scoreId:crypto.randomUUID()})).status).toBe(400);
 });

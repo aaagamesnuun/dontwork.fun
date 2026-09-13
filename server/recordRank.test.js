@@ -30,8 +30,9 @@ it('never ranks reset tombstones or counts them ahead of active records',async()
  expect(await clearRecordRank(db,old,1)).toBeNull();expect(await clearRecordRank(db,active,1)).toMatchObject({overallRank:1,versionRank:1});
  if(cutoff){for(let i=2;i<=cutoff;i++)clear(1000);expect((await(await get('clear',old)).json()).ranking).toBeNull();}
 });
-it('separates cash and assets cohorts and handles huge balances, ties and saved versions',async()=>{
- trial(1e200,'astra-v13-30m:classic','2.9.0');
+it('excludes retired scores and handles huge balances, ties and saved versions',async()=>{
+ const retired=trial(1e200,'astra-v13-30m:classic','2.9.0');
+ expect((await(await get('trial',retired)).json()).ranking).toBeNull();
  const first=trial(1e100),tie=trial(1e100),other=trial(1e200,'astra-v13-30m-assets:classic','3.1.0');
  expect((await(await get('trial',first)).json()).ranking).toMatchObject({overallRank:2,versionRank:1,appVersion:'3.0.0'});
  expect((await(await get('trial',tie)).json()).ranking).toMatchObject({overallRank:3,versionRank:2});

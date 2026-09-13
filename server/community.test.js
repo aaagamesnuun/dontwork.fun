@@ -41,10 +41,10 @@ it('averages every matching record beyond page 1 and preserves reset/version/dat
  expect(await ranking('rankings?period=day&version=8.0.0')).toMatchObject({total:0,averageTimeMs:null});
  expect((await ranking('rankings?period=bad')).status).toBe(400);
 });
-it('includes zero and huge timed amounts without mixing cash and assets rules',async()=>{
+it('includes zero and huge timed amounts while excluding retired scores',async()=>{
  trialRow(0);trialRow(1e200);trialRow(999,'2026-09-11 14:59:59');trialRow(777,'2026-09-11 16:00:00','astra-v13-30m:classic');
- expect(await ranking('bankroll-rankings?period=day&scoring=assets')).toMatchObject({total:2,averageBankroll:5e199});
- expect(await ranking('bankroll-rankings?period=day&scoring=cash')).toMatchObject({total:1,averageBankroll:777});
+ expect(await ranking('bankroll-rankings?period=day')).toMatchObject({total:2,averageBankroll:5e199});
+ expect(await ranking('bankroll-rankings?period=day&scoring=cash')).toMatchObject({status:410});
  expect(await ranking('bankroll-rankings?period=day&version=8.0.0')).toMatchObject({total:0,averageBankroll:null});
  expect((await ranking('bankroll-rankings?period=bad')).status).toBe(400);
 });
@@ -89,4 +89,12 @@ it('accepts the official Workers origin and can show the latest reply beyond the
  for(let i=0;i<25;i++)last=await(await board({...postInput(),parentId:root.id,body:'Reply '+i})).json();
  const latest=await(await board(null,'?thread='+root.id+'&cursor='+(last.id-1))).json();
  expect(latest.posts.map(p=>p.id)).toEqual([last.id]);expect(latest.thread.replyCount).toBe(25);
+});
+
+it('does not display or attach retired timed records to board posts',async()=>{
+ const trialRecordId=trialRow(9999,'2026-09-11 16:00:00','astra-v13-30m:classic');
+ const created=await(await board({...postInput(),trialRecordId})).json();
+ expect((await(await board()).json()).posts[0].trialRank).toBeNull();
+ sql.prepare('UPDATE board_posts SET trial_record_id=? WHERE id=?').run(trialRecordId,created.id);
+ expect((await(await board()).json()).posts[0].trialRank).toBeNull();
 });

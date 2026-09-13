@@ -10,11 +10,11 @@ import {freshRun,work,TARGET} from './game/engine';
 import {setLanguage} from './i18n';
 import {readBoardDraft,saveBoardDraft,completeBoardAttempt} from './boardDraft';
 afterEach(()=>{vi.unstubAllGlobals();setLanguage('ja')});
-it('keeps period, version, pagination and scoring filters independent',()=>{
+it('keeps period, version and pagination filters independent',()=>{
  const normal=new URL(rankingPath('3.0.0',50,'week'));
  expect(Object.fromEntries(normal.searchParams)).toEqual({version:'3.0.0',offset:'50',period:'week'});
- const trial=new URL(trialRankingPath('2.9.0',100,'cash','day'));
- expect(Object.fromEntries(trial.searchParams)).toEqual({version:'2.9.0',offset:'100',scoring:'cash',period:'day'});
+ const trial=new URL(trialRankingPath('3.0.0',100,'day'));
+ expect(Object.fromEntries(trial.searchParams)).toEqual({version:'3.0.0',offset:'100',period:'day'});
 });
 it('renders selected period and a population average independently of page size',()=>{
  for(const lang of ['ja','en'] as const){setLanguage(lang);
@@ -29,6 +29,7 @@ it('renders post content as text and uses separate normal and timed rank badges'
  const html=renderToStaticMarkup(<BoardPostCard post={post} onReply={()=>{}}/>);
  expect(html).not.toContain('<script>');expect(html).not.toContain('<img src=x>');expect(html).toContain('&lt;script&gt;');expect(html).toContain('通常 9位');expect(html).toContain('30分 2位');expect(html).toContain('返信 3件');
  expect(renderToStaticMarkup(<BoardPostCard post={{...post,normalRank:null,trialRank:null}}/>)).not.toContain('board-rank');
+ expect(renderToStaticMarkup(<BoardPostCard post={{...post,normalRank:null,trialRuleset:'astra-v13-30m:classic'}}/>)).not.toContain('board-rank');
 });
 it('retains the private score reference after a new normal run without changing its save',()=>{
  const memory=new Map<string,string>();vi.stubGlobal('localStorage',{getItem:(k:string)=>memory.get(k)??null,setItem:(k:string,v:string)=>memory.set(k,v)});

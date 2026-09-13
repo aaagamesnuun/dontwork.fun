@@ -47,11 +47,11 @@ it("supports full amounts and the challenge score without adding a heading row",
     expect(trial).toContain('30分モード');expect(trial).not.toContain('クリア目標');
   }
 });
-it("shows total holdings without changing an old challenge's cash-only score", () => {
+it("shows migrated challenge assets while preserving the separate cash balance", () => {
   const trial=freshTrial();
-  const legacy={...trial,cash:1000,spent:250,trial:{...trial.trial!,scoring:"cash" as const}};
+  const legacy=readSave(JSON.stringify({...trial,cash:1000,spent:250,trial:{...trial.trial!,scoring:"cash"}}))!;
   expect(render(legacy)).toContain('class="balance-trial-assets" aria-label="総資産: $1.25K"');
-  expect(trialAssets(legacy)).toBe(1000);
+  expect(trialAssets(legacy)).toBe(1250);
 });
 it("shows spending in cash while keeping total assets stable, then reveals challenge winnings together", () => {
   for(const balanceChangeInline of [false,true]) {

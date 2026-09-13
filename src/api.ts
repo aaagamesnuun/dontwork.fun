@@ -4,7 +4,7 @@ import { t as _t } from "./i18n";
 import { soundAssignment, soundExperimentProps } from "./soundExperiment";
 import { VERSION, ECONOMY_REVISION, fuelCapacity, rollFloor, status, totalCost, settlePortfolio, stakeOf, isInfinite, interval, UPGRADES, type Run, type Settings, } from "./game/engine";
 import { betById } from "./game/catalog";
-export const ruleset = (s: Run) => `astra-v${ECONOMY_REVISION}${s.trial ? s.trial.scoring==="assets"?"-30m-assets":"-30m" : ""}:` + s.catalog;
+export const ruleset = (s: Run) => `astra-v${ECONOMY_REVISION}${s.trial ? "-30m-assets" : ""}:` + s.catalog;
 export const apiMoney = (n: number) => Math.max(-1e15, Math.min(1e15, Number.isFinite(n) ? n : 0));
 const apiCount = (n: number) => Math.max(0, Math.min(1e8, Math.round(n)));
 export async function request<T>(path: string, body?: unknown, method = body ? "POST" : "GET"): Promise<T> {

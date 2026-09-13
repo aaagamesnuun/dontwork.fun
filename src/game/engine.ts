@@ -184,13 +184,13 @@ export interface TrialResult {
   rule:TrialRule; addedMs:number;
 }
 export interface TimeTrial {
-  scoring?: "cash" | "assets";
+  scoring: "assets";
   rule:TrialRule; elapsedMs:number; addedMs:number; anchor:number|null;
   started:boolean; paused:boolean; result:TrialResult|null;
   nickname:string; submitted:boolean;
   purchases:number; spent:number; lastPurchase:{cost:number;addedMs:number}|null;
 }
-export const trialAssets = (s:Run) => finiteMoney(s.cash + (s.trial?.scoring === "cash" ? 0 : s.spent));
+export const trialAssets = (s:Run) => finiteMoney(s.cash + s.spent);
 export const trialRemaining = (trial:TimeTrial) => Math.max(0,TRIAL_MS+trial.addedMs-trial.elapsedMs);
 export const trialActive = (s:Run) => !s.trial || (s.running && s.trial.started && !s.trial.paused && !s.trial.result && trialRemaining(s.trial)>0);
 export interface Run {
@@ -772,6 +772,8 @@ export function compactHistory(points: Run["history"]): Run["history"] {
     .flatMap((p, i) => (p.kind === "upgrade" ? [i] : []))
     .slice(-260);
   const keep = new Set([0, points.length - 1, ...upgrades, ...recent]);
+  const assetStart=points.map(p=>p.kind).lastIndexOf("assets-start");
+  if(assetStart>=0)keep.add(assetStart);
   if (recent.length && recent[0] > 0) keep.add(recent[0] - 1);
   const candidates = points.flatMap((_, i) => (keep.has(i) ? [] : [i]));
   const size = Math.max(
@@ -957,7 +959,7 @@ export function spin(s: Run, forced?: number, elapsed = interval(s)): Run {
       at: s.activeMs + elapsed,
       spin: s.spins + 1,
       kind: jackpot ? "jackpot" : profit > 0 ? "win" : "loss",
-      ...(s.trial?{trialMs:s.trial.elapsedMs,assets:finiteMoney(cash+(s.trial.scoring==="cash"?0:s.spent))}:{}),
+      ...(s.trial?{trialMs:s.trial.elapsedMs,assets:finiteMoney(cash+s.spent)}:{}),
       ...(s.coinPendingCount>0?{coinProfit:s.coinPendingProfit,coinCount:s.coinPendingCount}:{}),
     }),
   });
@@ -1868,8 +1870,10 @@ export function readSave(raw: string | null): Run | null {
       if (n[k] !== null && (!Number.isFinite(n[k]) || n[k]! < 0)) return null;
     if(n.trial){
       const t=n.trial;
-      if(t.scoring===undefined){t.scoring=t.result?"cash":"assets";if(!t.result && t.started)n.debug=true;}
-      if(!["cash","assets"].includes(t.scoring))return null;
+      const previousScoring:unknown=t.scoring;
+      if(previousScoring!==undefined && previousScoring!=="cash" && previousScoring!=="assets")return null;
+      const retiredScoring=previousScoring!=="assets";
+      const cashHistory=previousScoring==="cash" || (previousScoring===undefined && !t.result?.rulesetVersion?.includes("-assets:"));
       if(!["fixed","shop","lottery"].includes(t.rule) || typeof t.started!=="boolean" || typeof t.paused!=="boolean" || typeof t.submitted!=="boolean" || typeof t.nickname!=="string" || Array.from(t.nickname).length>16 ||
         !Number.isFinite(t.elapsedMs) || t.elapsedMs<0 || !Number.isFinite(t.addedMs) || t.addedMs<0 || t.addedMs>86400000 || t.elapsedMs>TRIAL_MS+t.addedMs ||
         (t.anchor!==null && (!Number.isFinite(t.anchor)||t.anchor<0)) || (t.paused && t.anchor!==null) || (!t.paused && t.anchor===null) || (!t.started && !t.paused) || (!t.started && (t.elapsedMs!==0 || t.anchor!==null)) ||
@@ -1884,10 +1888,27 @@ export function readSave(raw: string | null): Run | null {
       if(t.rule!=="fixed")n.debug=true;
       if(t.result){
         const r=t.result;
+        if(typeof r.appVersion!=="string" || typeof r.rulesetVersion!=="string")return null;
+        const retiredResult=!r.rulesetVersion.includes("-assets:");
+        if(retiredResult && (!retiredScoring || !r.rulesetVersion.includes("-30m:")))return null;
         if(r.id!==n.id || !Number.isFinite(r.finalBankroll)||r.finalBankroll<0||r.finalBankroll>MONEY_CEILING || r.finalBankroll!==(r.rulesetVersion.includes("-assets:")?finiteMoney(n.cash+n.spent):n.cash) ||
           r.durationMs!==TRIAL_MS+t.addedMs || r.addedMs!==t.addedMs || r.rule!==t.rule || r.spins!==n.spins || r.catalog!==n.catalog ||
           typeof r.appVersion!=="string" || typeof r.rulesetVersion!=="string" || typeof r.ranked!=="boolean" || t.anchor!==null || !t.paused || t.elapsedMs!==r.durationMs)return null;
         n.running=false;n.background=null;
+        if(retiredResult)t.result={...r,finalBankroll:trialAssets(n),rulesetVersion:r.rulesetVersion.replace("-30m:","-30m-assets:"),ranked:false};
+      }
+      // Retire cash-only saves once without losing balances, clocks or names.
+      // Recomputed personal records must not enter the current competition.
+      t.scoring="assets";
+      if(retiredScoring){
+        n.debug=true;t.submitted=false;
+        if(t.result)t.result={...t.result,ranked:false};
+        if(cashHistory){
+          // Compacted cash history cannot reconstruct past cumulative investment.
+          // Keep it in the save, and begin the assets chart at this exact balance.
+          n.history=appendHistory(n.history,{kind:"assets-start",cash:n.cash,assets:trialAssets(n),at:n.activeMs,trialMs:t.elapsedMs,spin:n.spins});
+          n.coinChartHold=null;
+        }
       }
       if(!n.background && !t.result){n.running=false;t.paused=true;t.anchor=null;}
       n.clearAt=null;n.completion=null;n.clearSnapshot=null;
@@ -1984,7 +2005,7 @@ export function advanceTrial(s:Run,now:number):Run {
   const elapsedMs=Math.min(TRIAL_MS+t.addedMs,t.elapsedMs+now-t.anchor);
   let next={...s,trial:{...t,elapsedMs,anchor:now}};
   if(elapsedMs<TRIAL_MS+t.addedMs)return next;
-  const result:TrialResult={id:s.id,appVersion:VERSION,rulesetVersion:`astra-v${ECONOMY_REVISION}-30m${t.scoring==="assets"?"-assets":""}:${s.catalog}`,catalog:s.catalog,
+  const result:TrialResult={id:s.id,appVersion:VERSION,rulesetVersion:`astra-v${ECONOMY_REVISION}-30m-assets:${s.catalog}`,catalog:s.catalog,
     durationMs:TRIAL_MS+t.addedMs,finalBankroll:trialAssets(s),spins:s.spins,ranked:!s.debug && t.rule==="fixed" && t.addedMs===0 && t.purchases===0 && !s.assistUsed,
     rule:t.rule,addedMs:t.addedMs};
   return {...next,running:false,background:null,coinChartHold:null,coinPendingCount:0,coinPendingProfit:0,

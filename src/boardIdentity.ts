@@ -1,5 +1,6 @@
 import { readSave, type Run } from './game/engine';
 import { NORMAL_SLOT, TRIAL_SLOT } from './trialSaves';
+import {eligibleTrialRecord} from './trialRules';
 const KEY='dontwork-board-identity-v1';
 export interface BoardIdentity { actorId:string; nickname:string; clearRecordId?:string; trialRecordId?:string }
 const uuid=(v:unknown):v is string=>typeof v==='string'&&/^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/i.test(v);
@@ -12,7 +13,7 @@ export function boardIdentity(run:Run):BoardIdentity {
   runs.push(run);
   for(const r of runs){
     if(r.completion?.ranked&&r.completionNickname){identity.clearRecordId=r.completion.id;if(!identity.nickname)identity.nickname=r.completionNickname}
-    if(r.trial?.result?.ranked&&r.trial.nickname){identity.trialRecordId=r.trial.result.id;if(!identity.nickname)identity.nickname=r.trial.nickname}
+    if(r.trial?.result&&eligibleTrialRecord(r.trial.result)&&r.trial.nickname){identity.trialRecordId=r.trial.result.id;if(!identity.nickname)identity.nickname=r.trial.nickname}
   }
   return identity;
 }

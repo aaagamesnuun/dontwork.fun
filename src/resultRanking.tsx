@@ -3,6 +3,7 @@ import {request} from './api';
 import {RANKING_ORIGIN,rankingVersion} from './rankings';
 import {t} from './i18n';
 import type {Run} from './game/engine';
+import {eligibleTrialRecord} from './trialRules';
 
 export interface ResultRanking {
   recordId:string;appVersion:string;rulesetVersion:string;overallRank:number;versionRank:number;
@@ -10,11 +11,11 @@ export interface ResultRanking {
 export const rankedRecord=(s:Run)=>s.trial?.result??s.completion;
 export function resultRankingPath(s:Run) {
   const record=rankedRecord(s);
-  return record?.ranked ? `${RANKING_ORIGIN}/api/${s.trial?'bankroll-rankings?scoreId=':'rankings?completionId='}${encodeURIComponent(record.id)}` : null;
+  return record?.ranked && (!s.trial||eligibleTrialRecord(s.trial.result)) ? `${RANKING_ORIGIN}/api/${s.trial?'bankroll-rankings?scoreId=':'rankings?completionId='}${encodeURIComponent(record.id)}` : null;
 }
 export function validResultRanking(s:Run,value:unknown):value is ResultRanking {
   const r=value as ResultRanking|null,record=rankedRecord(s);
-  return !!record?.ranked && !!r && r.recordId===record.id && r.appVersion===record.appVersion && r.rulesetVersion===record.rulesetVersion && Number.isSafeInteger(r.overallRank) && r.overallRank>0 && Number.isSafeInteger(r.versionRank) && r.versionRank>0 && r.versionRank<=r.overallRank;
+  return !!record?.ranked && (!s.trial||eligibleTrialRecord(s.trial.result)) && !!r && r.recordId===record.id && r.appVersion===record.appVersion && r.rulesetVersion===record.rulesetVersion && Number.isSafeInteger(r.overallRank) && r.overallRank>0 && Number.isSafeInteger(r.versionRank) && r.versionRank>0 && r.versionRank<=r.overallRank;
 }
 export function resultRankingText(s:Run,rank?:ResultRanking|null) {
   return validResultRanking(s,rank) ? t('全体 {0}位 · {1} {2}位',rank.overallRank,rankingVersion(rank.appVersion),rank.versionRank) : '';
