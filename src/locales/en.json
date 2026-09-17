@@ -1170,5 +1170,21 @@
   "直近24時間": "Last 24 hours",
   "直近7日間": "Last 7 days",
   "記録の登録日時で集計（日本時間）。": "Based on record submission time (Japan time).",
-  "WORK {0}回": "WORK {0} clicks"
+  "WORK {0}回": "WORK {0} clicks",
+  "ルックを変える": "Change the look",
+  "ゲームのルック": "Game look",
+  "見た目と動きだけを切り替えます。進行・ルール・ランキング資格はそのまま。": "Switch the art and motion. Progress, rules and ranking eligibility stay the same.",
+  "選択中: {0}": "Selected: {0}",
+  "いつものトレーディングデスク。": "The original trading desk.",
+  "資産もスピンも、一本の長いレシートに。": "Your fortune, printed on one long receipt.",
+  "走査する針、蛍光の波形、押し込むキー。": "A scanning needle, phosphor traces and tactile keys.",
+  "巨大な金額と、鋭い罫線で遊ぶ。": "Monumental numbers. Sharp rules. Pure play.",
+  "仕事を辞めるための、小さな金融OS。": "A small financial OS for leaving work behind.",
+  "あなたの損益だけが、今日のトップニュース。": "Your profit and loss is the only top story.",
+  "切符、値札、明細を組み合わせた市場。": "A market assembled from tickets, tags and statements.",
+  "100個の面から、ひとつの結果が開く。": "One outcome unfolds from one hundred faces.",
+  "合計": "TOTAL",
+  "あなたの資産、放送中。": "YOUR MONEY, ON AIR.",
+  "本日の持ち分": "TODAY’S HOLDINGS",
+  "いま、ここにある資産": "CAPITAL, HERE AND NOW"
 }

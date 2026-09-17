@@ -1,3 +1,5 @@
+import { FutureFolds } from "./LookExperience";
+import type { GameLook } from "./gameLooks";
 import { useMoneyStyle } from "./moneyPreferences";
 import { t as _t, textValue as _text, useLanguage } from "./i18n";
 import { ChartBackdrop } from "./ChartBackdrop";
@@ -32,7 +34,10 @@ export function GrowthStrip({ growth }: {
         </div>)}
     </>);
 }
-export const PayoffSweep = memo(function PayoffSweep({ values, frame, reduced, snapshot, style = "classic", motion = "classic", jackpotRule = "combined", jackpotHigh = false, signal }: {
+export const PayoffSweep = memo(function PayoffSweep({ values, frame, reduced, snapshot, style = "classic", motion = "classic", jackpotRule = "combined", jackpotHigh = false, signal, look = "classic", revealedRoll = null, pending = false }: {
+    look?: GameLook;
+    revealedRoll?: number | null;
+    pending?: boolean;
     values: (number | null)[];
     frame: SweepFrame | null;
     reduced: boolean;
@@ -101,6 +106,7 @@ export const PayoffSweep = memo(function PayoffSweep({ values, frame, reduced, s
       {style !== "chart" ? (<div className="classic-payoff">
           <div className={`payoff-reel ${moving ? "is-spinning" : ""} ${slowing ? "is-slowing" : ""} ${reduced ? "no-sweep-motion" : ""}`} role="img" aria-label={_t("出目1から100。青はプラス、赤はマイナス。同じ固定尺度の金額を表示。灰色はカット済み。{0}", overflow ? _t("山形は枠の上限を超えた金額。") : "")}>
             {readout}{highBand}
+            {look === "futures" && <FutureFolds revealedRoll={revealedRoll} pending={pending}/>}
             {REEL_GRID}
             {reelBars}
             <div className="payoff-cursor-track">
@@ -113,6 +119,7 @@ export const PayoffSweep = memo(function PayoffSweep({ values, frame, reduced, s
           </div>
         </div>) : (<div className={`payoff-sweep ${moving ? "sweeping" : ""} ${slowing ? "is-slowing" : ""}`}>
           {readout}{highBand}
+          {look === "futures" && <FutureFolds revealedRoll={revealedRoll} pending={pending}/>}
           <span className="chart-jackpot-label" style={{ right: `calc(10px + ${100 - (12 + (jackpotPosition - .5) * 9.76) / 10}%)` }} aria-hidden="true">{jackpotLabel}</span>
           <svg viewBox="0 0 1000 180" preserveAspectRatio="none" role="img" aria-label={_t("出目1から100。青は配当、赤は支払。同じ固定尺度の金額バー。")}>
             {CHART_GRID}

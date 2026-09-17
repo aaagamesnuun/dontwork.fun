@@ -1,3 +1,4 @@
+import { LookHeading, LookPanelLabel, LookReaction } from "./LookExperience";
 import { Board } from "./Board";
 import { rememberBoardScores } from "./boardIdentity";
 import { CommunityLinks } from "./CommunityLinks";
@@ -1381,7 +1382,7 @@ export default function App({ onOpenDesk, studio }: {
         return () => { clearInterval(retryTimer); removeEventListener('online', retry); };
     }, [s.id, s.completionNickname, s.trial?.nickname]);
     const spinSurface = (<section className={`roll-station ${shown.settings.reelStyle === "number" ? "number-mode" : ""}`}>
-              {shown.settings.reelStyle === "payoff" ? (<PayoffSweep signal={sweepSignal} values={distribution} snapshot={shownSweep} style={shown.settings.payoffStyle} frame={frame} reduced={osReduced || shown.settings.motion === "reduced"} motion={shown.settings.sweepMotion} jackpotRule={shown.settings.jackpotRule} jackpotHigh={shown.jackpotHigh}/>) : (<div className="number-mode-content">
+              {shown.settings.reelStyle === "payoff" ? (<PayoffSweep look={shown.settings.look} revealedRoll={shown.last?.roll ?? null} pending={!!model.pending} signal={sweepSignal} values={distribution} snapshot={shownSweep} style={shown.settings.payoffStyle} frame={frame} reduced={osReduced || shown.settings.motion === "reduced"} motion={shown.settings.sweepMotion} jackpotRule={shown.settings.jackpotRule} jackpotHigh={shown.jackpotHigh}/>) : (<div className="number-mode-content">
                   <GrowthStrip growth={framePending(frame, osReduced || shown.settings.motion === "reduced")
                 ? (frame?.snapshot?.growth ?? shownSweep.growth)
                 : shownSweep.growth}/>
@@ -1437,7 +1438,7 @@ export default function App({ onOpenDesk, studio }: {
     </div>);
     if (!releaseCheck.checked || releaseCheck.latest)
         return <ReleaseNotice check={releaseCheck}/>;
-    return (<div inert={updating && updateDialogSafe(modal)} data-capture-spin={captureMode ? shown.spins : undefined} data-capture-roll={captureMode ? shown.last?.roll : undefined} data-capture-jackpot={captureMode ? !!shown.last?.jackpot : undefined} data-capture-rush={captureMode ? rush : undefined} data-capture-assisted={captureMode ? !!shown.last?.assisted : undefined} data-capture-scripted={studio ? true : undefined} data-capture-cursor={studio ? shown.spins - studio.initialRun.spins : undefined} className={`app ${numberStyle === "full" ? "full-money" : ""} ${guide.key.startsWith("second-bet-") ? "position-lesson" : ""} ${s.trial ? "trial-mode" : ""} ${s.trial && !trialActive(s) ? "trial-frozen" : ""} ${captureMode ? "capture-mode" : ""} ${desk ? "desk-layout" : "tab-layout"} wealth-${wealthStage(shown)} ${shown.settings.newsPosition === "bottom" ? "news-bottom" : ""} ${shown.settings.fuelEnabled ? "" : "no-fuel"} fx-${shown.settings.fx} ${rush ? "rush-mode" : ""} ${isInfinite(shown) ? "infinity-mode" : ""} ${shown.settings.motion === "reduced" ? "reduced-motion" : ""}`}>
+    return (<div data-look={shown.settings.look} data-look-pending={!!model.pending} inert={updating && updateDialogSafe(modal)} data-capture-spin={captureMode ? shown.spins : undefined} data-capture-roll={captureMode ? shown.last?.roll : undefined} data-capture-jackpot={captureMode ? !!shown.last?.jackpot : undefined} data-capture-rush={captureMode ? rush : undefined} data-capture-assisted={captureMode ? !!shown.last?.assisted : undefined} data-capture-scripted={studio ? true : undefined} data-capture-cursor={studio ? shown.spins - studio.initialRun.spins : undefined} className={`app ${numberStyle === "full" ? "full-money" : ""} ${guide.key.startsWith("second-bet-") ? "position-lesson" : ""} ${s.trial ? "trial-mode" : ""} ${s.trial && !trialActive(s) ? "trial-frozen" : ""} ${captureMode ? "capture-mode" : ""} ${desk ? "desk-layout" : "tab-layout"} wealth-${wealthStage(shown)} ${shown.settings.newsPosition === "bottom" ? "news-bottom" : ""} ${shown.settings.fuelEnabled ? "" : "no-fuel"} fx-${shown.settings.fx} ${rush ? "rush-mode" : ""} ${isInfinite(shown) ? "infinity-mode" : ""} ${shown.settings.motion === "reduced" ? "reduced-motion" : ""}`}>
       {pwa.update && modal === null && <aside className="pwa-update-notice" role="status">
         <span>{updateError || (updating ? _t("続きを保存して更新しています…") : _t("最新版の準備ができました"))}</span>
         {!updating && !updateError && <button className="primary" onClick={() => { setUpdating(true); setS(run => ({ ...run, running: false })); }}>{_t("保存して更新")}</button>}
@@ -1478,6 +1479,7 @@ export default function App({ onOpenDesk, studio }: {
       {shown.settings.newsPosition === "top" && news}
       <div className={`balance-header ${shown.completion && shown.clearAt !== null ? "has-clear-notice" : ""}`}>
         {shown.completion && shown.clearAt !== null && <button className="clear-notice" onClick={() => { setGoalCelebration(null); setModal("clear"); }} aria-label={_t("クリア記録を開く")}><span>{_t("🏆 {0}達成！", money(completionTarget(shown)))}</span><strong>{shown.completionNickname ? _t("記念カードを見る") : _t("名前を登録して記念カードへ")} →</strong></button>}
+        <LookHeading s={shown}/>
         <BalanceReadout s={shown} amount={walletChange.amount} serial={walletChange.serial}/>
       </div>
       <SweepAudio signal={sweepSignal} settings={shown.settings}/>
@@ -1490,9 +1492,11 @@ export default function App({ onOpenDesk, studio }: {
             stopImpact(surface.current);
         }}>
         {!chartVisible && <div className="chart-notification-fallback">{chartNotices}</div>}
-        {spinVisible && <aside className="shared-spin" key="common-spin" aria-label={_t("スピン")}>{spinSurface}</aside>}
+        {spinVisible && <aside className="shared-spin" key="common-spin" aria-label={_t("スピン")}><LookPanelLabel look={shown.settings.look} panel="sweep"/>{spinSurface}</aside>}
         {chartVisible && (<section ref={chartTarget} className="chart-page">
+            <LookPanelLabel look={shown.settings.look} panel="chart"/>
             <WealthChart s={shown}/>
+            {shown.settings.look !== "classic" && <LookReaction s={shown} pending={!!model.pending} reduced={osReduced || shown.settings.motion === "reduced"}/>}
             {chartNotices}
           </section>)}
         <div className={captureMode ? `capture-controls ${tab === "spin" ? "is-closed" : ""}` : "workspace-panels"}>

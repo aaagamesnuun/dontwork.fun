@@ -1,3 +1,4 @@
+import { normalizeLook, type GameLook } from "../gameLooks";
 import { defaultTelemetry } from "../serviceConfig";
 import { moneyStyle } from "../moneyPreferences";
 import { activatePositionTutorial, introductoryBets, type SecondBetTutorial } from "./positionTutorial";
@@ -76,6 +77,7 @@ export const SWEEP_MOTIONS = [
   "mix",
 ] as const;
 export interface Settings {
+  look: GameLook;
   rollDisplay: "number";
   spectacleRevision: 1;
   handToys: boolean;
@@ -290,6 +292,7 @@ export interface Run {
   telemetry: boolean;
 }
 export const defaultSettings: Settings = {
+  look: "classic",
   rollDisplay: "number",
   spectacleRevision: 1, handToys: false, coinFlip: false, dockToy: "off",
   backgroundPlay: true,
@@ -1255,6 +1258,7 @@ export function playBaccarat(s: Run, wager: number, side: "player" | "banker", t
     history:appendHistory(s.history,{cash,at:s.activeMs,spin:s.spins,kind:"baccarat"})});
 }
 export function configure(s: Run, patch: Partial<Settings>): Run {
+  if (patch.look !== undefined) patch = { ...patch, look: normalizeLook(patch.look) };
   if (patch.workClicksPerSecond !== undefined && (!Number.isInteger(patch.workClicksPerSecond) || patch.workClicksPerSecond < 1 || patch.workClicksPerSecond > 60)) return s;
   if (s.trial && patch.workClicksPerSecond !== undefined) patch = {...patch,workClicksPerSecond:s.settings.workClicksPerSecond};
   if (s.trial) patch = {...patch,autoAlwaysOn:false,backgroundPlay:false};
@@ -1450,6 +1454,7 @@ export function readSave(raw: string | null): Run | null {
       running: false,
       last: null,
     } as Run;
+    n.settings.look = normalizeLook(n.settings.look);
     if (n.settings.secondBetAssistRevision !== 1 || typeof n.settings.secondBetAssist !== "boolean" || typeof n.settings.spinAssist !== "boolean" || typeof n.settings.spinAssistSequence !== "string" || !/^[WL]{4,5}$/.test(n.settings.spinAssistSequence)) return null;
     // Shorten legacy assistance without replaying consumed spins. Preserve the
     // first four choices of a custom LAB order; adopt WLWW for the old default.

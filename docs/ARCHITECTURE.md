@@ -6,6 +6,9 @@ dontwork.fun 3.0.0の実装を読むための案内です。ローカル起動�
 
 ## ソース地図
 
+7種類のLABルックは [gameLooks.ts](../src/gameLooks.ts)、[LookExperience.tsx](../src/LookExperience.tsx)、[gameLooks.css](../src/gameLooks.css)。公開済み状態だけで動き、ゲームルールを変更しません。[詳細](game-looks.md)。
+
+
 ランキングの期間・平均、掲示板のD1保存・順位リンク・再送については [community.md](community.md) を参照してください。`RankingPeriod.tsx` と `server/rankingPeriod.js` が期間表示と日本時間の境界、`Board.tsx` / `boardDraft.ts` / `boardIdentity.ts` と `server/board.js` が掲示板を担当します。
 
 | 入口・領域 | 主な責務 |
