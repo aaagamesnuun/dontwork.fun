@@ -70,6 +70,16 @@
 .ai-empty { padding:40px 0; text-align:center; color:#a3acb7; }
 .ai-pagination { display:flex; align-items:center; justify-content:flex-end; gap:16px; margin-top:20px; }
 .ai-rules { margin-top:24px; }
+.ai-sound-panel { margin-top:16px; padding:14px; border:1px solid #344235; border-radius:8px; background:#0b1216; }
+.ai-sound-controls { display:flex; flex-wrap:wrap; align-items:center; gap:12px; }
+.ai-app .ai-sound-toggle { display:inline-flex; align-items:center; justify-content:center; gap:9px; flex:0 0 auto; }
+.ai-app .ai-sound-toggle[aria-pressed=true] { color:#d9f5a3; border-color:#8eac61; background:#20321b; }
+.ai-sound-controls label { display:grid; gap:5px; flex:1 1 160px; min-width:0; font-size:12px; color:#a3acb7; }
+.ai-sound-controls select { min-width:0; max-width:100%; width:100%; min-height:44px; background:#111b23; border:1px solid #37424d; border-radius:6px; color:#e8edf4; font:14px system-ui,sans-serif; padding:8px; }
+.ai-sound-panel p { margin:10px 0 0; font-size:13px; color:#a3acb7; }
+.ai-audio-led { width:6px; height:6px; border-radius:50%; background:#c8f26c; opacity:.4; }
+.ai-audio-led.is-playing { animation:ai-audio-beat .55s ease-out; }
+@keyframes ai-audio-beat { from { opacity:1; box-shadow:0 0 12px #c8f26c; } to { opacity:.4; box-shadow:none; } }
 @keyframes ai-arrival { from { opacity:.4; } to { opacity:1; } }
-@media(prefers-reduced-motion:reduce) { .ai-last-roll { animation:none; } }
+@media(prefers-reduced-motion:reduce) { .ai-last-roll,.ai-audio-led { animation:none; } }
 @media(max-width:760px) { .ai-main { padding:20px 12px 40px; } .ai-app .topbar { flex-wrap:wrap; padding:12px; gap:10px; } .ai-app .topbar nav { margin-left:auto; gap:4px; } .ai-app .brand-name { font-size:18px; } .ai-app .topbar nav a,.ai-app .topbar nav button { padding:8px; font-size:13px; } .ai-mode-label { font-size:12px; } .ai-observation { grid-template-columns:1fr; } .ai-card { padding:18px; } .ai-session-heading { align-items:flex-start; flex-direction:column; } .ai-metrics { grid-template-columns:1fr 1fr; gap:20px; } .ai-url { flex-wrap:wrap; } .ai-url input { flex-basis:100%; } .ai-create { margin:24px auto; } .ai-stage-heading { flex-wrap:wrap; } }

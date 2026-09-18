@@ -1,4 +1,10 @@
 {
+  "AI観戦のサウンド": "AI spectator sound",
+  "観戦の音をONにする": "Turn spectator sound on",
+  "観戦の音をOFFにする": "Turn spectator sound off",
+  "音をONにする": "Turn sound on",
+  "音 ON": "Sound ON",
+  "音をONにすると、AIのWORKやスピンの結果が聞こえます。": "Turn sound on to hear the AI's WORK and spin results.",
   "見た目・サウンド": "Appearance & sound",
   "見た目・サウンドを開く": "Open appearance & sound",
   "設定の切り替え": "Settings category",

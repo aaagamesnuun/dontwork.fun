@@ -3,6 +3,7 @@ import { AiApiError, aiRequest, saveAiConnection, loadAiConnection, type AiConne
 import { t, useLanguage } from './i18n';
 import { duration, money, TARGET } from './game/engine';
 import { WealthChart } from './TradingViews';
+import { AiSpectatorSound, useAiSpectatorSound } from './AiSpectatorSound';
 import './aiMode.css';
 
 export function AiIcon() {
@@ -18,6 +19,7 @@ export default function AiMode() {
   const [busy, setBusy] = useState(false), [creating, setCreating] = useState(!id), [ranking, setRanking] = useState(false);
   const [nickname, setNickname] = useState(''), [agentName, setAgentName] = useState('Codex');
   const [retry, setRetry] = useState(0);
+  const audio = useAiSpectatorSound(state, !creating && !ranking);
   const owner = connection?.id === id ? connection : null;
   useEffect(() => {
     if (!id || creating) return;
@@ -89,6 +91,7 @@ export default function AiMode() {
         {owner && live && <section className="ai-connect ai-card"><div><h2>{t('このURLを自分のAIに渡す')}</h2><p>{t('「このゲームの作戦を一緒に考えて、操作して」と伝えてください。')}</p></div><div className="ai-url"><input readOnly aria-label={t('AI接続URL')} value={owner.connectionUrl} onFocus={e => e.target.select()}/><button className="primary" onClick={() => void copy(owner.connectionUrl)}>{t('URLをコピー')}</button></div><small>{t('URLを知るAIが操作できます。有効期限7日。観戦URLには操作権限がありません。')}</small><button className="ai-text-button" disabled={busy} onClick={() => void control('rotate')}>{t('URLを再発行')}</button></section>}
         <div className="ai-observation"><section className="ai-stage ai-card">
           <div className="ai-stage-heading"><h2>{t('AIのプレイを観戦')}</h2><button onClick={() => void copy(`${location.origin}/?ai=${id}`)}>{t('観戦URLをコピー')}</button></div>
+          <AiSpectatorSound audio={audio}/>
           <div className={`ai-last-roll ${state.run.last?.jackpot ? 'is-jackpot' : ''}`} key={state.run.spins}><small>{state.run.last?.jackpot ? 'JACKPOT' : 'SHARED ROLL'}</small><strong>{state.run.last?.roll ?? '—'}</strong><span>{state.run.last ? money(state.run.last.profit) : t('最初のスピンを待っています')}</span></div>
           <WealthChart s={state.run}/>
           <div className="ai-portfolio">{state.choices.bets.filter(b => b.count > 0).map(b => <article key={b.id}><strong>{b.name}</strong><span>×{b.count}</span><small>{t('賭け金')} {money(b.stake)}</small></article>)}{!state.run.portfolio.length && <p className="muted">{t('AIがギャンブルを選ぶと、ここに表示されます。')}</p>}</div>
