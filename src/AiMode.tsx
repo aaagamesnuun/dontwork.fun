@@ -4,6 +4,9 @@ import { t, useLanguage } from './i18n';
 import { duration, money, TARGET } from './game/engine';
 import { WealthChart } from './TradingViews';
 import { AiSpectatorSound, useAiSpectatorSound } from './AiSpectatorSound';
+import { useAiSpectatorPresentation } from './aiSpectatorPresentation';
+import { useReducedMotion } from './useReducedMotion';
+import { AiSweep } from './AiSweep';
 import './aiMode.css';
 
 export function AiIcon() {
@@ -15,11 +18,15 @@ export default function AiMode() {
   useLanguage();
   const [connection, setConnection] = useState(() => { const query = new URLSearchParams(location.search).get('ai'); return loadAiConnection(query && query !== '1' ? query : undefined); });
   const [id, setId] = useState(() => { const query = new URLSearchParams(location.search).get('ai'); return query && query !== '1' ? query : loadAiConnection()?.id ?? ''; });
-  const [state, setState] = useState<AiSnapshot | null>(null), [error, setError] = useState(''), [notice, setNotice] = useState('');
+  const [latest, setState] = useState<AiSnapshot | null>(null), [error, setError] = useState(''), [notice, setNotice] = useState('');
   const [busy, setBusy] = useState(false), [creating, setCreating] = useState(!id), [ranking, setRanking] = useState(false);
   const [nickname, setNickname] = useState(''), [agentName, setAgentName] = useState('Codex');
   const [retry, setRetry] = useState(0);
-  const audio = useAiSpectatorSound(state, !creating && !ranking);
+  const reduced = useReducedMotion();
+  const watching = !creating && !ranking;
+  const presentation = useAiSpectatorPresentation(latest, watching, reduced);
+  const state = presentation.shown;
+  const audio = useAiSpectatorSound(latest, watching, presentation.result);
   const owner = connection?.id === id ? connection : null;
   useEffect(() => {
     if (!id || creating) return;
@@ -63,6 +70,7 @@ export default function AiMode() {
     catch { setNotice(t('コピーできませんでした。URLを選択してコピーしてください。')); }
   };
   const live = state && ['waiting', 'active', 'paused'].includes(state.status);
+  const controllable = latest && ['waiting', 'active', 'paused'].includes(latest.status);
   return <div className="ai-app">
     <header className="topbar">
       <a className="wordmark" href="/"><img className="brand-icon" src="/icons/dontwork.svg" alt="" width="32" height="32"/><span className="brand-name">dontwork<em>.fun</em></span></a>
@@ -84,7 +92,7 @@ export default function AiMode() {
         {id && <button onClick={() => setCreating(false)}>{t('観戦に戻る')}</button>}
       </section> : state ? <>
         <section className="ai-session-heading"><div><p className={`ai-status ${live && state.status !== 'paused' ? 'is-live' : ''}`}><span/>{t(statusText[state.status])}</p><h1>{state.nickname}<small>{state.agentName}</small></h1></div>
-          <div className="ai-session-actions">{owner && live && <><button disabled={busy} onClick={() => void control(state.status === 'paused' ? 'resume' : 'pause')}>{t(state.status === 'paused' ? 'AI操作を再開' : 'AI操作を一時停止')}</button><button disabled={busy} onClick={() => void control('revoke')}>{t('接続を終了')}</button></>}<button disabled={busy} onClick={() => setCreating(true)}>{t('新しいAIプレイ')}</button></div>
+          <div className="ai-session-actions">{owner && live && <><button disabled={busy || !controllable} onClick={() => void control(latest?.status === 'paused' ? 'resume' : 'pause')}>{t(latest?.status === 'paused' ? 'AI操作を再開' : 'AI操作を一時停止')}</button><button disabled={busy || !controllable} onClick={() => void control('revoke')}>{t('接続を終了')}</button></>}<button disabled={busy} onClick={() => setCreating(true)}>{t('新しいAIプレイ')}</button></div>
         </section>
         <section className="ai-metrics"><div><span>{t('総資産')}</span><strong>{money(state.run.cash)}</strong><small>/ $1B</small></div><div><span>{t('経過時間')}</span><strong>{duration(state.elapsedMs)}</strong></div><div><span>SPIN</span><strong>{state.run.spins}</strong></div><div><span>WORK</span><strong>{state.run.work}</strong><small>{t('上限 5回/秒')}</small></div></section>
         <progress className="ai-goal" max={TARGET} value={Math.min(TARGET, state.run.cash)} aria-label={t('$1Bまでの進行')}/>
@@ -92,7 +100,7 @@ export default function AiMode() {
         <div className="ai-observation"><section className="ai-stage ai-card">
           <div className="ai-stage-heading"><h2>{t('AIのプレイを観戦')}</h2><button onClick={() => void copy(`${location.origin}/?ai=${id}`)}>{t('観戦URLをコピー')}</button></div>
           <AiSpectatorSound audio={audio}/>
-          <div className={`ai-last-roll ${state.run.last?.jackpot ? 'is-jackpot' : ''}`} key={state.run.spins}><small>{state.run.last?.jackpot ? 'JACKPOT' : 'SHARED ROLL'}</small><strong>{state.run.last?.roll ?? '—'}</strong><span>{state.run.last ? money(state.run.last.profit) : t('最初のスピンを待っています')}</span></div>
+          <AiSweep state={state} presentation={presentation} reduced={reduced}/>
           <WealthChart s={state.run}/>
           <div className="ai-portfolio">{state.choices.bets.filter(b => b.count > 0).map(b => <article key={b.id}><strong>{b.name}</strong><span>×{b.count}</span><small>{t('賭け金')} {money(b.stake)}</small></article>)}{!state.run.portfolio.length && <p className="muted">{t('AIがギャンブルを選ぶと、ここに表示されます。')}</p>}</div>
           <div className="ai-upgrades">{state.choices.upgrades.filter(u => u.unlocked).map(u => <span key={u.id}>{u.id.toUpperCase()} <b>Lv.{u.level}</b></span>)}</div>

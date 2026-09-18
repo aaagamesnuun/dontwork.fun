@@ -43,10 +43,21 @@
 .ai-app .ai-text-button { background:none; border:none; text-decoration:underline; font-size:13px; }
 .ai-observation { display:grid; grid-template-columns:minmax(0,1.65fr) minmax(280px,1fr); gap:20px; align-items:start; }
 .ai-stage .wealth-chart { height:240px; min-height:240px; margin:12px 0; }
-.ai-last-roll { display:flex; align-items:center; justify-content:center; flex-direction:column; min-height:200px; margin-top:20px; border-radius:8px; background:#080d12; animation:ai-arrival .3s ease-out; }
-.ai-last-roll strong { font-size:80px; line-height:1.3; font-variant-numeric:tabular-nums; }
-.ai-last-roll small { color:#a3acb7; letter-spacing:.15em; }
-.ai-last-roll.is-jackpot { border:1px solid #c8f26c; color:#c8f26c; }
+.ai-spin-stage { margin-top:20px; min-width:0; }
+.ai-spin-stage .sweep-panel { height:190px; min-height:0; }
+.ai-spin-stage .classic-payoff { display:block; height:100%; min-height:0; }
+.ai-spin-stage .payoff-reel { height:100%; min-height:0; max-height:none; width:100%; }
+.ai-spin-stage .sweep-readout { font-size:24px; }
+.ai-spin-metrics { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:6px; padding:12px 0; border-bottom:1px solid #28313b; }
+.ai-spin-metrics>span { display:grid; gap:5px; min-width:0; }
+.ai-spin-metrics small { color:#a3acb7; font-size:11px; }
+.ai-spin-metrics b { font:500 clamp(12px,1.5vw,16px)/1.2 var(--mono); font-variant-numeric:tabular-nums; overflow-wrap:anywhere; }
+.ai-spin-outcome { display:flex; align-items:center; justify-content:space-between; gap:12px; min-height:44px; padding:8px 0 0; }
+.ai-spin-outcome>span { font-size:12px; color:#a3acb7; }
+.ai-spin-outcome strong { font:600 clamp(22px,4vw,32px)/1.2 var(--mono); font-variant-numeric:tabular-nums; }
+.ai-spin-outcome.is-jackpot>span { color:#ffd166; letter-spacing:.12em; }
+.ai-spin-stage .positive { color:#70b8ff; }
+.ai-spin-stage .negative { color:#ff756e; }
 .ai-portfolio { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; }
 .ai-portfolio article { display:grid; grid-template-columns:1fr auto; gap:8px; border:1px solid #364531; border-left:3px solid #c8f26c; border-radius:6px; padding:14px; }
 .ai-portfolio article strong { font-size:14px; overflow-wrap:anywhere; }
@@ -80,6 +91,5 @@
 .ai-audio-led { width:6px; height:6px; border-radius:50%; background:#c8f26c; opacity:.4; }
 .ai-audio-led.is-playing { animation:ai-audio-beat .55s ease-out; }
 @keyframes ai-audio-beat { from { opacity:1; box-shadow:0 0 12px #c8f26c; } to { opacity:.4; box-shadow:none; } }
-@keyframes ai-arrival { from { opacity:.4; } to { opacity:1; } }
-@media(prefers-reduced-motion:reduce) { .ai-last-roll,.ai-audio-led { animation:none; } }
+@media(prefers-reduced-motion:reduce) { .ai-audio-led { animation:none; } }
 @media(max-width:760px) { .ai-main { padding:20px 12px 40px; } .ai-app .topbar { flex-wrap:wrap; padding:12px; gap:10px; } .ai-app .topbar nav { margin-left:auto; gap:4px; } .ai-app .brand-name { font-size:18px; } .ai-app .topbar nav a,.ai-app .topbar nav button { padding:8px; font-size:13px; } .ai-mode-label { font-size:12px; } .ai-observation { grid-template-columns:1fr; } .ai-card { padding:18px; } .ai-session-heading { align-items:flex-start; flex-direction:column; } .ai-metrics { grid-template-columns:1fr 1fr; gap:20px; } .ai-url { flex-wrap:wrap; } .ai-url input { flex-basis:100%; } .ai-create { margin:24px auto; } .ai-stage-heading { flex-wrap:wrap; } }

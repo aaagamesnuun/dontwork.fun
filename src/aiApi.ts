@@ -1,15 +1,24 @@
 import { t } from './i18n';
 import { servicesEnabled } from './serviceConfig';
-import type { Run } from './game/engine';
+import type { Run, Settings } from './game/engine';
 import type { aiChoices } from './game/ai';
+import type { SweepSnapshot } from './game/sweep';
 export const AI_SESSION_KEY = 'dontwork-ai-session-v1';
 const AI_CONNECTIONS_KEY = 'dontwork-ai-connections-v1';
+export interface AiSpinView {
+  spinId: number;
+  sweep: SweepSnapshot;
+  intervalMs: number;
+  jackpotHigh: boolean;
+  jackpotRule: Settings['jackpotRule'];
+}
 export interface AiSnapshot {
   id: string; nickname: string; agentName: string; ruleset: string; version: number;
   createdAt: number; expiresAt: number; startedAt: number | null; updatedAt: number;
   status: 'waiting' | 'active' | 'paused' | 'finished' | 'revoked' | 'expired';
   elapsedMs: number; nextWorkAt: number; nextSpinAt: number; strategy: string; run: Run;
   choices: ReturnType<typeof aiChoices>;
+  spinView?: AiSpinView;
   log: { version: number; at: number; type: string; reason: string; cash: number; roll?: number; betId?: string; delta?: number; upgrade?: string }[];
 }
 export interface AiConnection { id: string; connectionUrl: string; spectatorUrl: string; ownerToken: string }

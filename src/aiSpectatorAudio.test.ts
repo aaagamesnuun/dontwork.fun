@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { AiSnapshot } from "./aiApi";
-import { AiSoundCursor, spectatorSoundSettings } from "./aiSpectatorAudio";
+import { AiResultSoundCursor, AiSoundCursor, spectatorSoundSettings } from "./aiSpectatorAudio";
 import { aiChoices, newAiRun } from "./game/ai";
 import { defaultSettings, spin, type Run } from "./game/engine";
 import { resultSound } from "./resultSound";
@@ -31,6 +31,61 @@ describe("spectator sound settings", () => {
     expect(settings).not.toBe(defaultSettings);
     expect(defaultSettings).toEqual(defaults);
     expect(server).toEqual(before);
+  });
+});
+
+describe("AI result sounds follow presentation landings", () => {
+  it.each([1, 80, 100])("classifies the captured result for roll %i only when it lands", roll => {
+    const cursor = new AiResultSoundCursor(), run = spinRun(roll), result = { key: `first:${run.last!.id}`, run };
+    expect(cursor.next(null, true)).toBeNull();
+    expect(cursor.next(result, true)).toEqual({ ...resultSound(run), kind: "result" });
+    expect(cursor.next(result, true)).toBeNull();
+    expect(cursor.next({ ...result }, true)).toBeNull();
+  });
+
+  it("consumes inaudible landings instead of replaying them after unmuting or returning", () => {
+    const cursor = new AiResultSoundCursor(), first = { key: "first:1", run: spinRun(100) };
+    expect(cursor.next(first, false)).toBeNull();
+    expect(cursor.next(first, true)).toBeNull();
+    const second = { key: "first:2", run: spinRun(1) };
+    cursor.sync(second);
+    expect(cursor.next(second, true)).toBeNull();
+    const third = { key: "first:3", run: spinRun(80) };
+    expect(cursor.next(third, true)?.cue).toBe(resultSound(third.run).cue);
+  });
+
+  it("does not forget a consumed result when presentation temporarily has no landing", () => {
+    const cursor = new AiResultSoundCursor(), result = { key: "first:1", run: spinRun(100) };
+    cursor.sync(result);
+    cursor.sync(null);
+    expect(cursor.next(null, true)).toBeNull();
+    expect(cursor.next(result, true)).toBeNull();
+  });
+
+  it("treats equal spin numbers in separate sessions as different landing keys", () => {
+    const cursor = new AiResultSoundCursor(), run = spinRun(80);
+    expect(cursor.next({ key: "first:1", run }, true)?.kind).toBe("result");
+    expect(cursor.next({ key: "second:1", run }, true)?.kind).toBe("result");
+  });
+
+  it("plays a delayed captured result even after newer WORK or spins advance the live state", () => {
+    const network = new AiSoundCursor(), landing = new AiResultSoundCursor(), captured = spinRun(100);
+    network.sync(snapshot(), 0);
+    const received = snapshot(1, { run: captured, log: [action(1, "spin")] });
+    expect(network.next(received, true, 1000)?.kind).toBe("result");
+    const latest = snapshot(2, { run: captured, updatedAt: SERVER_TIME + 4000, log: [action(1, "spin"), action(2, "work", SERVER_TIME + 4000)] });
+    expect(network.next(latest, true, 5000)?.cue).toBe("work");
+    const differentResult = spinRun(1, captured);
+    expect(network.next(snapshot(3, { run: differentResult, log: [action(3, "spin")] }), true, 11000)).toBeNull();
+    expect(landing.next({ key: "first:1", run: captured }, true)).toEqual({ ...resultSound(captured), kind: "result" });
+    expect(landing.next({ key: "first:2", run: differentResult }, true)).toEqual({ ...resultSound(differentResult), kind: "result" });
+  });
+
+  it("ignores a landing without a result and never changes the captured Run", () => {
+    const cursor = new AiResultSoundCursor(), run = spinRun(100), before = structuredClone(run);
+    expect(cursor.next({ key: "first:0", run: newAiRun() }, true)).toBeNull();
+    expect(cursor.next({ key: "first:1", run }, true)?.kind).toBe("result");
+    expect(run).toEqual(before);
   });
 });
 

@@ -1258,5 +1258,6 @@
   "WORKは1秒に5回。$1B到達タイムでAI専用ランキングに自動登録されます。通常セーブとは別のプレイです。": "WORK is limited to five times per second. Your time to $1B enters the AI leaderboard automatically. This run is separate from your human save.",
   "上限 5回/秒": "Max 5 / second",
   "$1B到達までの時間。WORKは1秒に5回、同じルールで競います。": "Time to $1B. Every AI follows the same rules, with WORK limited to five times per second.",
-  "AIに遊ばせる": "Let your AI play"
+  "AIに遊ばせる": "Let your AI play",
+  "直前の純損益": "Last net profit"
 }

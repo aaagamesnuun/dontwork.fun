@@ -1,5 +1,6 @@
 import { AI_RULESET, AI_WORK_INTERVAL, AI_WORKS_PER_SECOND, AiActionError, aiChoices, newAiRun, parseAiAction, performAiAction } from '../src/game/ai.ts';
 import { canSpin, interval } from '../src/game/engine.ts';
+import { sweepSnapshot } from '../src/game/sweep.ts';
 
 const headers = { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store', 'Referrer-Policy': 'no-referrer', 'X-Robots-Tag': 'noindex, nofollow', 'X-Content-Type-Options': 'nosniff' };
 const json = (body, status = 200, extra = {}) => new Response(JSON.stringify(body), { status, headers: { ...headers, ...extra } });
@@ -20,12 +21,18 @@ async function bodyOf(request) {
 }
 function snapshot(row, now = Date.now()) {
   const run = JSON.parse(row.state_json);
+  const storedLog = JSON.parse(row.log_json);
+  const latestView = [...storedLog].reverse().find(entry => entry.spinView)?.spinView;
+  const spinView = latestView && latestView.spinId === run.last?.id ? latestView : undefined;
+  // The view is stored beside its accepted spin, but sent only once. Older
+  // sessions and views aged out of the bounded log remain valid snapshots.
+  const log = storedLog.map(({ spinView: _view, ...entry }) => entry);
   return { id: row.id, nickname: row.nickname, agentName: row.agent_name, ruleset: row.ruleset, version: row.version,
     createdAt: row.created_at, expiresAt: row.expires_at, startedAt: row.started_at, updatedAt: row.updated_at,
     status: row.finished_at !== null ? 'finished' : row.revoked_at !== null ? 'revoked' : row.expires_at <= now ? 'expired' : row.paused ? 'paused' : row.started_at === null ? 'waiting' : 'active',
     elapsedMs: row.duration_ms ?? (row.started_at === null ? 0 : Math.max(0, now - row.started_at)),
     nextWorkAt: row.last_work_at === null ? now : row.last_work_at + AI_WORK_INTERVAL, nextSpinAt: row.next_spin_at,
-    strategy: row.strategy, log: JSON.parse(row.log_json), run, choices: aiChoices(run) };
+    strategy: row.strategy, log, ...(spinView ? { spinView } : {}), run, choices: aiChoices(run) };
 }
 function guide(row, origin, controlToken) {
   const base = `${origin}/api/ai/sessions/${row.id}`;
@@ -76,7 +83,18 @@ async function act(request, db, id, body) {
   if (action.type === 'spin' || (!canSpin(before) && canSpin(run)) || action.type === 'equip') nextSpin = now + interval(run);
   else if (canSpin(before) && canSpin(run) && interval(before) !== interval(run)) nextSpin = Math.max(now, nextSpin - interval(before) + interval(run));
   const finished = run.clearAt === null ? null : now;
-  const log = [...JSON.parse(row.log_json), { version: row.version + 1, at: now, type: action.type, reason: action.reason ?? '', betId: action.betId, upgrade: action.upgrade, delta: action.delta, cash: run.cash, roll: action.type === 'spin' ? run.last?.roll : undefined }].slice(-30);
+  const spinView = action.type === 'spin' ? {
+    spinId: run.last.id,
+    sweep: sweepSnapshot(before),
+    intervalMs: interval(before),
+    jackpotHigh: before.jackpotHigh,
+    jackpotRule: before.settings.jackpotRule,
+  } : undefined;
+  const previousLog = JSON.parse(row.log_json);
+  // A subsequent spin supersedes only the cosmetic view, never action history.
+  // Non-spin operations retain the latest view until its log entry ages out.
+  const retainedLog = spinView ? previousLog.map(({ spinView: _view, ...entry }) => entry) : previousLog;
+  const log = [...retainedLog, { version: row.version + 1, at: now, type: action.type, reason: action.reason ?? '', betId: action.betId, upgrade: action.upgrade, delta: action.delta, cash: run.cash, roll: action.type === 'spin' ? run.last?.roll : undefined, ...(spinView ? { spinView } : {}) }].slice(-30);
   // A single conditional write linearizes all operations, including work, rotations and pauses.
   const updated = await db.prepare(`UPDATE ai_sessions SET state_json=?, log_json=?, strategy=?, version=version+1, started_at=?, updated_at=?, last_work_at=?, next_spin_at=?, finished_at=?, duration_ms=? WHERE id=? AND version=? AND control_hash=? AND revoked_at IS NULL AND paused=0 AND finished_at IS NULL RETURNING *`)
     .bind(JSON.stringify(run), JSON.stringify(log), action.type === 'strategy' ? action.text.trim() : row.strategy, started, now, action.type === 'work' ? now : row.last_work_at, nextSpin, finished, finished === null ? null : Math.max(1, now - started), id, row.version, row.control_hash).first();

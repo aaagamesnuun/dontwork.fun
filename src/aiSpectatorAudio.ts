@@ -1,7 +1,7 @@
 import type { AiSnapshot } from "./aiApi";
 import type { Cue } from "./audio";
 import type { ResultAccent } from "./audioPalette";
-import { defaultSettings, type Settings } from "./game/engine";
+import { defaultSettings, type Run, type Settings } from "./game/engine";
 import { resultSound } from "./resultSound";
 
 export function spectatorSoundSettings(enabled: boolean, pack: Settings["soundPack"]): Settings {
@@ -22,6 +22,26 @@ export type AiSpectatorCue = {
   accent?: ResultAccent;
   kind: "result" | "action";
 };
+
+export type AiLandingResult = { key: string; run: Run };
+
+/** Presentation owns arrival time; an accepted result is heard only on landing. */
+export class AiResultSoundCursor {
+  private key: string | null = null;
+
+  sync(result: AiLandingResult | null): void {
+    if (result) this.key = result.key;
+  }
+
+  next(result: AiLandingResult | null, audible: boolean): AiSpectatorCue | null {
+    if (!result || result.key === this.key) return null;
+    this.sync(result);
+    if (!audible || !result.run.last) return null;
+    // The captured Run belongs to this landing, even if newer WORK/spins have
+    // arrived or the animation outlasted the network cursor's freshness window.
+    return { ...resultSound(result.run), kind: "result" };
+  }
+}
 
 type Cursor = { id: string; version: number; spins: number; observedAt: number };
 

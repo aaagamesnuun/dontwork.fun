@@ -3,7 +3,8 @@ import { DatabaseSync } from 'node:sqlite';
 import { readFileSync } from 'node:fs';
 import { aiApi } from './ai.js';
 import worker from './worker.js';
-import { TARGET } from '../src/game/engine';
+import { interval, spin, TARGET } from '../src/game/engine';
+import { sweepSnapshot } from '../src/game/sweep';
 let sqlite, db;
 const origin = 'https://game.example';
 beforeEach(() => {
@@ -159,5 +160,106 @@ describe('AI games are server authoritative', () => {
   it('routes through the production Worker and reports missing schema as unavailable', async () => {
     expect((await worker.fetch(new Request(origin + '/api/ai/rankings'), { DB: db })).status).toBe(200);
     sqlite.exec('DROP TABLE ai_sessions'); expect((await call('/api/ai/rankings')).status).toBe(503);
+  });
+});
+
+describe('AI spectator spin views', () => {
+  async function seedRun(session, patch) {
+    const state = await session.state();
+    const run = { ...state.run, cash: 10000, peak: 10000, portfolio: [{ id: 'edge-50', count: 1 }], ...patch };
+    sqlite.prepare('UPDATE ai_sessions SET state_json=? WHERE id=?').run(JSON.stringify(run), session.id);
+    return run;
+  }
+  const storedLog = session => JSON.parse(sqlite.prepare('SELECT log_json FROM ai_sessions WHERE id=?').get(session.id).log_json);
+  async function nextSpin(session) {
+    const state = await session.state();
+    vi.setSystemTime(Math.max(Date.now(), state.nextSpinAt));
+    const response = await session.action({ version: state.version, type: 'spin' });
+    expect(response.status).toBe(200);
+    return response.json();
+  }
+
+  it('captures the actual pre-spin portfolio and interval after equipment and upgrade actions', async () => {
+    const s = await create(), earlier = await seedRun(s, { slots: 2 });
+    expect((await s.action({ version: 0, type: 'equip', betId: 'edge-25', delta: 1 })).status).toBe(200);
+    expect((await s.action({ version: 1, type: 'upgrade', upgrade: 'speed' })).status).toBe(200);
+    const before = await s.state(), result = await nextSpin(s);
+    expect(result.spinView).toEqual({ spinId: result.run.last.id, sweep: sweepSnapshot(before.run), intervalMs: interval(before.run), jackpotHigh: before.run.jackpotHigh, jackpotRule: before.run.settings.jackpotRule });
+    expect(result.spinView.sweep).not.toEqual(sweepSnapshot(earlier));
+    expect(result.spinView.sweep.bars[99]).toEqual({ payout: 680, cost: 110 });
+    expect(result.spinView.intervalMs).toBeLessThan(5000);
+    expect(result.log.every(entry => !Object.hasOwn(entry, 'spinView'))).toBe(true);
+    expect(storedLog(s).filter(entry => entry.spinView)).toHaveLength(1);
+  });
+
+  it('preserves the pre-jackpot cut range, interval and flag instead of using the result state', async () => {
+    const s = await create(), before = await seedRun(s, { spins: 31, trim: 3 });
+    const first = await nextSpin(s);
+    expect(first.run.last.jackpot).toBe(true);
+    expect(first.run.removed).toBe(3);
+    expect(first.spinView.sweep).toEqual(sweepSnapshot(before));
+    expect(first.spinView.sweep.bars.filter(bar => bar === null)).toHaveLength(0);
+    expect(first.spinView).toMatchObject({ intervalMs: 5000, jackpotHigh: false, jackpotRule: 'combined' });
+    expect(first.choices.spinIntervalMs).toBe(300);
+    expect(first.run.jackpotHigh).toBe(true);
+    const second = await nextSpin(s);
+    expect(second.spinView.sweep).toEqual(sweepSnapshot(first.run));
+    expect(second.spinView.sweep.bars.filter(bar => bar === null)).toHaveLength(3);
+    expect(second.spinView).toMatchObject({ spinId: first.run.last.id + 1, intervalMs: 300, jackpotHigh: true });
+  });
+
+  it('stores one latest view, preserves it through non-spin operations and strips it from every public log', async () => {
+    const s = await create();
+    await seedRun(s, {});
+    const first = await nextSpin(s);
+    expect((await s.action({ version: first.version, type: 'work' })).status).toBe(200);
+    const working = await s.state();
+    expect(working.spinView).toEqual(first.spinView);
+    expect((await s.action({ version: working.version, type: 'upgrade', upgrade: 'speed' })).status).toBe(200);
+    const upgraded = await s.state();
+    expect(upgraded.spinView).toEqual(first.spinView);
+    const second = await nextSpin(s), saved = storedLog(s);
+    expect(saved.filter(entry => entry.spinView)).toHaveLength(1);
+    expect(saved.find(entry => entry.version === first.version)).not.toHaveProperty('spinView');
+    expect(saved.at(-1).spinView).toEqual(second.spinView);
+    const guide = await (await call(new URL(s.connectionUrl).pathname)).json();
+    const mcp = await (await call(`/api/ai/mcp/${s.id}`, { jsonrpc: '2.0', id: 1, method: 'tools/call', params: { name: 'get_state', arguments: {} } }, s.control)).json();
+    for (const result of [second, await s.state(), guide.state, JSON.parse(mcp.result.content[0].text)]) {
+      expect(result.spinView).toEqual(second.spinView);
+      expect(result.log.every(entry => !Object.hasOwn(entry, 'spinView'))).toBe(true);
+      expect(JSON.stringify(result).match(/"spinView"/g)).toHaveLength(1);
+    }
+  });
+
+  it('supports existing sessions without a view and never attaches a view to another spin', async () => {
+    const s = await create();
+    expect(await s.state()).not.toHaveProperty('spinView');
+    const before = await seedRun(s, {}), existing = spin(before, 80, 0);
+    const legacyLog = [{ version: 1, type: 'spin', at: Date.now(), cash: existing.cash, roll: 80 }];
+    sqlite.prepare('UPDATE ai_sessions SET state_json=?,log_json=?,version=1 WHERE id=?').run(JSON.stringify(existing), JSON.stringify(legacyLog), s.id);
+    expect(await s.state()).not.toHaveProperty('spinView');
+    legacyLog[0].spinView = { spinId: existing.last.id - 1, sweep: sweepSnapshot(before), intervalMs: 5000, jackpotHigh: false, jackpotRule: 'combined' };
+    sqlite.prepare('UPDATE ai_sessions SET log_json=? WHERE id=?').run(JSON.stringify(legacyLog), s.id);
+    const stale = await s.state();
+    expect(stale).not.toHaveProperty('spinView');
+    expect(stale.log[0]).not.toHaveProperty('spinView');
+    const next = await nextSpin(s);
+    expect(next.spinView.spinId).toBe(next.run.last.id);
+  });
+
+  it('keeps the action history bounded when the latest view ages out', async () => {
+    const s = await create();
+    await seedRun(s, {});
+    const first = await nextSpin(s);
+    for (let version = first.version; version < first.version + 30; version++) {
+      expect((await s.action({ version, type: 'strategy', text: 'Stay the course' })).status).toBe(200);
+    }
+    const state = await s.state();
+    expect(state.log).toHaveLength(30);
+    expect(state).not.toHaveProperty('spinView');
+    expect(storedLog(s).some(entry => entry.spinView)).toBe(false);
+    const next = await nextSpin(s);
+    expect(next.spinView.spinId).toBe(next.run.last.id);
+    expect(storedLog(s).filter(entry => entry.spinView)).toHaveLength(1);
   });
 });
