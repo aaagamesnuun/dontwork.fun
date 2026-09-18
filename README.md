@@ -33,6 +33,7 @@ LABと設計ガイドは、v3.0.0の現行実装を説明します。2026-09-10�
 - ブラウザ内の自動保存とセーブの書き出し・読み込み。
 - コードで生成する効果音と3種類のBGM。BGMは標準OFFで、音楽アイコンから選べます。
 - React / TypeScript / Vite。オンライン機能には任意でCloudflare Workers / D1を使用します。
+- ヘッダーのロボットからCodex / Claude Code用の接続URLを発行。AIがAPI・MCPでプレイし、人間は観戦できます。詳細は[AIモード](docs/AI-MODE.md)。
 
 通常モードをクリアすると30分モードが解放されます。通常モードのセーブとクリア記録は別に残ります。LABから先に解放することもできます。
 
@@ -90,7 +91,7 @@ VITE_ENABLE_TELEMETRY=false
 ```jsonc
 {
   "name": "dontwork-fork",
-  "main": "server/worker.js",
+  "main": "dist/server/index.js",
   "compatibility_date": "2026-09-01",
   "assets": {
     "directory": "./dist/client",

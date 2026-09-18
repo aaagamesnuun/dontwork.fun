@@ -1,0 +1,14 @@
+/* Keep the robot entry reachable beside every existing header action. */
+.app .topbar .ai-button { color:inherit; display:inline-flex; align-items:center; justify-content:center; text-decoration:none; }
+@media (min-width:361px) and (max-width:400px) {
+  .app[data-look] .topbar .wordmark { gap:3px; }
+  .app[data-look] .topbar .wordmark .brand-name { font-size:15px; }
+  .app[data-look] .topbar .wordmark .brand-icon { width:26px; height:26px; flex-basis:26px; }
+}
+@media (max-width:360px) {
+  .app[data-look][data-look] { --header-h:72px; }
+  .app[data-look] .topbar { flex-wrap:wrap; height:auto; row-gap:0; }
+  .app[data-look] .topbar .wordmark { min-height:28px; }
+  .app[data-look] .topbar nav { flex-basis:100%; width:100%; margin-left:0; justify-content:space-between; }
+  .app[data-look] .topbar nav .contact-button { width:40px; min-width:40px; height:40px; }
+}

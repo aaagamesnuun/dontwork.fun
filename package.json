@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite --host 0.0.0.0",
+    "dev:ai": "node scripts/dev-ai.mjs",
     "build": "tsc -b && vite build && node scripts/prepare-sites-build.mjs",
     "preview": "vite preview --host 0.0.0.0 --outDir dist/client",
     "test": "vitest run",

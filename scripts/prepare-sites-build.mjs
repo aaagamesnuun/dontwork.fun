@@ -1,5 +1,6 @@
 import { copyFile, mkdir, readdir, rename } from "node:fs/promises";
 import { resolve } from "node:path";
+import { build } from "vite";
 
 const clientDirectory = resolve("dist/client");
 const serverDirectory = resolve("dist/server");
@@ -20,10 +21,10 @@ await copyFile(
 );
 
 await mkdir(serverDirectory, { recursive: true });
-await copyFile(
-  resolve("server/worker.js"),
-  resolve(serverDirectory, "index.js"),
-);
+// Bundle the same TypeScript economy used by the browser into the Worker.
+await build({ configFile: false, publicDir: false, ssr: { noExternal: true },
+  build: { ssr: resolve("server/worker.js"), outDir: serverDirectory, emptyOutDir: true, target: "es2022", minify: false,
+    rollupOptions: { output: { entryFileNames: "index.js", inlineDynamicImports: true } } } });
 
 await copyFile(
   resolve("server/rankings.js"),

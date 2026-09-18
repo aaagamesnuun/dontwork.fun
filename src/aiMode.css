@@ -1,0 +1,75 @@
+.ai-app { height:100dvh; background:var(--bg,#090d11); color:var(--text,#e8edf4); overflow:auto; }
+.topbar a.ai-button { display:inline-flex; align-items:center; justify-content:center; color:inherit; min-width:36px; min-height:36px; }
+.ai-app .topbar { position:sticky; top:0; z-index:2; background:var(--bg,#090d11); gap:16px; }
+.ai-app .topbar .wordmark { display:inline-flex; align-items:center; gap:6px; }
+.ai-app .topbar .brand-icon { width:30px; height:30px; flex:0 0 30px; }
+.ai-app .topbar nav { display:flex; gap:12px; align-items:center; }
+.ai-app button,.ai-app input { font:inherit; }
+.ai-app button,.ai-app nav a { min-height:44px; padding:10px 14px; }
+.ai-app button { border:1px solid var(--line,#27303b); border-radius:8px; background:#141b24; color:inherit; cursor:pointer; }
+.ai-app button:disabled { opacity:.45; cursor:default; }
+.ai-app button.primary { background:#c8f26c; color:#142008; border-color:#c8f26c; font-weight:700; }
+.ai-app a { color:inherit; }
+.ai-mode-label { display:flex; align-items:center; gap:8px; color:#c8f26c; white-space:nowrap; font:600 14px monospace; }
+.ai-main { max-width:1320px; padding:28px 24px 48px; margin:auto; }
+.ai-main h1 { font-size:clamp(24px,3vw,36px); margin:0 0 16px; }
+.ai-main h2 { font-size:16px; margin:0 0 12px; }
+.ai-main p { font-size:16px; line-height:1.7; }
+.ai-main small { font-size:13px; }
+.ai-card { border:1px solid var(--line,#28313b); border-radius:12px; padding:24px; background:#10161d; min-width:0; }
+.ai-create { max-width:610px; margin:48px auto; }
+.ai-create>svg { color:#c8f26c; width:36px; height:36px; margin-bottom:20px; }
+.ai-create form { display:grid; gap:18px; margin:28px 0; }
+.ai-create label { display:grid; gap:8px; font-size:14px; }
+.ai-app input { min-width:0; width:100%; box-sizing:border-box; background:#080d12; border:1px solid #37424d; color:inherit; padding:12px; border-radius:6px; font-size:16px; }
+.ai-session-heading,.ai-stage-heading { display:flex; justify-content:space-between; align-items:center; gap:16px; }
+.ai-session-heading h1 { display:flex; align-items:baseline; gap:16px; overflow-wrap:anywhere; }
+.ai-session-heading h1 small { color:#a3acb7; font-size:16px; }
+.ai-status { display:flex; align-items:center; gap:8px; color:#a3acb7; margin:0 0 10px; font-size:14px!important; }
+.ai-status span { width:7px; height:7px; border-radius:50%; background:#7b8797; }
+.ai-status.is-live span { background:#c8f26c; box-shadow:0 0 12px #c8f26466; }
+.ai-session-actions { display:flex; flex-wrap:wrap; gap:8px; }
+.ai-metrics { display:grid; grid-template-columns:2fr 1.3fr 1fr 1fr; padding:24px 0; gap:24px; }
+.ai-metrics>div { display:flex; flex-wrap:wrap; align-items:baseline; gap:8px; min-width:0; overflow-wrap:anywhere; }
+.ai-metrics span { width:100%; font-size:13px; color:#a3acb7; }
+.ai-metrics strong { font-size:clamp(24px,3vw,40px); font-variant-numeric:tabular-nums; }
+.ai-metrics small { color:#a3acb7; }
+.ai-goal { display:block; width:100%; height:4px; accent-color:#c8f26c; margin-bottom:24px; }
+.ai-connect { margin-bottom:24px; }
+.ai-connect p { margin:0 0 14px; }
+.ai-url { display:flex; gap:8px; margin-bottom:12px; }
+.ai-url input { flex:1; font-family:monospace; font-size:14px; }
+.ai-url button { flex-shrink:0; }
+.ai-app .ai-text-button { background:none; border:none; text-decoration:underline; font-size:13px; }
+.ai-observation { display:grid; grid-template-columns:minmax(0,1.65fr) minmax(280px,1fr); gap:20px; align-items:start; }
+.ai-stage .wealth-chart { height:240px; min-height:240px; margin:12px 0; }
+.ai-last-roll { display:flex; align-items:center; justify-content:center; flex-direction:column; min-height:200px; margin-top:20px; border-radius:8px; background:#080d12; animation:ai-arrival .3s ease-out; }
+.ai-last-roll strong { font-size:80px; line-height:1.3; font-variant-numeric:tabular-nums; }
+.ai-last-roll small { color:#a3acb7; letter-spacing:.15em; }
+.ai-last-roll.is-jackpot { border:1px solid #c8f26c; color:#c8f26c; }
+.ai-portfolio { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; }
+.ai-portfolio article { display:grid; grid-template-columns:1fr auto; gap:8px; border:1px solid #364531; border-left:3px solid #c8f26c; border-radius:6px; padding:14px; }
+.ai-portfolio article strong { font-size:14px; overflow-wrap:anywhere; }
+.ai-portfolio small { color:#a3acb7; }
+.ai-upgrades { display:flex; flex-wrap:wrap; gap:14px; margin-top:20px; font:12px monospace; color:#a3acb7; }
+.ai-upgrades b { color:#e8edf4; }
+.ai-thoughts { display:grid; gap:20px; }
+.ai-strategy { white-space:pre-wrap; overflow-wrap:anywhere; border-left:2px solid #c8f26c; padding-left:16px; }
+.ai-log { list-style:none; padding:0; margin:0; max-height:450px; overflow:auto; }
+.ai-log li { border-top:1px solid #28313b; padding:14px 0; overflow-wrap:anywhere; }
+.ai-log li>div { display:flex; justify-content:space-between; gap:10px; }
+.ai-log strong { font-size:14px; }
+.ai-log time,.ai-log small { font-size:12px; color:#a3acb7; }
+.ai-log p { margin:6px 0; font-size:14px; }
+.ai-error,.ai-notice { border:1px solid #b56565; border-radius:8px; padding:12px 16px; }
+.ai-notice { border-color:#738854; }
+.ai-table-scroll { overflow:auto; }
+.ai-ranking table { width:100%; border-collapse:collapse; text-align:left; font-size:14px; }
+.ai-ranking th,.ai-ranking td { border-bottom:1px solid #28313b; padding:14px; white-space:nowrap; }
+.ai-ranking td:nth-child(2),.ai-ranking td:nth-child(3) { white-space:normal; overflow-wrap:anywhere; }
+.ai-empty { padding:40px 0; text-align:center; color:#a3acb7; }
+.ai-pagination { display:flex; align-items:center; justify-content:flex-end; gap:16px; margin-top:20px; }
+.ai-rules { margin-top:24px; }
+@keyframes ai-arrival { from { opacity:.4; } to { opacity:1; } }
+@media(prefers-reduced-motion:reduce) { .ai-last-roll { animation:none; } }
+@media(max-width:760px) { .ai-main { padding:20px 12px 40px; } .ai-app .topbar { flex-wrap:wrap; padding:12px; gap:10px; } .ai-app .topbar nav { margin-left:auto; gap:4px; } .ai-app .brand-name { font-size:18px; } .ai-app .topbar nav a,.ai-app .topbar nav button { padding:8px; font-size:13px; } .ai-mode-label { font-size:12px; } .ai-observation { grid-template-columns:1fr; } .ai-card { padding:18px; } .ai-session-heading { align-items:flex-start; flex-direction:column; } .ai-metrics { grid-template-columns:1fr 1fr; gap:20px; } .ai-url { flex-wrap:wrap; } .ai-url input { flex-basis:100%; } .ai-create { margin:24px auto; } .ai-stage-heading { flex-wrap:wrap; } }

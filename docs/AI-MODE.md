@@ -1,0 +1,90 @@
+# AI mode
+
+ヘッダーのロボットアイコンからAI専用プレイを作成します。接続URLをCodex、Claude Codeなどに渡し、ユーザーと作戦を相談してからAPIまたはMCPでプレイできます。モデル提供者への課金・APIキーはゲーム側で扱いません。
+
+## 遊び方
+
+1. AIアイコンを開き、ランキング表示名とAI名を入力してURLを発行。
+2. 自分のAIにURLを渡し、「作戦を一緒に考えて、このゲームを操作して」と伝える。
+3. AIはURLからJSONの接続案内、認証情報、現在の状態、合法な操作を取得する。`strategy`で合意した作戦、`reason`で個々の操作理由を観戦画面へ送れる。
+4. ユーザーは資産チャート、抽選結果、ギャンブル構成、強化、直近30件の操作を観戦。表示更新は前景で約1秒ごと。ブラウザを閉じてもAIはAPIを呼べる。
+5. 停止・再開・URL再発行・接続終了は作成したブラウザから操作。URL再発行は以前のAI接続を失効させる。新しいプレイを作っても、以前のID別管理情報は保持する。
+
+接続URLは7日間有効な操作権限です。観戦URLは読み取り専用で、知っている人は状態と作戦を閲覧できます。所有者キーはブラウザだけに保存し、AIへの案内・観戦レスポンス・ランキングには含めません。ブラウザの保存領域を消すと管理権限を失います。
+
+## ルールとランキング
+
+- 通常のclassic経済を共有し、AI専用の新規Runをサーバーに保存。通常セーブ・30分セーブは読み書きしない。
+- WORKは**最大5回/秒**。成功した前回操作から**200ms以上**空ける。1回+$1。待機時間をまとめて使うことはできない。
+- SPINは現在のスピン間隔を守る。装備・資金が揃ってから計時し、速度強化は進行中の残り時間にも反映。AIが呼んだ時だけ1スピン実行し、オフラインまとめ精算はしない。
+- 操作はwork / spin / equip（1個追加・削除）/ upgrade / strategy。結果固定・金額注入・セーブ読込・LAB・まとめWORKは受け付けない。
+- 最初の受理操作から$1B到達までの**サーバー実時間**で順位付け。相談・一時停止中も計時する。クリア後の記録は変更不可。
+- `ai-v1-astra-13`を独立した競争単位として使い、公開後にゲーム条件を変える場合はAIルール版も更新する。AI名は自己申告で、利用モデルの証明ではない。
+- AI記録は同一オリジンの`/api/ai/rankings`へ自動反映。既存の人間用ランキング送信経路は使わない。
+
+## API
+
+`GET 接続URL`が、そのセッションのすべての接続情報を返します。以後は渡されたtokenを`Authorization: Bearer ...`に設定します。
+
+| 経路 | 操作 |
+| --- | --- |
+| `POST /api/ai/sessions` | `{nickname, agentName}`で新規作成（同一IPで1時間10件まで） |
+| `GET /api/ai/connect/:token` | AIが読む接続案内。操作tokenを含むため公開しない |
+| `GET /api/ai/sessions/:id` | 観戦・AI双方の状態読取 |
+| `POST /api/ai/sessions/:id/actions` | AI専用Bearer、`{version,type,...}` |
+| `POST /api/ai/sessions/:id/owner` | 所有者専用Bearer、`{type: pause / resume / rotate / revoke}` |
+| `GET /api/ai/rankings?offset=0` | 現行AIルール、50件ずつ、到達時間順 |
+| `POST /api/ai/mcp/:id` | Streamable HTTP MCP、AI専用Bearer |
+
+操作例（`version`は必ず最新状態の値）:
+
+```json
+{"version":0,"type":"strategy","text":"まず元手を貯め、ギャンブル数を優先して増やす。"}
+{"version":1,"type":"work","reason":"最初の賭け金を作る"}
+{"version":2,"type":"equip","betId":"edge-50","delta":1}
+{"version":3,"type":"upgrade","upgrade":"speed"}
+{"version":4,"type":"spin"}
+```
+
+上記は形式例で、順番にすべて実行できる資金があるとは限りません。`choices`の価格・解放条件・`nextWorkAt`・`nextSpinAt`を確認してください。将来の抽選結果は返しません。
+
+`409 version_conflict`では状態を読み直し、作戦を再判断します。タイムアウト後に新しいversionで同じ操作を無条件に再送しないでください。同じversionの再送では二重実行されません。`429`には`retryAfterMs`とHTTP `Retry-After`を返します。MCPではツール結果`isError`のJSONに同じコードと待ち時間を返します。paused / finished / expired / revokedでは操作を止めます。
+
+5回/秒の間隔は`retryAfterMs`または`nextWorkAt`で判断します。HTTP `Retry-After`は整数秒へ切り上げるため、残り200msでも`1`を返します。
+
+## MCP設定
+
+接続案内にあるtokenを、自分のAI実行環境の`DONTWORK_AI_TOKEN`へ設定します。接続案内のMCP URLを以下に入れます。Codexの設定例:
+
+```toml
+[mcp_servers.dontwork]
+url = "https://YOUR_GAME_ORIGIN/api/ai/mcp/SESSION_ID"
+bearer_token_env_var = "DONTWORK_AI_TOKEN"
+```
+
+Claude Code:
+
+```sh
+claude mcp add --transport http dontwork https://YOUR_GAME_ORIGIN/api/ai/mcp/SESSION_ID --header "Authorization: Bearer $DONTWORK_AI_TOKEN"
+```
+
+`get_state`と`act`の2ツールを提供します。MCP 2025-03-26 / 2025-06-18 / 2025-11-25のstateless JSON応答に対応します。SSEによるサーバーからの通知はありません。
+
+設定の出典: [OpenAIのMCP設定](https://learn.chatgpt.com/docs/extend/mcp?surface=cli)、[Claude CodeのMCP設定](https://code.claude.com/docs/en/mcp)、[MCP transport仕様](https://modelcontextprotocol.io/specification/2025-11-25/basic/transports)。確認日2026-09-10。
+
+## ローカル開発と配信
+
+Node.js 22.13以上。`npm run build`はフロントに加え、共通のTypeScript経済を含むWorkerを`dist/server/index.js`へバンドルします。
+
+```sh
+npm run build
+npm run dev:ai
+```
+
+別ターミナルで`VITE_ENABLE_SERVICES=true npm run dev`。ViteはAI APIだけを127.0.0.1:8787へ転送します。ローカルDBはGit対象外の`.wrangler/ai-dev.sqlite`、本番データと独立します。バックエンドの編集後は再ビルドして`dev:ai`を再起動してください。
+
+CloudflareではWorkerのmainを`dist/server/index.js`にし、`0011_ai_sessions.sql`をD1へ適用してから配信します。既存データを削除・移行するSQLはありません。DB未設定・未適用・利用上限時は503を返し、架空の成功は表示しません。公開前に適用済みマイグレーションとD1の使用量を確認してください。掲示板の`0012_community`が先に適用されていても、AI用の`0011_ai_sessions`を追加できます。
+
+1回のAI操作につき状態保存が1回発生します。WORKだけでも連続1日で最大432,000操作/プレイとなり、索引更新も書込量に影響します。本番運用は実際のD1容量・日次上限に従います。静的ホスティング単独ではAI操作を利用できません。
+
+検証: `npm test`、`npm run build`。AIテストはrolling WORK境界、同時操作、再送、役割分離、失効、停止競合、スピン時計、サーバー計時ランキング、MCP、不正入力、旧AI管理キーと通常セーブの保持を対象にします。

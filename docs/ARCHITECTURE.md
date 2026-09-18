@@ -176,6 +176,14 @@ AUTOを停止しただけなら、ニュースは残り回数を保持して再�
 
 ニュース欄の高さは [release30.css](../src/release30.css) で統一しています。通常ニュース・チュートリアル・ジャックポットで共通の48px枠を予約し、上下2pxの余白を引いた44pxの表示枠を使います。desk・tab・撮影モード、上配置・下配置も同じ契約です。内容が変わってもチャートの位置や高さを変えません。長文は本文内でスクロールでき、ジャックポットの残り回数は説明文と分離して常に残します。説明ボタンも同じサイズです。
 
+## AIがプレイするモード
+
+ヘッダーのロボットから`/?ai=1`を開きます。[AiMode.tsx](../src/AiMode.tsx)は接続案内・観戦・AI専用ランキングを表示し、通常のゲーム時計を動かしません。通常セーブとは別に所有者の接続情報だけをブラウザへ保存します。
+
+[server/ai.js](../server/ai.js)は同一オリジンの`/api/ai/*`を担当し、[game/ai.ts](../src/game/ai.ts)経由で共通エンジンをサーバー実行します。`0011_ai_sessions.sql`のD1へRunを保存し、version付き条件更新で重複精算を防ぎます。WORKは200msに1回、スピンはサーバーの期限を守ります。所有者とAIの操作キーは別で、観戦ではどちらも返しません。
+
+AI記録は最初の操作から$1B到達までのサーバー実時間で計測し、人間用ランキングには送信しません。接続・運用・ローカル検証の手順は[AI-MODE.md](AI-MODE.md)。forkでは従来どおりオンライン機能が既定OFFです。ビルドは共通エンジンを含めてWorkerを`dist/server/index.js`へバンドルします。
+
 ## 任意のWorker / D1とfork
 
 [serviceConfig.ts](../src/serviceConfig.ts)が接続の境界です。通常のforkはオンラインサービス・新規プレイの計測設定ともにOFFです。自分の同一配信元のAPIを使うビルドでは`VITE_ENABLE_SERVICES=true`、計測の初期値を変更する場合は別に`VITE_ENABLE_TELEMETRY=true`を指定します。保存済みの計測選択は環境変数で上書きしません。localhost / 開発環境からの計測送信は[Telemetry](../src/api.ts)が抑止します。
@@ -191,13 +199,13 @@ AUTOを停止しただけなら、ニュースは残り回数を保持して再�
 | `/api/leaderboard` | 以前のランキング方式に対応するAPI。現在のクリアカード送信は`/api/rankings`を使う。 |
 | `/api/save-codes`、`/api/save-codes/restore` | 廃止済み。`410 Gone`を返す。 |
 
-[worker.js](../server/worker.js)はAPI以外を`ASSETS`へ渡し、HTMLのルートに静的アプリを返します。D1は`DB` bindingです。Workerは受信データの形式・対応バージョン・ルールを検証して保存しますが、ゲーム全体をサーバー上で再実行して正当性を証明する設計ではありません。
+[worker.js](../server/worker.js)はAPI以外を`ASSETS`へ渡し、HTMLのルートに静的アプリを返します。D1は`DB` bindingです。人間のプレイではWorkerが受信データの形式・対応バージョン・ルールを検証して保存し、ゲーム全体の再実行による証明は行いません。AI専用プレイは前述のサーバー管理方式です。
 
 ## ビルド、PWA更新、DB更新
 
 ホーム画面への追加案内は [Pwa.tsx](../src/Pwa.tsx) で共通化しています。iPhone/iPad（Safari・Chrome）は、共有→「表示を増やす」→ホーム画面に追加→アイコンから起動の4手順です。Androidはメニュー→インストール→アイコンから起動の3手順を維持します。
 
-[package.json](../package.json)の`npm run build`はTypeScript検査、Viteビルド、[prepare-sites-build.mjs](../scripts/prepare-sites-build.mjs)を順に実行します。静的成果物は`dist/client/`、Worker用のコピーは`dist/server/`、SQLのコピーは`dist/.openai/drizzle/`です。スクリプト名にSitesが残っていますが、`dist/client/`は通常の静的ホスティングでも利用できます。現在のパス前提は`/`です。
+[package.json](../package.json)の`npm run build`はTypeScript検査、Viteビルド、[prepare-sites-build.mjs](../scripts/prepare-sites-build.mjs)を順に実行します。静的成果物は`dist/client/`、共通エンジンを含むWorkerバンドルは`dist/server/index.js`、SQLのコピーは`dist/.openai/drizzle/`です。スクリプト名にSitesが残っていますが、`dist/client/`は通常の静的ホスティングでも利用できます。現在のパス前提は`/`です。
 
 [generate-pwa.mjs](../scripts/generate-pwa.mjs)はHTML・JS・CSS・対象素材・Service WorkerテンプレートからビルドIDを作り、HTMLと`sw.js`に埋め込みます。[service-worker.template.js](../scripts/service-worker.template.js)は一式の事前キャッシュが成功してから有効化します。API、POST、外部配信元はキャッシュ対象にしません。
 

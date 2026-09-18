@@ -70,6 +70,7 @@ import { registerGameTools } from "./webmcp";
 import { NativeSwitch } from "./NativeSwitch";
 import { GrowthStrip, PayoffSweep, WealthChart, type SweepFrame, } from "./TradingViews";
 import { Telemetry, request } from "./api";
+import { AiIcon } from './AiMode';
 export type Change = (fn: (s: Run) => Run) => void;
 const UPGRADE_INFO: Record<Upgrade, [
     string,
@@ -1444,7 +1445,7 @@ export default function App({ onOpenDesk, studio }: {
         {!updating && !updateError && <button className="primary" onClick={() => { setUpdating(true); setS(run => ({ ...run, running: false })); }}>{_t("保存して更新")}</button>}
       </aside>}
       <header className="topbar">
-        <a className="wordmark" href="#" onClick={(e) => {
+        <a className="wordmark" href="#" aria-label="dontwork.fun" onClick={(e) => {
             e.preventDefault();
             setTab("spin");
         }}>
@@ -1458,6 +1459,7 @@ export default function App({ onOpenDesk, studio }: {
         </div>
         <nav>
           {!studio && <button className="contact-button board-button" aria-label={_t("掲示板")} title={_t("掲示板")} onClick={()=>setModal("board")}><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M20 15a3 3 0 0 1-3 3H9l-5 3V6a3 3 0 0 1 3-3h10a3 3 0 0 1 3 3Z"/><path d="M8 8h8M8 12h5"/></svg></button>}
+          {!studio && <a className="contact-button ai-button" href="/?ai=1" aria-label={_t("AIに遊ばせる")} title={_t("AIに遊ばせる")}><AiIcon/></a>}
           <button className="contact-button" aria-label={_t("問い合わせ")} title={_t("問い合わせ")} onClick={() => setModal("feedback")}>
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 6 9 7 9-7"/></svg>
           </button>

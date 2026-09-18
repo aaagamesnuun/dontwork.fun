@@ -3,6 +3,7 @@ setLanguage(language());
 import { createRoot } from "react-dom/client";
 import { BrandGate } from "./BrandGate";
 import { CaptureStudio } from './CaptureStudio';
+import AiMode from './AiMode';
 import './domainMigration.css';
 import "./styles.css";
 import "./workspace.css";
@@ -10,7 +11,7 @@ import { startPwaUpdates } from "./pwaUpdates";
 
 const studio=new URLSearchParams(location.search).get('studio')==='1';
 if(!studio)startPwaUpdates();
-createRoot(document.getElementById("root")!).render(studio?<CaptureStudio/>:<BrandGate />);
+createRoot(document.getElementById("root")!).render(studio?<CaptureStudio/>:new URLSearchParams(location.search).has('ai')?<AiMode/>:<BrandGate />);
 
 import "./release.css";
 
@@ -33,3 +34,5 @@ import "./release30.css";
 import "./community.css";
 
 import "./gameLooks.css";
+
+import "./aiHeader.css";
