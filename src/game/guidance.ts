@@ -92,6 +92,8 @@ export function guidance(s: Run, tick = 0, tab: "spin" | "positions" | "upgrades
         .sort((a, b) => a.unlock - b.unlock)[0];
     if (s.jackpots === 0 && s.spins >= 5 && s.spins < 10)
         return result("jackpot-intro", jackpotCondition(s.settings.jackpotRule), null, "JACKPOT", false);
+    if (tick % 12 === 5)
+        return result("appearance", _t("ヘッダーの調整アイコンで、見た目とサウンドを変えられます。"), null, "STYLE", false);
     if (next && tick % 2 === 0)
         return result("goal", _t("次の目標は総資産{0}。到達すると、新しいギャンブルが使える。", money(next.unlock)), null, "GOAL", false);
     const tips = [

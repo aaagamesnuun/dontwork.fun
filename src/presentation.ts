@@ -1,7 +1,7 @@
 import {advanceBackground} from "./backgroundPlay";
 import { activatePositionTutorial } from "./game/positionTutorial";
 import { advanceTrial, trialAssets, trialDeadline, pauseTrial, resumeTrial, buyTrialTime, trialActive } from "./game/engine";
-import { appendHistory, MONEY_CEILING, finiteMoney, finish, fuelCapacity, coinUnlocked, nextDistribution, playCoinFlip, applyPositionIntent, samePositions, endJackpot, endUnfundedJackpot, type PositionIntent, type Run } from "./game/engine";
+import { appendHistory, MONEY_CEILING, finiteMoney, finish, fuelCapacity, coinUnlocked, nextDistribution, playCoinFlip, applyPositionIntent, samePositions, endJackpot, endUnfundedJackpot, isInfinite, type PositionIntent, type Run } from "./game/engine";
 
 export interface PositionRequest {runId:string;intent:PositionIntent;approved:boolean;confirm:boolean}
 
@@ -16,6 +16,7 @@ export type PresentationAction =
   | { type:"trial-pause"; now:number }
   | { type:"trial-resume"; now:number }
   | { type:"trial-time"; now:number; forced?:boolean }
+  | { type: "jackpot-stop" }
   | { type: "change"; update: (run: Run) => Run }
   | { type: "settled-change"; update: (run: Run) => Run }
   | { type: "purchase"; update: (run: Run) => Run }
@@ -57,6 +58,13 @@ function reducePresentation(
     const advanced=advanceTrial(state.run,now);if(advanced!==state.run)state={...state,run:advanced};
   }
   if(action.type==="trial-clock")return state;
+  if(action.type==="jackpot-stop") {
+    if (!isInfinite(presentedRun(state))) return state;
+    // An accepted infinite spin already owns its 100 outcome. Publish it once
+    // before ending the chain, keeping WORK, purchases and completion intact.
+    const settled = settleAccepted(state);
+    return { ...settled, run: { ...endJackpot(settled.run), backgroundJackpot: false } };
+  }
   if(action.type==="trial-pause"){
     if(state.run.background){const catchup=advanceBackground(state.run,now,true,12000);if(!catchup.done)return {...state,run:catchup.run};state={run:catchup.run,pending:null};}
     state=settleAccepted(state);

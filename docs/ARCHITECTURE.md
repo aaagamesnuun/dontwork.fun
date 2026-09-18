@@ -6,7 +6,9 @@ dontwork.fun 3.0.0の実装を読むための案内です。ローカル起動�
 
 ## ソース地図
 
-7種類のLABルックは [gameLooks.ts](../src/gameLooks.ts)、[LookExperience.tsx](../src/LookExperience.tsx)、[gameLooks.css](../src/gameLooks.css)。公開済み状態だけで動き、ゲームルールを変更しません。[詳細](game-looks.md)。
+7種類の追加ルックは [gameLooks.ts](../src/gameLooks.ts)、[LookExperience.tsx](../src/LookExperience.tsx)、[gameLooks.css](../src/gameLooks.css)。ヘッダーから開く [ExperienceSettings.tsx](../src/ExperienceSettings.tsx) で音と一緒に選び、[lookStartup.ts](../src/lookStartup.ts) が任意の起動時ランダム選択を一度だけ行います。公開済み状態だけで動き、ゲームルールを変更しません。[詳細](game-looks.md)。
+
+無限ジャックポット中のニュース欄には「JP終了」を表示します。専用の `jackpot-stop` presentation action は受理済みスピンを一度だけ清算してから連鎖を終了し、Appが遅延公開・演出をキャンセルして通常スピンの時計に戻します。現金・強化・達成済み記録・ランキング資格は保持します。
 
 
 ランキングの期間・平均、掲示板のD1保存・順位リンク・再送については [community.md](community.md) を参照してください。`RankingPeriod.tsx` と `server/rankingPeriod.js` が期間表示と日本時間の境界、`Board.tsx` / `boardDraft.ts` / `boardIdentity.ts` と `server/board.js` が掲示板を担当します。

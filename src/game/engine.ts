@@ -78,6 +78,7 @@ export const SWEEP_MOTIONS = [
 ] as const;
 export interface Settings {
   look: GameLook;
+  randomLookOnOpen: boolean;
   rollDisplay: "number";
   spectacleRevision: 1;
   handToys: boolean;
@@ -293,6 +294,7 @@ export interface Run {
 }
 export const defaultSettings: Settings = {
   look: "classic",
+  randomLookOnOpen: false,
   rollDisplay: "number",
   spectacleRevision: 1, handToys: false, coinFlip: false, dockToy: "off",
   backgroundPlay: true,
@@ -1259,6 +1261,7 @@ export function playBaccarat(s: Run, wager: number, side: "player" | "banker", t
 }
 export function configure(s: Run, patch: Partial<Settings>): Run {
   if (patch.look !== undefined) patch = { ...patch, look: normalizeLook(patch.look) };
+  if (patch.randomLookOnOpen !== undefined) patch = { ...patch, randomLookOnOpen: patch.randomLookOnOpen === true };
   if (patch.workClicksPerSecond !== undefined && (!Number.isInteger(patch.workClicksPerSecond) || patch.workClicksPerSecond < 1 || patch.workClicksPerSecond > 60)) return s;
   if (s.trial && patch.workClicksPerSecond !== undefined) patch = {...patch,workClicksPerSecond:s.settings.workClicksPerSecond};
   if (s.trial) patch = {...patch,autoAlwaysOn:false,backgroundPlay:false};
@@ -1455,6 +1458,7 @@ export function readSave(raw: string | null): Run | null {
       last: null,
     } as Run;
     n.settings.look = normalizeLook(n.settings.look);
+    n.settings.randomLookOnOpen = n.settings.randomLookOnOpen === true;
     if (n.settings.secondBetAssistRevision !== 1 || typeof n.settings.secondBetAssist !== "boolean" || typeof n.settings.spinAssist !== "boolean" || typeof n.settings.spinAssistSequence !== "string" || !/^[WL]{4,5}$/.test(n.settings.spinAssistSequence)) return null;
     // Shorten legacy assistance without replaying consumed spins. Preserve the
     // first four choices of a custom LAB order; adopt WLWW for the old default.

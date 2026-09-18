@@ -1,0 +1,15 @@
+.experience-tabs {display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:0 0 18px}
+.experience-tabs button {min-height:44px;border:1px solid var(--line);background:transparent;color:var(--muted);font:600 15px/1.2 system-ui,sans-serif}
+.experience-tabs button[aria-pressed=true] {color:var(--lime);border-color:var(--lime);background:color-mix(in srgb,var(--lime) 10%,transparent)}
+.random-look-setting {display:flex;align-items:flex-start;gap:12px;padding:14px 0 18px;border-bottom:1px solid var(--line);margin-bottom:18px;font:600 15px/1.6 system-ui,sans-serif;cursor:pointer}
+.random-look-setting input {width:22px;height:22px;margin:2px 0;flex:0 0 22px;accent-color:var(--lime)}
+.random-look-setting small {display:block;margin-top:6px;font-size:13px;font-weight:400;color:var(--muted)}
+.experience-settings .look-picker {margin-top:0}
+.experience-settings .look-picker-heading>span {display:none}
+.app .news-strip.has-jackpot-stop {position:relative;z-index:80;isolation:isolate}
+.app .news-strip.jackpot-news .jackpot-stop {width:auto;min-width:72px;flex:0 0 auto;padding:0 8px;border:1px solid #fff0ab;background:#302710;color:#fff0ab;font:700 12px/1 system-ui,sans-serif;white-space:nowrap;cursor:pointer}
+.app .news-strip .jackpot-stop:hover {background:#5b4514}
+.app .news-strip .jackpot-stop:focus-visible {outline:2px solid currentColor;outline-offset:2px}
+.app .news-strip.has-jackpot-stop .jackpot-news-rule {display:none}
+.app .news-strip.has-jackpot-stop .rush-remaining>small {font-size:10px}
+.app .news-strip .appearance-news-open {width:auto;min-width:48px;flex:0 0 auto;padding:0 8px;font-size:12px}

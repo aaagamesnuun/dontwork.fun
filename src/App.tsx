@@ -12,7 +12,8 @@ import { secondBetStep } from "./game/positionTutorial";
 import { JackpotNews } from "./JackpotNews";
 import { createProgressSignal, SpinProgress } from "./SpinProgress";
 import { useBetNameStyle } from "./betNamePreferences";
-import { MusicSettings } from "./MusicSettings";
+import { ExperienceIcon, ExperienceSettings } from "./ExperienceSettings";
+import { enterLookSession } from "./lookStartup";
 import { useLanguage, setLanguage } from "./i18n";
 import { t as _t, textValue as _text } from "./i18n";
 import { TrialModes, TrialTimeShop, TrialResult, TrialLeaderboard } from "./TimeTrial";
@@ -30,11 +31,9 @@ import { endUnfundedJackpot } from "./game/engine";
 import { HandToyButton } from "./HandToy";
 import { payoutMilestone, type WinImpact } from "./ResultVisuals";
 import { coinUnlocked, needsCoinUnlockNotice, acknowledgeCoinUnlock } from "./game/engine";
-import { soundPackSettings } from "./soundPresets";
 import { backgroundAccess, holdBackgroundJackpot, resumeBackgroundJackpot, advanceBackground, backgroundSave, startBackground } from "./backgroundPlay";
 import { resultSound } from "./resultSound";
 import { createSweepSignal, SweepMotionDriver } from "./SweepReadout";
-import { SoundPackPicker } from "./SoundPackPicker";
 import { Rating, shouldAskClearRating, markClearRating } from "./Rating";
 import { CoinFlip, nextDockPanel, dockLabel, type DockPanel } from "./CoinFlip";
 import { launchCoin, playResultVisual, stopVisuals, setRainBanknote } from "./ResultVisuals";
@@ -295,6 +294,7 @@ export default function App({ onOpenDesk, studio }: {
         catch {
             run = freshRun();
         }
+        if (!needsPwa()) run = enterLookSession(run);
         return { run: endUnfundedJackpot(run), pending: null };
     });
     const [sweepSignal] = useState(createSweepSignal);
@@ -504,6 +504,27 @@ export default function App({ onOpenDesk, studio }: {
             return false;
         }
     }, [saveKey, studio]);
+    const stopInfiniteJackpot = () => {
+        if (!isInfinite(presentedRun(liveModel.current))) return;
+        // Settle the already accepted spin once, then cancel its delayed presentation.
+        flushSync(() => dispatch({ type: "jackpot-stop" }));
+        resultReveal.cancel();
+        clock.current = 0;
+        setProgress(0);
+        stopSpinCharge();
+        stopSounds();
+        stopHaptics();
+        stopVisuals(visualLayer.current);
+        stopImpact(surface.current);
+        stopImpact(flash.current);
+        if (fxTimer.current) clearTimeout(fxTimer.current);
+        pendingJackpotTab.current = null;
+        musicRush.current = false;
+        setCelebration(null);
+        setFrame(null);
+        saveCurrentRun();
+        setToast(_t("ジャックポットを終了しました。通常スピンに戻ります。"));
+    };
     useEffect(() => {
         if (!studio)
             return;
@@ -1431,11 +1452,12 @@ export default function App({ onOpenDesk, studio }: {
               </div>
               <SpinProgress signal={progressSignal}/>
             </section>);
-    const news = (<div className={`news-strip ${rush ? "jackpot-news" : ""} ${guide.urgent ? "needs-action" : ""}`} role="status" aria-live={guide.urgent ? "polite" : "off"}>
+    const news = (<div className={`news-strip ${rush ? "jackpot-news" : ""} ${isInfinite(shown) ? "has-jackpot-stop" : ""} ${guide.urgent ? "needs-action" : ""}`} role="status" aria-live={guide.urgent ? "polite" : "off"}>
       <span className="news-label">{_text(rush ? isInfinite(shown) ? "INFINITY JACKPOT" : "JACKPOT" : guide.label)}</span>
       {rush ? <JackpotNews s={shown} tick={tipTick} guide={guide}/> : <p key={guide.key}>{_text(guide.text)}</p>}
       {shown.settings.showJackpotCounter && <small className="jackpot-counter">{shown.spinsSinceJackpot === null ? _t("次のJPから計測") : _t("{0} {1}回", shown.jackpots ? _t("前回JPから") : _t("開始から"), shown.spinsSinceJackpot)}</small>}
-      <button aria-label={_t("このニュースの説明")} onClick={() => { if (rush && guide.key === "jackpot") setModal("jackpot-help"); else { setNewsDetail({ ...guide }); setModal("news-help"); } }}>?</button>
+      {isInfinite(shown) && <button className="jackpot-stop" aria-label={_t("無限ジャックポットを終了")} onClick={stopInfiniteJackpot}>■ {_t("JP終了")}</button>}
+      {!rush && guide.key === "appearance" ? <button className="appearance-news-open" aria-label={_t("見た目・サウンドを開く")} onClick={() => setModal("sound")}>{_t("開く")}</button> : <button aria-label={_t("このニュースの説明")} onClick={() => { if (rush && guide.key === "jackpot") setModal("jackpot-help"); else { setNewsDetail({ ...guide }); setModal("news-help"); } }}>?</button>}
     </div>);
     if (!releaseCheck.checked || releaseCheck.latest)
         return <ReleaseNotice check={releaseCheck}/>;
@@ -1466,8 +1488,8 @@ export default function App({ onOpenDesk, studio }: {
           <button className="contact-button trophy-button" aria-label={_t("ランキング")} title={_t("ランキング")} onClick={() => setModal("leaderboard")}>
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M7 3h10v6a5 5 0 0 1-10 0V3ZM7 5H3v2a4 4 0 0 0 4 4m10-6h4v2a4 4 0 0 1-4 4M12 14v5m-4 2h8m-6-2h4"/></svg>
           </button>
-          <button className="contact-button sound-button" aria-label={_t("音楽・サウンド")} title={_t("音楽・サウンド")} onClick={() => setModal("sound")}>
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M9 18V5l12-2v13M9 9l12-2"/><ellipse cx="6" cy="18" rx="3" ry="3"/><ellipse cx="18" cy="16" rx="3" ry="3"/></svg>
+          <button className="contact-button sound-button" aria-label={_t("見た目・サウンド")} title={_t("見た目・サウンド")} onClick={() => setModal("sound")}>
+            <ExperienceIcon/>
           </button>
           {!studio && <button className={`contact-button background-button ${shown.settings.jackpotNotifications && typeof Notification !== "undefined" && Notification.permission === "granted" ? "enabled" : ""}`} onClick={() => setModal("background")} aria-label={_t("ジャックポット通知")} title={_t("ジャックポット通知")}>
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4"/></svg>
@@ -1736,16 +1758,8 @@ export default function App({ onOpenDesk, studio }: {
             }}/>
         </Modal>)}
       {!studio && modal === "background" && <Modal title={_t("ジャックポット通知")} onClose={() => setModal(null)}><NotificationSettings s={shown} change={change}/></Modal>}
-      {modal === "sound" && <Modal title={_t("音楽・サウンド")} onClose={() => setModal(null)}>
-        <label className="setting-row"><span>{_t("効果音")}</span><NativeSwitch label={_t("効果音")} checked={shown.settings.sound} tactile={shown.settings.haptics} onChange={sound => { change(run => configure(run, { sound })); setAudioEnabled(audioEnabled({ ...shown.settings, sound })); if (sound)
-            wakeAudio(true); }}/></label>
-        <SoundPackPicker value={shown.settings.soundPack} onChange={soundPack => {
-                const patch = soundPackSettings(soundPack);
-                change(run => configure(run, patch));
-                uiSound("win", { ...shown.settings, ...patch });
-            }}/>
-        <MusicSettings s={shown} change={change}/>
-        <button className="secondary" onClick={() => setModal("settings")}>{_t("音量・振動の設定 →")}</button>
+      {modal === "sound" && <Modal title={_t("見た目・サウンド")} onClose={() => setModal(null)}>
+        <ExperienceSettings s={shown} change={change} onAudioSettings={() => setModal("settings")}/>
       </Modal>}
       {!studio && modal === "settings" && (<Modal title="SETTINGS" onClose={() => setModal(null)}>
           <SettingsPanel s={s} change={change} notify={setToast} erase={() => telemetry.current?.erase() ?? Promise.resolve()}/>

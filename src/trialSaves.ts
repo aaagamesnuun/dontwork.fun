@@ -14,7 +14,8 @@ export function switchTrialMode(current: Run, mode: 'normal' | 'trial', rule?: T
     const saved = current.trial ? pauseTrial(current, now) : { ...current, running: false, background: null };
     const targetKey = mode === 'normal' ? NORMAL_SLOT : TRIAL_SLOT;
     const stored = readSave(localStorage.getItem(targetKey));
-    const next = mode === 'normal' ? (stored && !stored.trial ? stored : freshRun()) : rule ? freshTrial(current.settings, rule) : (stored?.trial ? stored : freshTrial(current.settings));
+    const restored = mode === 'normal' ? (stored && !stored.trial ? stored : freshRun()) : rule ? freshTrial(current.settings, rule) : (stored?.trial ? stored : freshTrial(current.settings));
+    const next = { ...restored, settings: { ...restored.settings, look: current.settings.look, randomLookOnOpen: current.settings.randomLookOnOpen } };
     // Back up the active game first; failed storage never discards its progress.
     localStorage.setItem(current.trial ? TRIAL_SLOT : NORMAL_SLOT, JSON.stringify(saved));
     localStorage.setItem(SAVE_KEY, JSON.stringify(next));
