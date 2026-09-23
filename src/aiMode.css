@@ -1,5 +1,4 @@
 .ai-app { height:100dvh; background:var(--bg,#090d11); color:var(--text,#e8edf4); overflow:auto; }
-.topbar a.ai-button { display:inline-flex; align-items:center; justify-content:center; color:inherit; min-width:36px; min-height:36px; }
 .ai-app .topbar { position:sticky; top:0; z-index:2; background:var(--bg,#090d11); gap:16px; }
 .ai-app .topbar .wordmark { display:inline-flex; align-items:center; gap:6px; }
 .ai-app .topbar .brand-icon { width:30px; height:30px; flex:0 0 30px; }

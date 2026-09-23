@@ -1,5 +1,7 @@
-/* Keep the robot entry reachable beside every existing header action. */
-.app .topbar .ai-button { color:inherit; display:inline-flex; align-items:center; justify-content:center; text-decoration:none; }
+/* AI play lives in the menu; keep the remaining header actions usable on phones. */
+.menu-grid .ai-menu-link { display:flex; align-items:center; gap:10px; padding:14px; font-size:16px; text-align:left; text-decoration:none; }
+.menu-grid .ai-menu-link svg { flex-shrink:0; }
+.menu-grid .ai-menu-link:hover { background:#2d3825; border-color:#6a7e53; }
 @media (min-width:361px) and (max-width:400px) {
   .app[data-look] .topbar .wordmark { gap:3px; }
   .app[data-look] .topbar .wordmark .brand-name { font-size:15px; }

@@ -1481,7 +1481,6 @@ export default function App({ onOpenDesk, studio }: {
         </div>
         <nav>
           {!studio && <button className="contact-button board-button" aria-label={_t("掲示板")} title={_t("掲示板")} onClick={()=>setModal("board")}><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M20 15a3 3 0 0 1-3 3H9l-5 3V6a3 3 0 0 1 3-3h10a3 3 0 0 1 3 3Z"/><path d="M8 8h8M8 12h5"/></svg></button>}
-          {!studio && <a className="contact-button ai-button" href="/?ai=1" aria-label={_t("AIに遊ばせる")} title={_t("AIに遊ばせる")}><AiIcon/></a>}
           <button className="contact-button" aria-label={_t("問い合わせ")} title={_t("問い合わせ")} onClick={() => setModal("feedback")}>
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 6 9 7 9-7"/></svg>
           </button>
@@ -1701,6 +1700,7 @@ export default function App({ onOpenDesk, studio }: {
             {studio && <button className="primary" onClick={() => { setModal(null); studio.onSettings(); }}>{_t("撮影スタジオの設定")}</button>}
             {shown.catalog === "legacy" && <button className="secondary" disabled={rush} onClick={() => setModal("draft")}>{_t("特殊ガチャ →")}</button>}
             {!isMobileDevice() && onOpenDesk && <button className="secondary" disabled={!!model.pending} onClick={onOpenDesk}>{_t("縦長ウィンドウで遊ぶ ↗")}</button>}
+            {!studio && <a className="secondary ai-menu-link" href="/?ai=1"><AiIcon/><span>{_t("AIに遊ばせる")} →</span></a>}
             {([
                 ["trial-mode", _t("モードを選ぶ · 30分モード")],
                 ["help", _t("遊び方")],
